@@ -10,6 +10,7 @@ Comparison of vasopressor use in patients with severe burns.
 - `data/raw/`, `data/processed/`: local data only, ignored by git
 - `output/`: generated figures and tables, ignored by git
 - `tests/testthat/`: unit tests
+- `PROJECT_VERSION`: project name and version; scripts use it to recognise the project folder
 
 ## Data handling
 

@@ -16,29 +16,33 @@
 #   - These environment variables: USERPROFILE, HOME, USERNAME, USER,
 #     RSTUDIO, DISPLAY, WAYLAND_DISPLAY. The first four are used only to mask
 #     the home folder and username in the report.
-#   - The location of this script file, to find the project's output folder.
-#     If that location cannot be determined, the current working folder is
-#     used instead, but only if it already contains a folder named "output".
-#   - Whether the project folder (the folder above this script's folder)
-#     contains a file named "renv.lock". Only the file name is checked, the
-#     file is not opened.
+#   - The location of this script file, to find the project folder.
+#   - The file "PROJECT_VERSION" in the project folder (the folder above this
+#     script's folder). It is a small text file with the project name and
+#     version. Only its "Project" and "Version" fields are used.
 #
 # WHAT THIS SCRIPT WRITES
 #   - Only inside the "output" folder of this project (the folder next to the
-#     "scripts" folder that contains this file). Nothing is written to the
-#     Desktop, the home folder, the temporary folder, or any other location.
+#     "scripts" folder that contains this file), and only when the project
+#     folder is confirmed (see below). Nothing is written to the Desktop, the
+#     home folder, the temporary folder, or any other location.
+#   - The project folder is confirmed only when all of these hold: this file
+#     is in a folder named "scripts", the folder above it contains the file
+#     "PROJECT_VERSION", and that file can be read and its "Project" field is
+#     exactly the expected project name set at the top of the script.
+#   - If the project folder is not confirmed, nothing at all is created or
+#     written: no folder, no test file, no report. The report is only printed
+#     to the console. This also applies when the location of this script
+#     cannot be determined (for example when its text is pasted into R). The
+#     current working folder is never used.
 #   - One small test file ("test" text only) in that output folder, to check
 #     that it is writable. It is deleted immediately after the check.
 #   - One report file, output/environment_report.txt. An existing file with
 #     that name in the output folder is replaced.
-#   - If the "output" folder does not exist, this script creates it (that
-#     one folder only, nothing above it). It does this only when the project
-#     folder is recognised: this file is in a folder named "scripts" and the
-#     folder above it contains a file named "renv.lock". Otherwise no folder
-#     is created. The current working folder is never used to create one.
-#   - If the output folder is missing and cannot be created, or is not
-#     writable, nothing is written, and the report is only printed to the
-#     console.
+#   - If the project folder is confirmed and the "output" folder does not
+#     exist, this script creates it (that one folder only, nothing above it).
+#   - If the output folder cannot be created, or is not writable, nothing is
+#     written, and the report is only printed to the console.
 #
 # WHAT THIS SCRIPT DOES NOT DO
 #   - It does not install, update, or remove any software or R package.
@@ -61,13 +65,13 @@
 #   console, so you can read it in full before sending it.
 #
 # HOW TO RUN
-#   Keep this file in the "scripts" folder inside the project folder you
-#   received (the folder that contains the file "renv.lock"). The "output"
-#   folder is created next to it if it is missing. Open this file there in
-#   RStudio and click "Source", or in the R console run:
+#   Keep this file in the "scripts" folder inside the complete project folder
+#   you received (the folder that contains the file "PROJECT_VERSION"). The
+#   "output" folder is created next to it if it is missing. Open this file
+#   there in RStudio and click "Source", or in the R console run:
 #   source(file.choose()) and select this file. If the file is run from
-#   another location, no folder is created and the report is not saved, only
-#   printed to the console.
+#   another location, nothing is written and the report is only printed to
+#   the console.
 #
 # REQUIREMENTS
 #   Base R only. No additional packages are needed.
@@ -77,6 +81,10 @@
 # the R workspace.
 local({
   report_version <- "1.0"
+
+  # The project name that the "Project" field of the PROJECT_VERSION file must
+  # match exactly for the project folder to be confirmed.
+  expected_project <- "burn_vp"
 
   # ---- Helper functions ------------------------------------------------------
 
@@ -103,18 +111,19 @@ local({
   is_windows <- .Platform$OS.type == "windows"
   is_mac <- Sys.info()[["sysname"]] == "Darwin"
 
-  # ---- Locate the project output folder --------------------------------------
+  # ---- Locate the project folder ---------------------------------------------
 
   # The report may only be saved in the "output" folder of the project, which is
   # next to the "scripts" folder that holds this file. The script location comes
   # from source() (or RStudio's Source button) or from the Rscript command line.
-  # If it cannot be found, the current working folder is used, but only if it
-  # already contains an "output" folder. Nothing is created here. Returns a list
-  # with the folder path (NA if no folder is known) and can_create, which is TRUE
-  # only when the script is in a folder named "scripts" whose parent folder
-  # contains a file named "renv.lock". This confirms that the parent is the
-  # project folder, so that no stray "output" folder is made elsewhere.
-  find_output_dir <- function() {
+  # The project folder is confirmed only if the script is in a folder named
+  # "scripts" and the parent folder has a PROJECT_VERSION file that can be read
+  # and whose Project field equals expected_project. If the script location is
+  # unknown, the project is not confirmed. Nothing is created or written here.
+  # Returns a list with confirmed (TRUE or FALSE), the output folder path (NA
+  # if not confirmed) and the project version (NA if not confirmed).
+  find_project <- function() {
+    none <- list(confirmed = FALSE, output_dir = NA_character_, version = NA_character_)
     script <- NA_character_
     for (fr in rev(sys.frames())) {
       f <- get0("ofile", envir = fr, inherits = FALSE)
@@ -128,25 +137,27 @@ local({
       args <- grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE)
       if (length(args) > 0) script <- sub("^--file=", "", args[1])
     }
-    if (!is.na(script)) {
-      script_dir <- dirname(normalizePath(script, winslash = "/", mustWork = FALSE))
-      project_dir <- dirname(script_dir)
-      confirmed <- basename(script_dir) == "scripts" &&
-        file.exists(file.path(project_dir, "renv.lock"))
-      return(list(path = file.path(project_dir, "output"), can_create = confirmed))
-    }
-    wd_output <- file.path(getwd(), "output")
-    list(path = if (dir.exists(wd_output)) wd_output else NA_character_,
-         can_create = FALSE)
+    if (is.na(script)) return(none)
+    script_dir <- dirname(normalizePath(script, winslash = "/", mustWork = FALSE))
+    project_dir <- dirname(script_dir)
+    if (basename(script_dir) != "scripts") return(none)
+    marker <- file.path(project_dir, "PROJECT_VERSION")
+    if (!file.exists(marker)) return(none)
+    info <- tryCatch(suppressWarnings(read.dcf(marker, fields = c("Project", "Version"))),
+                     error = function(e) NULL)
+    if (is.null(info) || nrow(info) < 1) return(none)
+    if (!isTRUE(info[1, "Project"] == expected_project)) return(none)
+    list(confirmed = TRUE, output_dir = file.path(project_dir, "output"),
+         version = info[1, "Version"])
   }
-  found <- find_output_dir()
-  output_dir <- found$path
+  project <- find_project()
+  output_dir <- project$output_dir
 
   # Create the output folder (only that one folder, not its parents) if it is
   # missing and the project folder is confirmed. A failure is not an error: the
   # folder is then treated as not found and the report is only printed.
   output_created <- "no"
-  if (!is.na(output_dir) && found$can_create && !dir.exists(output_dir)) {
+  if (project$confirmed && !dir.exists(output_dir)) {
     if (suppressWarnings(dir.create(output_dir, showWarnings = FALSE))) output_created <- "yes"
   }
 
@@ -191,7 +202,8 @@ local({
   }
 
   # Check whether a folder is writable by creating a small test file in it and
-  # deleting it straight away. Returns "yes", "no", or "folder not found".
+  # deleting it straight away. Only called for a confirmed project folder.
+  # Returns "yes", "no", or "folder not found".
   can_write <- function(dir) {
     if (!dir.exists(dir)) return("folder not found")
     f <- tempfile(tmpdir = dir, fileext = ".txt")
@@ -292,17 +304,22 @@ local({
   # ---- Locale and file handling ----------------------------------------------
 
   # Language, decimal mark, and time zone affect how data files and dates are
-  # read. The tool saves its output in the project output folder, so check that
-  # this folder exists and can be written to (using a temporary test file that
-  # is deleted at once), and record whether this run had to create it.
+  # read. The tool saves its output in the project output folder, so, if the
+  # project folder is confirmed, check that this folder exists and can be
+  # written to (using a temporary test file that is deleted at once), and record
+  # whether this run had to create it. If it is not confirmed, nothing is
+  # checked or written.
   section("Locale and file handling")
   kv("Locale", Sys.getlocale())
   kv("UTF-8 locale", l10n_info()[["UTF-8"]])
   kv("Decimal mark", Sys.localeconv()[["decimal_point"]])
   kv("Time zone", safe(Sys.timezone()))
-  output_status <- if (is.na(output_dir)) "folder not found" else can_write(output_dir)
+  output_status <- if (project$confirmed) can_write(output_dir) else "not checked"
+  kv("Project folder confirmed", if (project$confirmed) "yes" else "no")
+  kv("Project version", if (project$confirmed) project$version else "unknown")
   kv("Output folder created", output_created)
-  kv("Can write to output folder", output_status)
+  kv("Can write to output folder",
+     if (project$confirmed) output_status else "not checked (project folder not confirmed)")
 
   # ---- All installed packages ------------------------------------------------
 
@@ -318,9 +335,9 @@ local({
   # Remove the username and home folder path from every line.
   out <- mask(out)
 
-  # Save the report in the project output folder, only if it exists and is
-  # writable (it was created above if the project folder was confirmed). An
-  # existing report is replaced.
+  # Save the report in the project output folder, only if the project folder is
+  # confirmed and the output folder exists and is writable (it was created above
+  # if missing). An existing report is replaced.
   report_path <- NA_character_
   if (output_status == "yes") {
     target <- file.path(output_dir, "environment_report.txt")
@@ -335,17 +352,15 @@ local({
     cat("\n\nReport saved to:", mask(report_path), "\n")
     cat("Please send this file back. It contains no patient data.\n")
   } else {
-    reason <- if (output_status == "no") {
+    reason <- if (!project$confirmed) {
+      paste("the project folder could not be confirmed, so nothing was written.",
+            "The script must be run from the scripts folder of the complete",
+            "project folder (the folder that contains the file PROJECT_VERSION).")
+    } else if (output_status == "no") {
       paste("the project output folder is not writable:", mask(output_dir))
-    } else if (is.na(output_dir)) {
-      paste("the project output folder could not be located. Run this script",
-            "from the scripts folder inside the project folder (the folder that",
-            "contains renv.lock).")
     } else {
-      paste("the project output folder was not found and was not created.",
-            "Looked for:", mask(output_dir),
-            "The script must be run from the scripts folder of the project,",
-            "next to a file named renv.lock.")
+      paste("the project output folder was not found and could not be created:",
+            mask(output_dir))
     }
     cat("\n\nThe report could not be saved because", reason, "\n")
     cat("Please copy the report text printed above in the console and send that instead.\n")
