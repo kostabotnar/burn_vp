@@ -67,11 +67,36 @@
 # HOW TO RUN
 #   Keep this file in the "scripts" folder inside the complete project folder
 #   you received (the folder that contains the file "PROJECT_VERSION"). The
-#   "output" folder is created next to it if it is missing. Open this file
-#   there in RStudio and click "Source", or in the R console run:
-#   source(file.choose()) and select this file. If the file is run from
-#   another location, nothing is written and the report is only printed to
-#   the console.
+#   "output" folder is created next to it if it is missing. If the file is run
+#   from another location, nothing is written and the report is only printed
+#   to the console.
+#
+#   Step 1. Start RStudio.
+#     Windows: open the Start menu, type "RStudio", and press Enter.
+#     macOS:   open the Applications folder and double-click RStudio, or
+#              press Cmd+Space, type "RStudio", and press Return.
+#     Linux:   open RStudio from the applications menu, or type "rstudio"
+#              in a terminal and press Enter.
+#
+#   Step 2. Open this file.
+#     In RStudio choose File > Open File..., go to the project folder, open
+#     the "scripts" folder, and select "environment_report.R".
+#
+#   Step 3. Run it.
+#     Click the "Source" button at the top right of the editor panel, or
+#     press Ctrl+Shift+S (Windows and Linux) or Cmd+Shift+S (macOS).
+#     The report appears in the Console panel and is saved as
+#     output/environment_report.txt in the project folder.
+#
+#   Without RStudio:
+#     Windows: start R from the Start menu, choose File > Source R code...,
+#              and select this file.
+#     macOS:   start R from the Applications folder, choose
+#              File > Source File..., and select this file.
+#     Linux:   in a terminal, go to the project folder and run:
+#              Rscript scripts/environment_report.R
+#     In any R console you can also run: source(file.choose()) and select
+#     this file.
 #
 # REQUIREMENTS
 #   Base R only. No additional packages are needed.
