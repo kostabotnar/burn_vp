@@ -3,18 +3,19 @@ script_src <- normalizePath(
   mustWork = TRUE
 )
 
-# Build a fake project (scripts/ and optionally output/) and a fake home folder
+# Build a fake project (scripts/, renv.lock, and optionally output/) and a fake home folder
 # inside a fresh temporary folder. Returns the paths.
-make_fake <- function(with_output = TRUE) {
+make_fake <- function(with_output = TRUE, with_lock = TRUE, script_dir = "scripts") {
   root <- normalizePath(tempfile("fake"), winslash = "/", mustWork = FALSE)
   project <- file.path(root, "project")
   home <- file.path(root, "home", "JaneDoe")
-  dir.create(file.path(project, "scripts"), recursive = TRUE)
+  dir.create(file.path(project, script_dir), recursive = TRUE)
   dir.create(home, recursive = TRUE)
   if (with_output) dir.create(file.path(project, "output"))
-  file.copy(script_src, file.path(project, "scripts", "environment_report.R"))
+  if (with_lock) writeLines("{}", file.path(project, "renv.lock"))
+  file.copy(script_src, file.path(project, script_dir, "environment_report.R"))
   list(root = root, project = project, home = home,
-       script = file.path(project, "scripts", "environment_report.R"))
+       script = file.path(project, script_dir, "environment_report.R"))
 }
 
 # Run an R command line in a subprocess with a fake home folder and username.
@@ -67,21 +68,55 @@ test_that("a username inside another word is not masked", {
   expect_true(any(grepl("xJaneDoex", report, fixed = TRUE)))
 })
 
-test_that("nothing is written and a clear message is shown without output folder", {
+expect_not_saved <- function(fake, before) {
+  res <- run_r(fake, fake$script)
+  testthat::expect_null(attr(res, "status"))
+  testthat::expect_identical(all_files(fake$root), before)
+
+  text <- paste(res, collapse = "\n")
+  testthat::expect_match(text, "could not be saved", fixed = TRUE)
+  testthat::expect_match(text, "copy the report text", fixed = TRUE)
+  testthat::expect_match(text, "Output folder created: +no")
+  testthat::expect_false(grepl("Report saved to", text, fixed = TRUE))
+  testthat::expect_false(grepl("send this file back", text, fixed = TRUE))
+  testthat::expect_false(grepl("JaneDoe", text, ignore.case = TRUE))
+  testthat::expect_match(text, "Environment report, version", fixed = TRUE)
+}
+
+test_that("the output folder is created inside the confirmed project folder", {
   fake <- make_fake(with_output = FALSE)
   before <- all_files(fake$root)
 
   res <- run_r(fake, fake$script)
   expect_null(attr(res, "status"))
-  expect_identical(all_files(fake$root), before)
+  expect_true(dir.exists(file.path(fake$project, "output")))
+  expect_setequal(setdiff(all_files(fake$root), before),
+                  c("project/output", "project/output/environment_report.txt"))
+  expect_setequal(setdiff(before, all_files(fake$root)), character())
 
   text <- paste(res, collapse = "\n")
-  expect_match(text, "could not be saved", fixed = TRUE)
-  expect_match(text, "copy the report text", fixed = TRUE)
-  expect_false(grepl("Report saved to", text, fixed = TRUE))
-  expect_false(grepl("send this file back", text, fixed = TRUE))
-  expect_false(grepl("JaneDoe", text, ignore.case = TRUE))
-  expect_match(text, "Environment report, version", fixed = TRUE)
+  expect_match(text, "Output folder created: +yes")
+  expect_match(text, "Can write to output folder: +yes")
+  expect_match(text, "Report saved to:", fixed = TRUE)
+})
+
+test_that("nothing is created without renv.lock in the project folder", {
+  fake <- make_fake(with_output = FALSE, with_lock = FALSE)
+  expect_not_saved(fake, all_files(fake$root))
+})
+
+test_that("nothing is created when the script folder is not named scripts", {
+  fake <- make_fake(with_output = FALSE, script_dir = "tools")
+  expect_not_saved(fake, all_files(fake$root))
+})
+
+test_that("a failed folder creation gives the not-saved message, not an error", {
+  fake <- make_fake(with_output = FALSE)
+  Sys.chmod(fake$project, "555")
+  on.exit(Sys.chmod(fake$project, "755"), add = TRUE)
+  skip_if(dir.create(file.path(fake$project, "probe"), showWarnings = FALSE),
+          "running as a user that ignores folder permissions")
+  expect_not_saved(fake, all_files(fake$root))
 })
 
 test_that("sourcing the script leaves the global environment unchanged", {
