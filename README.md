@@ -6,6 +6,7 @@ Comparison of vasopressor use in patients with severe burns.
 
 - `R/`: reusable functions
 - `analysis/`: analysis scripts and reports
+- `scripts/`: standalone utility scripts, not part of the analysis
 - `data/raw/`, `data/processed/`: local data only, ignored by git
 - `output/`: generated figures and tables, ignored by git
 - `tests/testthat/`: unit tests
