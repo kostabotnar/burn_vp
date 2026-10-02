@@ -1,0 +1,27 @@
+# Patient data must never be committed
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Generated outputs
+output/**/*
+!output/figures/.gitkeep
+!output/tables/.gitkeep
+
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+renv/library/
+renv/staging/
+renv/local/
+
+# Quarto / R Markdown
+*_cache/
+*_files/
+/.quarto/
+
+.DS_Store
