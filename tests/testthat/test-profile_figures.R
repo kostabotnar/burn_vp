@@ -1,6 +1,7 @@
 cb <- read_codebook(testthat::test_path("..", "..", "metadata", "codebook.csv"))
 rng <- read_qc_ranges(testthat::test_path("..", "..", "metadata", "qc_ranges.csv"))
 
+# nolint start: object_usage_linter. Helpers call functions sourced from R/.
 fig_data <- local({
   a <- cbind(site = "NBC", generate_synthetic_nbc(cb, n = 60, seed = 1), stringsAsFactors = FALSE)
   b <- cbind(site = "UTMB", generate_synthetic_nbc(cb, n = 60, seed = 2), stringsAsFactors = FALSE)
@@ -13,6 +14,8 @@ expect_plot <- function(p) {
   expect_s3_class(p, "ggplot")
   expect_no_error(ggplot2::ggplot_build(p))
 }
+
+# nolint end
 
 test_that("sites keep their colour by identity", {
   expect_equal(site_colours(c("NBC", "UTMB")), c(NBC = "#2a78d6", UTMB = "#eb6834"))

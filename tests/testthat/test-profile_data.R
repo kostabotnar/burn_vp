@@ -1,12 +1,15 @@
 cb <- read_codebook(testthat::test_path("..", "..", "metadata", "codebook.csv"))
 rng <- read_qc_ranges(testthat::test_path("..", "..", "metadata", "qc_ranges.csv"))
 
+# nolint start: object_usage_linter. Helpers call functions sourced from R/.
 two_sites <- function(n = 80) {
   a <- cbind(site = "NBC", generate_synthetic_nbc(cb, n = n, seed = 1), stringsAsFactors = FALSE)
   b <- cbind(site = "UTMB", generate_synthetic_nbc(cb, n = n, seed = 2), stringsAsFactors = FALSE)
   rbind(a, b)
 }
 syn <- two_sites()
+
+# nolint end
 
 test_that("SMD matches hand-computed values", {
   expect_equal(smd_continuous(c(1, 2, 3), c(3, 4, 5)), 2)
@@ -190,7 +193,8 @@ test_that("correlation_matrix is Spearman on pairwise complete data", {
 
 test_that("write_profile_outputs only writes inside output/", {
   dir <- local_output_dir()
-  paths <- write_profile_outputs(list(a = data.frame(x = 1), m = matrix(1:4, 2, dimnames = list(c("a", "b"), c("a", "b")))), dir)
+  m <- matrix(1:4, 2, dimnames = list(c("a", "b"), c("a", "b")))
+  paths <- write_profile_outputs(list(a = data.frame(x = 1), m = m), dir)
   expect_true(all(file.exists(paths)))
   expect_error(write_profile_outputs(list(a = data.frame(x = 1)), "/tmp"), "output")
 })

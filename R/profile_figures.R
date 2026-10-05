@@ -1,3 +1,4 @@
+# nolint start: object_usage_linter. Functions from the other R/ files are not visible here.
 fig_colours <- list(
   surface = "#fcfcfb", ink = "#0b0b0b", ink_secondary = "#52514e", muted = "#898781",
   grid = "#e1e0d9", axis = "#c3c2b7"
@@ -111,9 +112,8 @@ fig_distributions <- function(data) {
 # Crystalloids in the first 24 h per kg against burn size, with the Parkland formula as a
 # reference (4 mL per kg per %TBSA is a line through the origin with slope 4).
 fig_fluid_vs_tbsa <- function(data) {
-  d <- if ("crystalloids_24h_ml_per_kg" %in% names(data)) data else {
-    derive_analysis_variables(data)
-  }
+  d <- data
+  if (!"crystalloids_24h_ml_per_kg" %in% names(d)) d <- derive_analysis_variables(d)
   df <- data.frame(site = site_factor(d$site), tbsa = d$tbsa_burned_pct,
                    fluid = d$crystalloids_24h_ml_per_kg)
   df <- df[stats::complete.cases(df), , drop = FALSE]
@@ -150,9 +150,8 @@ fig_missingness <- function(missingness, max_variables = 40) {
   m$label <- ifelse(round(m$pct_unexpected_missing) >= 1,
                     sprintf("%.0f", m$pct_unexpected_missing), "")
   m$dark <- m$pct_unexpected_missing >= 45
-  note <- if (all(worst == 0)) "No unexpected missing values in any key variable." else {
-    "Key variables ordered by the highest unexpected missing percentage."
-  }
+  note <- "Key variables ordered by the highest unexpected missing percentage."
+  if (all(worst == 0)) note <- "No unexpected missing values in any key variable."
   if (length(ordered) > max_variables) {
     note <- sprintf("%s Showing %d of %d.", note, max_variables, length(ordered))
   }
@@ -251,6 +250,10 @@ fig_binary_proportions <- function(data) {
                    strip.text.y = ggplot2::element_text(angle = 0, hjust = 0))
 }
 
+wrap_labels <- function(x) {
+  vapply(strwrap(x, 22, simplify = FALSE), paste, character(1), collapse = "\n")
+}
+
 # Spearman correlation heatmap (lower triangle). Coefficients with |rho| of at least 0.3 are
 # written in the cells; every coefficient is in profile/correlation.csv.
 fig_correlation <- function(r) {
@@ -271,9 +274,7 @@ fig_correlation <- function(r) {
       low = fig_diverging[["low"]], mid = fig_diverging[["mid"]], high = fig_diverging[["high"]],
       midpoint = 0, limits = c(-1, 1), name = "Spearman rho", na.value = fig_colours$grid
     ) +
-    ggplot2::scale_x_discrete(labels = function(x) vapply(strwrap(x, 22, simplify = FALSE),
-                                                          paste, character(1), collapse = "\n"),
-                              expand = c(0, 0)) +
+    ggplot2::scale_x_discrete(labels = wrap_labels, expand = c(0, 0)) +
     ggplot2::scale_y_discrete(expand = c(0, 0)) +
     ggplot2::guides(fill = ggplot2::guide_colourbar(barwidth = 12, barheight = 0.6)) +
     ggplot2::labs(x = NULL, y = NULL, title = "Spearman correlations of key variables",
@@ -324,10 +325,13 @@ figure_catalogue <- function() {
     ),
     alt = c(
       "Small multiples of box plots with points comparing key variables between sites.",
-      "Scatter plot of crystalloid volume per kg against TBSA, coloured by site, with a line for the Parkland formula.",
+      paste("Scatter plot of crystalloid volume per kg against TBSA, coloured by site, with a line",
+            "for the Parkland formula."),
       "Heatmap of the percentage of unexpected missing values for each key variable and site.",
-      "Box plots with points of hours from burn to ICU admission, first NE and first surgery by site.",
-      "Dot and interval chart of proportions with confidence intervals for binary exposures and outcomes by site.",
+      paste("Box plots with points of hours from burn to ICU admission, first NE and first surgery",
+            "by site."),
+      paste("Dot and interval chart of proportions with confidence intervals for binary exposures",
+            "and outcomes by site."),
       "Heatmap of Spearman correlation coefficients between key variables."
     ),
     width = c(11, 8, 6.5, 8, 8, 9), height = c(6, 5.5, 8.5, 6.5, 5, 7.5),
@@ -356,3 +360,4 @@ save_profile_figures <- function(figures, dir) {
   }
   cat_df
 }
+# nolint end
