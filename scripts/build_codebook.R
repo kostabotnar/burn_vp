@@ -166,8 +166,8 @@ ne_delay_h|n|Delay of NE|.|.
 peak_ne_24h_ug_kg_min|n|Maximum infusion rate|.|.
 peak_ne_24_48h_ug_kg_min|n|Maximum infusion rate|.|.
 total_ne_48h_ug_kg|n|.|.|Not in the dictionary.
-other_vp_24h|c|Types of vasopressors|Epinephrine;Phenylepinephrine;Vasopressin;Dobutamine;Dopamine;Others|Levels from the dictionary, which spells Phenylepinephrine. Template example uses other names (for example Ephedrine), so later recoding is needed. May hold several drugs.
-other_vp_24_48h|c|Types of vasopressors|Epinephrine;Phenylepinephrine;Vasopressin;Dobutamine;Dopamine;Others|Same notes as other_vp_24h.
+other_vp_24h|c|Types of vasopressors|Epinephrine;Phenylephrine;Vasopressin;Dobutamine;Dopamine;Others|Levels from the dictionary. The level is spelled Phenylephrine here; the dictionary has the typo Phenylepinephrine. Template example uses other names (for example Ephedrine), so later recoding is needed. May hold several drugs.
+other_vp_24_48h|c|Types of vasopressors|Epinephrine;Phenylephrine;Vasopressin;Dobutamine;Dopamine;Others|Same notes as other_vp_24h. Level spelled Phenylephrine (dictionary typo Phenylepinephrine corrected).
 peak_other_vp_24h_ug_kg_min|n|Maximum infusion rate|.|Unclear which drug the rate refers to when several are given.
 peak_other_vp_24_48h_ug_kg_min|n|Maximum infusion rate|.|Unclear which drug the rate refers to when several are given.
 days_on_vp|n|.|.|Header has no unit; days assumed. Not in the dictionary.
