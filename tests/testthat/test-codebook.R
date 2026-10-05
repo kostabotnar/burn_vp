@@ -1,4 +1,5 @@
-write_codebook_csv <- function(rows, dir = withr::local_tempdir(.local_envir = parent.frame())) {
+write_codebook_csv <- function(rows, dir = NULL) {
+  if (is.null(dir)) dir <- local_output_dir(parent.frame()) # nolint: object_usage.
   path <- file.path(dir, "codebook.csv")
   utils::write.csv(rows, path, row.names = FALSE, na = "NA")
   path
@@ -61,7 +62,7 @@ test_that("binary and categorical rows need allowed values", {
 })
 
 test_that("a missing file is an error", {
-  expect_error(read_codebook(file.path(tempdir(), "no_such_codebook.csv")), "not found")
+  expect_error(read_codebook(file.path(local_output_dir(), "no_such_codebook.csv")), "not found")
 })
 
 codebook_path <- normalizePath(
