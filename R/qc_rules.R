@@ -1080,7 +1080,7 @@ run_qc <- function(data, codebook, ranges = read_qc_ranges(),
       expected_type = character(), stringsAsFactors = FALSE
     )),
     unmapped_values = qc_attr_table(data, "unmapped_values", data.frame(
-      column = character(), value = character(), n = integer(), stringsAsFactors = FALSE
+      row = integer(), column = character(), raw_value = character(), stringsAsFactors = FALSE
     )),
     rule_catalogue = qc_rule_catalogue(rules)
   )
