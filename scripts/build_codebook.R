@@ -32,6 +32,7 @@ find_root <- function() {
 # name | type | dictionary prefix | allowed values (";" separated) | notes
 # Types: n numeric, i integer, b binary, c categorical, d date, t time, x text.
 fluid_note <- "It is unclear whether 48h fluid columns are cumulative 0-48h or 24-48h."
+# nolint start: line_length_linter
 spec_text <- paste0("
 patient_id|x|.|.|.
 age_years|n|Age|.|.
@@ -230,6 +231,7 @@ vital_status_follow_up|x|.|.|Levels not defined.
 icu_readmission|b|.|.|.
 icu_readmission_date|d|.|.|.
 ")
+# nolint end
 
 key_names <- c(
   "age_years", "gender", "admission_weight_kg", "height_cm", "tbsa_burned_pct", "full_thickness",
