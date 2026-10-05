@@ -503,6 +503,30 @@ generate_synthetic_nbc <- function(codebook, n = 100, seed = 1) {
   as.data.frame(out, stringsAsFactors = FALSE, check.names = FALSE)
 }
 
+# Converts a column to what Excel stores: dates as day serials, times as day fractions. A value
+# that cannot be converted (for example text injected into a numeric or date column) is written
+# as text, which turns the whole column into text cells; the loader reports such values as
+# parse problems.
+xlsx_cells <- function(x, type) {
+  excel_origin_offset <- 25569
+  if (type == "date" && !is.character(x)) {
+    return(as.numeric(x) + excel_origin_offset)
+  }
+  if (type == "time") {
+    clock <- !is.na(x) & grepl("^([01]?[0-9]|2[0-3]):[0-5][0-9]$", x)
+    fraction <- rep(NA_real_, length(x))
+    parts <- strsplit(x[clock], ":", fixed = TRUE)
+    fraction[clock] <- vapply(parts, function(p) (as.numeric(p[1]) * 60 + as.numeric(p[2])) / 1440,
+                              numeric(1))
+    if (all(clock | is.na(x))) return(fraction)
+    out <- format(fraction, digits = 15, trim = TRUE)
+    out[!clock] <- x[!clock]
+    out[is.na(x)] <- NA_character_
+    return(out)
+  }
+  x
+}
+
 # Writes data in the template layout: section names in row 1 (first column of each section
 # only), source headers in row 2, data from row 3. Writes only to `path`.
 write_nbc_xlsx <- function(data, codebook, path) {
@@ -520,17 +544,8 @@ write_nbc_xlsx <- function(data, codebook, path) {
   }
   openxlsx::writeData(wb, "Ark1", as.data.frame(t(codebook$source_name)), startRow = 2,
                       colNames = FALSE)
-  excel_origin_offset <- 25569
   for (i in seq_len(nrow(codebook))) {
-    x <- data[[i]]
-    x <- switch(codebook$type[i],
-      date = as.numeric(x) + excel_origin_offset,
-      time = {
-        parts <- strsplit(x, ":", fixed = TRUE)
-        vapply(parts, function(p) (as.numeric(p[1]) * 60 + as.numeric(p[2])) / 1440, numeric(1))
-      },
-      x
-    )
+    x <- xlsx_cells(data[[i]], codebook$type[i])
     openxlsx::writeData(wb, "Ark1", x, startCol = i, startRow = 3, colNames = FALSE)
   }
   openxlsx::saveWorkbook(wb, path, overwrite = TRUE)
