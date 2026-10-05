@@ -36,7 +36,7 @@ row7 <- function(...) {
 }
 
 test_that("headers are checked by position and every problem is listed", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   headers <- cb$source_name
   headers[2] <- "Age"
@@ -48,7 +48,7 @@ test_that("headers are checked by position and every problem is listed", {
 })
 
 test_that("extra and missing columns are reported with positions", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   path <- write_site_xlsx(dir, c(cb$source_name, "Surprise"), list(c(row7("a"), "x")))
   expect_error(read_site_data(path, cb, "NBC"), "extra column at position 8: 'Surprise'")
@@ -61,7 +61,7 @@ test_that("extra and missing columns are reported with positions", {
 })
 
 test_that("header whitespace is ignored but case is not", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   headers <- cb$source_name
   headers[2] <- "  Age (years) "
@@ -73,7 +73,7 @@ test_that("header whitespace is ignored but case is not", {
 })
 
 test_that("duplicate header text is resolved by position", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   path <- write_site_xlsx(dir, cb$source_name, list(row7("a", "1", "Yes", "44045", "0.5", "44046")))
   res <- read_site_data(path, cb, "NBC")
@@ -82,7 +82,7 @@ test_that("duplicate header text is resolved by position", {
 })
 
 test_that("empty rows are dropped and row numbers refer to file data rows", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   rows <- list(row7("a", "1"), row7(), row7("-", "N/A", "", "NA"), row7("b", "x"))
   path <- write_site_xlsx(dir, cb$source_name, rows)
@@ -93,7 +93,7 @@ test_that("empty rows are dropped and row numbers refer to file data rows", {
 })
 
 test_that("numbers accept a dot or a comma as decimal mark", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   rows <- list(row7("a", "60.5"), row7("b", "60,5"), row7("c", " 7 "), row7("d", "2.7E1"))
   res <- read_site_data(write_site_xlsx(dir, cb$source_name, rows), cb, "NBC")
@@ -102,7 +102,7 @@ test_that("numbers accept a dot or a comma as decimal mark", {
 })
 
 test_that("integers must be whole numbers", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   rows <- list(row7("a", NA, NA, NA, NA, NA, "3"), row7("b", NA, NA, NA, NA, NA, "2.5"))
   path <- write_site_xlsx(dir, cb$source_name, rows)
@@ -112,7 +112,7 @@ test_that("integers must be whole numbers", {
 })
 
 test_that("Excel serials and ISO strings become Date", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   rows <- list(row7("a", NA, NA, "44045"), row7("b", NA, NA, "2021-03-04"),
                row7("c", NA, NA, "44045.5"))
@@ -122,7 +122,7 @@ test_that("Excel serials and ISO strings become Date", {
 })
 
 test_that("time fractions become HH:MM and HH:MM strings are kept", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   rows <- list(
     row7("a", NA, NA, NA, "0.479166666666667"), row7("b", NA, NA, NA, "2.7777777777777776E-2"),
@@ -133,7 +133,7 @@ test_that("time fractions become HH:MM and HH:MM strings are kept", {
 })
 
 test_that("missing-value strings become NA in every column type", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   rows <- list(row7("a", "NA", "N/A", "-", "", "-", "NA"), row7("b", "1"))
   res <- read_site_data(write_site_xlsx(dir, cb$source_name, rows), cb, "NBC")
@@ -142,7 +142,7 @@ test_that("missing-value strings become NA in every column type", {
 })
 
 test_that("text columns are trimmed but not recoded", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   rows <- list(row7(" p1 ", "1", " N0 "))
   res <- read_site_data(write_site_xlsx(dir, cb$source_name, rows), cb, "NBC")
@@ -151,7 +151,7 @@ test_that("text columns are trimmed but not recoded", {
 })
 
 test_that("failed parses are recorded with row and column and warned about once", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   rows <- list(
     row7("a", "10"),
@@ -185,7 +185,7 @@ test_that("failed parses are recorded with row and column and warned about once"
 })
 
 test_that("site column and source_file attribute are set", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   path <- write_site_xlsx(dir, cb$source_name, list(row7("a", "1"), row7("b", "2")))
   res <- read_site_data(path, cb, "UTMB")
@@ -196,7 +196,7 @@ test_that("site column and source_file attribute are set", {
 })
 
 test_that("a sheet can be chosen by name", {
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   cb <- small_codebook()
   df <- as.data.frame(rbind(c("S", rep(NA, 6)), cb$source_name, row7("z", "3")))
   path <- file.path(dir, "sheets.xlsx")
@@ -207,15 +207,15 @@ test_that("a sheet can be chosen by name", {
 
 test_that("a missing file or an empty site is an error", {
   cb <- small_codebook()
-  expect_error(read_site_data(file.path(tempdir(), "nope.xlsx"), cb, "NBC"), "not found")
-  dir <- withr::local_tempdir()
+  expect_error(read_site_data(file.path(local_output_dir(), "nope.xlsx"), cb, "NBC"), "not found")
+  dir <- local_output_dir()
   path <- write_site_xlsx(dir, cb$source_name, list(row7("a")))
   expect_error(read_site_data(path, cb, ""), "'site'")
 })
 
 test_that("the real codebook headers load a made-up row", {
   cb <- read_codebook(testthat::test_path("..", "..", "metadata", "codebook.csv"))
-  dir <- withr::local_tempdir()
+  dir <- local_output_dir()
   made_up <- rep(NA_character_, nrow(cb))
   made_up[cb$name == "patient_id"] <- "T1"
   made_up[cb$name == "age_years"] <- "41,5"
