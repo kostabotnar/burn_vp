@@ -1,8 +1,6 @@
 # Patient data must never be committed
-data/raw/*
-data/processed/*
-!data/raw/.gitkeep
-!data/processed/.gitkeep
+data/*
+!data/.gitkeep
 
 # Generated outputs
 output/**/*
@@ -25,3 +23,5 @@ renv/local/
 /.quarto/
 
 .DS_Store
+.zed/
+data/
