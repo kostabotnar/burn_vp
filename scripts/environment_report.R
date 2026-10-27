@@ -10,16 +10,29 @@
 # WHAT THIS SCRIPT READS
 #   - Operating system name, release, version, processor type, CPU core count.
 #   - R version, R installation folder, R package library folders.
-#   - Names and versions of installed R packages.
+#   - Names and versions of installed R packages, and whether the packages the
+#     project needs (readxl, openxlsx, ggplot2, htmltools, base64enc, withr,
+#     writexl, testthat, lintr, renv) are installed and load.
+#   - Whether the project's own package library (renv/library in the project
+#     folder) exists, and how many packages in the file "renv.lock" it holds.
+#   - Whether the running R version matches the R version in "renv.lock".
+#   - Whether renv is installed and, on Windows, whether Rtools (needed to
+#     build packages from source) is found.
 #   - Whether graphics and dialog support (Tcl/Tk, XQuartz, display) is present.
 #   - Language, decimal mark, and time zone settings.
 #   - These environment variables: USERPROFILE, HOME, USERNAME, USER,
-#     RSTUDIO, DISPLAY, WAYLAND_DISPLAY. The first four are used only to mask
-#     the home folder and username in the report.
+#     RSTUDIO, DISPLAY, WAYLAND_DISPLAY, RTOOLS43_HOME, RTOOLS44_HOME,
+#     RTOOLS45_HOME. The first four are used only to mask the home folder and
+#     username in the report.
 #   - The location of this script file, to find the project folder.
 #   - The file "PROJECT_VERSION" in the project folder (the folder above this
 #     script's folder). It is a small text file with the project name and
 #     version. Only its "Project" and "Version" fields are used.
+#   - The file "renv.lock" in the project folder (when the project folder is
+#     confirmed). Only the R version and the package names and versions in it
+#     are used.
+#   - The names of the folders inside "renv/library" in the project folder, to
+#     find the project package library. Nothing in it is changed.
 #
 # WHAT THIS SCRIPT WRITES
 #   - Only inside the "output" folder of this project (the folder next to the
@@ -53,7 +66,7 @@
 #   - It does not collect the computer name, IP address, or email address.
 #
 # SIDE EFFECTS IN THE R SESSION
-#   - Installed packages from the "Key packages" list below, and tcltk, are
+#   - Installed packages from the "Project packages" list below, and tcltk, are
 #     loaded into the current R session to test that they work. Loading runs
 #     the package's own startup code but installs nothing.
 #
@@ -98,6 +111,10 @@
 #     In any R console you can also run: source(file.choose()) and select
 #     this file.
 #
+# TEXT ENCODING
+#   The report is saved as UTF-8 text, so letters such as a-ring or o-slash in
+#   system names (for example the language setting) are kept intact.
+#
 # REQUIREMENTS
 #   Base R only. No additional packages are needed.
 # =============================================================================
@@ -105,18 +122,62 @@
 # The whole script runs inside local() so that no helper objects are left in
 # the R workspace.
 local({
-  report_version <- "1.0"
+  report_version <- "1.1"
 
   # The project name that the "Project" field of the PROJECT_VERSION file must
   # match exactly for the project folder to be confirmed.
   expected_project <- "burn_vp"
 
+  # The R major.minor version the project is built for. It is used when the
+  # project folder is not confirmed; otherwise the version in renv.lock is used.
+  fallback_r_version <- "4.5"
+
   # ---- Helper functions ------------------------------------------------------
+
+  # Return text as UTF-8 marked strings. System functions (locale name, paths)
+  # may return non-ASCII text with no encoding mark, and R then assumes the
+  # native encoding, which can turn UTF-8 bytes into two wrong characters. Text
+  # that is valid UTF-8 is marked as UTF-8; anything else is converted from the
+  # native encoding.
+  as_utf8 <- function(x) {
+    x <- as.character(x)
+    todo <- !is.na(x) & Encoding(x) == "unknown" &
+      grepl("[^\\x01-\\x7f]", x, perl = TRUE, useBytes = TRUE)
+    for (i in which(todo)) {
+      if (validUTF8(x[i])) {
+        Encoding(x[i]) <- "UTF-8"
+      } else {
+        x[i] <- iconv(x[i], from = "", to = "UTF-8", sub = "byte")
+      }
+    }
+    x
+  }
+
+  # Undo text that was UTF-8 but was read as a single-byte encoding, such as
+  # "Bokm" followed by A-tilde and a yen sign instead of "Bokm" and a-ring. Each
+  # character is turned back into its byte and the result is kept only if it is
+  # valid UTF-8. Only used for the locale name, where such text cannot be real.
+  repair_mojibake <- function(x) {
+    x <- as_utf8(x)
+    for (i in which(!is.na(x) & grepl("[^\\x01-\\x7f]", x, perl = TRUE))) {
+      for (enc in c("CP1252", "latin1")) {
+        bytes <- suppressWarnings(iconv(x[i], from = "UTF-8", to = enc, toRaw = TRUE))[[1]]
+        if (is.null(bytes)) next
+        fixed <- rawToChar(bytes)
+        Encoding(fixed) <- "UTF-8"
+        if (validUTF8(fixed) && fixed != x[i]) {
+          x[i] <- fixed
+          break
+        }
+      }
+    }
+    x
+  }
 
   # Report lines are collected in memory and written to disk once at the end.
   # "<<-" updates the "out" defined just below, inside this local() block.
   out <- character()
-  add <- function(...) out <<- c(out, ...)
+  add <- function(...) out <<- c(out, as_utf8(c(...)))
 
   # Add a section heading to the report.
   section <- function(title) add("", paste("==", title, "=="))
@@ -125,7 +186,7 @@ local({
   # flattened, and multiple values are joined with " | ".
   kv <- function(key, value) {
     if (is.null(value) || length(value) == 0) value <- "unknown"
-    value <- gsub("\\s+", " ", trimws(as.character(value)))
+    value <- gsub("\\s+", " ", trimws(as_utf8(value)))
     add(sprintf("%-30s %s", paste0(key, ":"), paste(value, collapse = " | ")))
   }
 
@@ -145,10 +206,12 @@ local({
   # "scripts" and the parent folder has a PROJECT_VERSION file that can be read
   # and whose Project field equals expected_project. If the script location is
   # unknown, the project is not confirmed. Nothing is created or written here.
-  # Returns a list with confirmed (TRUE or FALSE), the output folder path (NA
-  # if not confirmed) and the project version (NA if not confirmed).
+  # Returns a list with confirmed (TRUE or FALSE), the project folder and output
+  # folder paths (NA if not confirmed) and the project version (NA if not
+  # confirmed).
   find_project <- function() {
-    none <- list(confirmed = FALSE, output_dir = NA_character_, version = NA_character_)
+    none <- list(confirmed = FALSE, project_dir = NA_character_,
+                 output_dir = NA_character_, version = NA_character_)
     script <- NA_character_
     for (fr in rev(sys.frames())) {
       f <- get0("ofile", envir = fr, inherits = FALSE)
@@ -172,8 +235,8 @@ local({
                      error = function(e) NULL)
     if (is.null(info) || nrow(info) < 1) return(none)
     if (!isTRUE(info[1, "Project"] == expected_project)) return(none)
-    list(confirmed = TRUE, output_dir = file.path(project_dir, "output"),
-         version = info[1, "Version"])
+    list(confirmed = TRUE, project_dir = project_dir,
+         output_dir = file.path(project_dir, "output"), version = info[1, "Version"])
   }
   project <- find_project()
   output_dir <- project$output_dir
@@ -186,13 +249,106 @@ local({
     if (suppressWarnings(dir.create(output_dir, showWarnings = FALSE))) output_created <- "yes"
   }
 
+  # ---- Project library and lockfile ------------------------------------------
+
+  # R version as "major.minor", for example "4.5".
+  r_major_minor <- paste(R.version$major, sub("\\..*$", "", R.version$minor), sep = ".")
+
+  # Find the project's renv package library. renv puts it in
+  # renv/library/<system>/R-<major.minor>/<platform> (older renv versions omit
+  # the <system> folder). It is not active when this script is run with
+  # source() from Rgui, so it is located by folder name. Returns the folder
+  # path, or NA if it does not exist for the running R version and platform.
+  find_project_library <- function(project_dir) {
+    if (is.na(project_dir)) return(NA_character_)
+    base <- file.path(project_dir, "renv", "library")
+    if (!dir.exists(base)) return(NA_character_)
+    wanted <- paste0("R-", r_major_minor)
+    search <- function(dir, depth) {
+      for (sub in sort(list.dirs(dir, full.names = TRUE, recursive = FALSE))) {
+        if (basename(dir) == wanted && basename(sub) == R.version$platform) return(sub)
+        if (depth < 3) {
+          found <- search(sub, depth + 1)
+          if (!is.na(found)) return(found)
+        }
+      }
+      NA_character_
+    }
+    search(base, 1)
+  }
+
+  # Read the R version and the package names and versions from renv.lock with
+  # base R only. The file is JSON, but it is read as text: every "Package" entry
+  # is paired with the first "Version" entry after it and before the next
+  # "Package" entry. A quote inside a text value is escaped in JSON (backslash
+  # before it) and is skipped. Returns NULL if the file is missing, unreadable,
+  # or has no package entries; otherwise a list with r_version (NA if absent) and
+  # packages (a data frame with columns package and version).
+  read_lockfile <- function(project_dir) {
+    if (is.na(project_dir)) return(NULL)
+    path <- file.path(project_dir, "renv.lock")
+    if (!file.exists(path)) return(NULL)
+    lines <- tryCatch(readLines(path, warn = FALSE, encoding = "UTF-8"), error = function(e) NULL)
+    if (is.null(lines)) return(NULL)
+    text <- paste(lines, collapse = "\n")
+    pkg_start <- regexpr('(?<!\\\\)"Packages"\\s*:\\s*\\{', text, perl = TRUE)
+    if (pkg_start == -1) return(NULL)
+
+    # Values of a string entry: positions and contents.
+    entries <- function(txt, key) {
+      m <- gregexpr(paste0('(?<!\\\\)"', key, '"\\s*:\\s*"([^"]*)"'), txt, perl = TRUE)[[1]]
+      if (m[1] == -1) return(data.frame(pos = integer(), value = character()))
+      starts <- attr(m, "capture.start")[, 1]
+      lens <- attr(m, "capture.length")[, 1]
+      data.frame(pos = as.integer(m), value = substring(txt, starts, starts + lens - 1),
+                 stringsAsFactors = FALSE)
+    }
+
+    r_version <- NA_character_
+    before <- substr(text, 1, pkg_start - 1)
+    r_block <- regexpr('(?<!\\\\)"R"\\s*:\\s*\\{', before, perl = TRUE)
+    if (r_block != -1) {
+      r_text <- substring(before, r_block)
+      hit <- regmatches(r_text, regexec('"Version"\\s*:\\s*"([^"]*)"', r_text))[[1]]
+      if (length(hit) == 2) r_version <- hit[2]
+    }
+
+    packages_text <- substring(text, pkg_start)
+    pkgs <- entries(packages_text, "Package")
+    if (nrow(pkgs) == 0) return(NULL)
+    vers <- entries(packages_text, "Version")
+    next_pos <- c(pkgs$pos[-1], .Machine$integer.max)
+    version <- vapply(seq_len(nrow(pkgs)), function(i) {
+      v <- vers$value[vers$pos > pkgs$pos[i] & vers$pos < next_pos[i]]
+      if (length(v) > 0) v[1] else NA_character_
+    }, character(1))
+    list(r_version = r_version,
+         packages = data.frame(package = pkgs$value, version = version,
+                               stringsAsFactors = FALSE))
+  }
+
+  lockfile <- read_lockfile(project$project_dir)
+  project_lib <- find_project_library(project$project_dir)
+
+  # Folders searched for the packages the project needs: the project library
+  # (plus R's own library, which holds the base and recommended packages) when
+  # it exists, otherwise the library folders of this R session.
+  search_libs <- if (is.na(project_lib)) .libPaths() else unique(c(project_lib, .Library))
+
+  # List installed packages in the given folders. If a package is installed in
+  # more than one folder, keep the copy from the first folder in the list.
+  list_packages <- function(libs) {
+    ip <- installed.packages(lib.loc = libs)
+    ip[!duplicated(ip[, "Package"]), , drop = FALSE]
+  }
+
   # ---- Prepare masking of username and home folder ---------------------------
 
   # Collect every spelling of the home folder path (both slash styles, and on
   # Windows also the short 8.3 form). Longest paths first, so a parent folder
   # does not partially mask a child path.
   homes <- c(Sys.getenv("USERPROFILE"), Sys.getenv("HOME"), path.expand("~"))
-  homes <- homes[nzchar(homes)]
+  homes <- as_utf8(homes[nzchar(homes)])
   homes <- unique(c(homes, normalizePath(homes, winslash = "/", mustWork = FALSE),
                     normalizePath(homes, winslash = "\\", mustWork = FALSE)))
   if (is_windows) {
@@ -207,7 +363,7 @@ local({
   # Collect the login name as reported by R and by the operating system.
   users <- unique(c(Sys.info()[["user"]], Sys.info()[["login"]],
                     Sys.getenv("USERNAME"), Sys.getenv("USER")))
-  users <- users[nzchar(users) & users != "unknown"]
+  users <- as_utf8(users[nzchar(users) & users != "unknown"])
 
   # Put a backslash before characters that have a special meaning in a regular
   # expression, so that text such as a path is matched literally.
@@ -218,6 +374,7 @@ local({
   # path segment: after "/" or "\", and followed by "/", "\", or the end of the
   # text.
   mask <- function(x) {
+    x <- as_utf8(x)
     for (h in homes) x <- gsub(escape_regex(h), "<home>", x, ignore.case = TRUE)
     for (u in users) {
       pattern <- paste0("(?<=[/\\\\])", escape_regex(u), "(?=[/\\\\]|$)")
@@ -268,9 +425,30 @@ local({
   rscript <- file.path(R.home("bin"), if (is_windows) "Rscript.exe" else "Rscript")
   kv("Rscript path", rscript)
   kv("Rscript exists", file.exists(rscript))
-  kv("Library paths", .libPaths())
+  kv("Library paths (active)", .libPaths())
   # Checks folder permissions only. Nothing is written to the library folders.
   kv("Library paths writable", file.access(.libPaths(), 2) == 0)
+  # The project library is not active when this script is run with source() from
+  # Rgui, so it is reported separately. Package checks below use it when it exists.
+  kv("Project library", if (!project$confirmed) {
+    "not checked (project folder not confirmed)"
+  } else if (is.na(project_lib)) {
+    "not found (run renv::restore())"
+  } else {
+    project_lib
+  })
+  kv("Package lookup folders", search_libs)
+  r_from_lock <- !is.null(lockfile) && !is.na(lockfile$r_version)
+  expected_r <- if (r_from_lock) lockfile$r_version else fallback_r_version
+  expected_r_source <- if (r_from_lock) "renv.lock" else "built-in default"
+  expected_mm <- sub("^([0-9]+\\.[0-9]+).*$", "\\1", expected_r)
+  kv("R version check", if (identical(expected_mm, r_major_minor)) {
+    sprintf("match (running %s, expected %s from %s)", r_major_minor, expected_mm,
+            expected_r_source)
+  } else {
+    sprintf("MISMATCH (running %s, expected %s from %s)", r_major_minor, expected_mm,
+            expected_r_source)
+  })
   kv("Running in RStudio", nzchar(Sys.getenv("RSTUDIO")))
   kv("GUI", .Platform$GUI)
 
@@ -312,24 +490,101 @@ local({
     kv("WAYLAND_DISPLAY", Sys.getenv("WAYLAND_DISPLAY", "not set"))
   }
 
-  # ---- Key packages ----------------------------------------------------------
+  # ---- Project packages ------------------------------------------------------
 
-  # List installed packages. If a package is installed in more than one library,
-  # keep the copy R would use (the first library in the search order).
-  section("Key packages")
-  ip <- installed.packages()
-  ip <- ip[!duplicated(ip[, "Package"]), , drop = FALSE]
-
-  # Packages the tool may use. For each one, report its version and whether it
-  # loads. Packages that are not installed are only reported, never installed.
-  key <- c("survival", "tcltk", "shiny", "jsonlite", "readxl", "openxlsx",
-           "writexl", "ggplot2", "data.table", "rstudioapi")
-  for (p in key) {
+  # The packages the project needs. For each one, report its version and
+  # whether it loads. They are looked up in the folders listed above as
+  # "Package lookup folders". Packages that are not installed are only
+  # reported, never installed.
+  section("Project packages")
+  ip <- list_packages(search_libs)
+  needed <- c(readxl = "runtime", openxlsx = "runtime", ggplot2 = "runtime",
+              htmltools = "runtime", base64enc = "runtime", withr = "runtime",
+              writexl = "development", testthat = "development", lintr = "development")
+  for (p in names(needed)) {
     status <- if (p %in% rownames(ip)) {
-      loads <- suppressWarnings(requireNamespace(p, quietly = TRUE))
-      paste0(ip[p, "Version"], if (loads) ", loads" else ", FAILS TO LOAD")
-    } else "not installed"
-    kv(p, status)
+      load_error <- tryCatch({
+        suppressMessages(suppressWarnings(loadNamespace(p, lib.loc = search_libs)))
+        NULL
+      }, error = function(e) conditionMessage(e))
+      paste0(ip[p, "Version"],
+             if (is.null(load_error)) ", loads" else paste0(", FAILS TO LOAD: ", load_error))
+    } else {
+      "not installed"
+    }
+    kv(paste0(p, " (", needed[[p]], ")"), status)
+  }
+
+  # Compare the packages in renv.lock with the packages found in the lookup
+  # folders. Only checked when the project folder is confirmed and the project
+  # library exists.
+  lock_check <- function() {
+    skipped <- function(why) {
+      list(count = why, missing = why, different = why)
+    }
+    if (!project$confirmed) return(skipped("not checked (project folder not confirmed)"))
+    if (is.null(lockfile)) return(skipped("not checked (renv.lock not found or not readable)"))
+    if (is.na(project_lib)) return(skipped("not checked (project library not found)"))
+    lp <- lockfile$packages
+    installed <- ip[match(lp$package, rownames(ip)), "Version"]
+    missing <- is.na(installed)
+    different <- !missing & !is.na(lp$version) & installed != lp$version
+    list(
+      count = sprintf("%d of %d installed at the locked version",
+                      sum(!missing & !different), nrow(lp)),
+      missing = if (any(missing)) lp$package[missing] else "none",
+      different = if (any(different)) {
+        sprintf("%s (installed %s, locked %s)", lp$package[different], installed[different],
+                lp$version[different])
+      } else {
+        "none"
+      }
+    )
+  }
+  lock <- lock_check()
+  kv("renv.lock packages", lock$count)
+  kv("renv.lock missing", lock$missing)
+  kv("renv.lock other version", lock$different)
+
+  # ---- renv and Rtools -------------------------------------------------------
+
+  # renv restores the project packages. Rtools is a set of build tools that
+  # Windows needs only when a package must be built from source.
+  section("renv and Rtools")
+  renv_ip <- list_packages(unique(c(project_lib[!is.na(project_lib)], .libPaths())))
+  renv_where <- if ("renv" %in% rownames(renv_ip)) {
+    if (identical(unname(renv_ip["renv", "LibPath"]), project_lib)) {
+      "project library"
+    } else {
+      "other library"
+    }
+  }
+  kv("renv", if (is.null(renv_where)) {
+    "not installed"
+  } else {
+    paste0(renv_ip["renv", "Version"], " (", renv_where, ")")
+  })
+  if (is_windows) {
+    rtools_vars <- c("RTOOLS45_HOME", "RTOOLS44_HOME", "RTOOLS43_HOME")
+    rtools_values <- Sys.getenv(rtools_vars)
+    kv("Rtools variables set", if (any(nzchar(rtools_values))) {
+      paste0(rtools_vars[nzchar(rtools_values)], "=", rtools_values[nzchar(rtools_values)])
+    } else {
+      "none"
+    })
+    make_path <- unname(Sys.which("make"))
+    kv("make program", if (nzchar(make_path)) make_path else "not found")
+    own_var <- paste0("RTOOLS", sub(".", "", r_major_minor, fixed = TRUE), "_HOME")
+    own_home <- Sys.getenv(own_var)
+    kv("Rtools", if (nzchar(own_home) && dir.exists(own_home)) {
+      paste0("found for this R (", own_var, ")")
+    } else if (nzchar(make_path)) {
+      paste0("a make program was found, but ", own_var, " is not set to an existing folder")
+    } else {
+      "not found (only needed to build packages from source)"
+    })
+  } else {
+    kv("Rtools", "not applicable")
   }
 
   # ---- Locale and file handling ----------------------------------------------
@@ -341,7 +596,7 @@ local({
   # whether this run had to create it. If it is not confirmed, nothing is
   # checked or written.
   section("Locale and file handling")
-  kv("Locale", Sys.getlocale())
+  kv("Locale", repair_mojibake(Sys.getlocale()))
   kv("UTF-8 locale", l10n_info()[["UTF-8"]])
   kv("Decimal mark", Sys.localeconv()[["decimal_point"]])
   kv("Time zone", safe(Sys.timezone()))
@@ -355,11 +610,14 @@ local({
   # ---- All installed packages ------------------------------------------------
 
   # Full list of installed packages, sorted by name, to help diagnose version
-  # conflicts.
+  # conflicts. Packages in the project library are marked.
   section("All installed packages (name, version, priority)")
-  pkg_order <- order(tolower(ip[, "Package"]))
-  add(sprintf("%s %s %s", ip[, "Package"], ip[, "Version"],
-              ifelse(is.na(ip[, "Priority"]), "", ip[, "Priority"]))[pkg_order])
+  all_ip <- list_packages(unique(c(project_lib[!is.na(project_lib)], .libPaths())))
+  pkg_order <- order(tolower(all_ip[, "Package"]))
+  in_project <- !is.na(project_lib) & all_ip[, "LibPath"] == project_lib
+  add(trimws(sprintf("%s %s %s%s", all_ip[, "Package"], all_ip[, "Version"],
+                     ifelse(is.na(all_ip[, "Priority"]), "", all_ip[, "Priority"]),
+                     ifelse(in_project, " (project library)", "")))[pkg_order])
 
   # ---- Save and display the report -------------------------------------------
 
@@ -372,8 +630,16 @@ local({
   report_path <- NA_character_
   if (output_status == "yes") {
     target <- file.path(output_dir, "environment_report.txt")
-    result <- suppressWarnings(try(writeLines(out, target), silent = TRUE))
-    if (inherits(result, "try-error")) output_status <- "no" else report_path <- target
+    # The file is opened with an explicit UTF-8 encoding. writeLines() on a plain
+    # file name would use the native encoding, which is not UTF-8 on every system.
+    con <- NULL
+    saved <- tryCatch({
+      con <- file(target, open = "w", encoding = "UTF-8")
+      writeLines(out, con)
+      TRUE
+    }, error = function(e) FALSE, warning = function(w) FALSE)
+    if (!is.null(con)) close(con)
+    if (saved) report_path <- target else output_status <- "no"
   }
 
   # Print the report to the console in all cases, so it can be read before
