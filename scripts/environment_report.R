@@ -232,8 +232,10 @@ local({
   can_write <- function(dir) {
     if (!dir.exists(dir)) return("folder not found")
     f <- tempfile(tmpdir = dir, fileext = ".txt")
-    ok <- tryCatch({ writeLines("test", f); file.exists(f) },
-                   error = function(e) FALSE, warning = function(w) FALSE)
+    ok <- tryCatch({
+      writeLines("test", f)
+      file.exists(f)
+    }, error = function(e) FALSE, warning = function(w) FALSE)
     if (file.exists(f)) unlink(f)
     if (ok) "yes" else "no"
   }
@@ -286,17 +288,21 @@ local({
     if (!suppressWarnings(requireNamespace("tcltk", quietly = TRUE))) stop("package failed to load")
     tcl_ver <- tcltk::tclvalue(tcltk::tcl("info", "patchlevel"))
     # winfo is a Tk command, so it fails when Tcl loads but windows cannot be shown.
-    tk_ok <- tryCatch({ tcltk::tcl("winfo", "exists", "."); "yes" },
-                      error = function(e) paste("no:", conditionMessage(e)))
+    tk_ok <- tryCatch({
+      tcltk::tcl("winfo", "exists", ".")
+      "yes"
+    }, error = function(e) paste("no:", conditionMessage(e)))
     paste0("Tcl ", tcl_ver, ", windows available: ", tk_ok)
   }, error = function(e) paste("no:", conditionMessage(e)))
   kv("Tcl/Tk", tk_status)
 
   # Windows: check that the built-in R file dialog functions are present.
   if (is_windows) {
+    utils_ns <- asNamespace("utils")
     kv("Windows dialogs available", c(
-      paste0("choose.files=", exists("choose.files", envir = asNamespace("utils"))),
-      paste0("winDialog=", exists("winDialog", envir = asNamespace("utils")))))
+      paste0("choose.files=", exists("choose.files", envir = utils_ns)),
+      paste0("winDialog=", exists("winDialog", envir = utils_ns))
+    ))
   }
   # macOS: Tcl/Tk windows need XQuartz, so check whether its folder exists.
   if (is_mac) kv("XQuartz present", dir.exists("/opt/X11"))
