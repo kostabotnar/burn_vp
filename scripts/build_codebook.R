@@ -9,10 +9,11 @@
 # After the first run, metadata/codebook.csv is the source of truth and is edited
 # directly. Re-running this script is only needed to rebuild it from scratch.
 #
+# Run with Rscript from any working directory; the project's renv library is activated
+# automatically (run renv::restore() once in the project folder if packages are missing).
+#
 # Output: output/codebook.csv inside the project folder (found by PROJECT_VERSION).
 # Copy it to metadata/codebook.csv by hand; this script writes nowhere else.
-
-library(readxl)
 
 src_dir <- "/home/kobotnar/data/src/burn_vp"
 
@@ -27,6 +28,10 @@ find_root <- function() {
   }
   dir
 }
+root <- find_root()
+source(file.path(root, "R", "project_paths.R"))
+activate_project_renv(root, packages = "readxl")
+library(readxl)
 
 # One line per template column, in template order:
 # name | type | dictionary prefix | allowed values (";" separated) | notes
@@ -353,6 +358,6 @@ build_codebook <- function() {
 }
 
 codebook <- build_codebook()
-out_dir <- file.path(find_root(), "output")
+out_dir <- file.path(root, "output")
 if (!dir.exists(out_dir)) dir.create(out_dir)
 write.csv(codebook, file.path(out_dir, "codebook.csv"), row.names = FALSE, na = "NA")

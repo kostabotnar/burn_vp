@@ -1,7 +1,8 @@
 # Runs the data quality and profiling pipeline on one or more site files in the NBC template
 # layout. Patient-level data stays inside the project's output/ folder.
 #
-# Usage (from anywhere):
+# Usage (from any working directory; the project's renv library is activated automatically.
+# If it reports missing packages, run renv::restore() once in R opened in the project folder):
 #   Rscript scripts/run_qc_pipeline.R NBC=output/generated/a.xlsx UTMB=path/b.xlsx [--label demo]
 #   Each SITE=path argument names a site and its xlsx file. Relative paths are resolved
 #   against the project folder, not the working directory.
@@ -26,6 +27,7 @@ if (basename(script_dir) != "scripts") {
 for (f in list.files(file.path(project_root, "R"), pattern = "\\.R$", full.names = TRUE)) {
   source(f)
 }
+activate_project_renv(project_root)
 
 args <- commandArgs(trailingOnly = TRUE)
 usage <- "Usage: run_qc_pipeline.R SITE=path.xlsx [SITE=path.xlsx ...] [--label text]"

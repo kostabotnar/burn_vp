@@ -32,3 +32,40 @@ project_output_dir <- function(root, subfolder = NULL) {
   if (!dir.exists(target)) stop("Could not create output folder: ", target, call. = FALSE)
   normalizePath(target, winslash = "/")
 }
+
+# Packages the scripts need from the project's renv library.
+project_packages <- c("readxl", "openxlsx", "ggplot2", "htmltools", "base64enc", "withr")
+
+# Makes the project's renv library the active library, whatever the working directory is.
+# renv's activate.R takes the project from RENV_PROJECT, else from the working directory, so
+# both are pointed at `root` for the call and the working directory is restored afterwards.
+# Does nothing when renv is already active for this root (script started from the project folder).
+# Stops with a plain message when a package in `packages` is still missing; it never installs.
+activate_project_renv <- function(root, packages = project_packages) {
+  if (!is_project_root(root)) {
+    stop("Project folder not confirmed: no PROJECT_VERSION with 'Project: ", expected_project_name,
+         "' in the given folder.", call. = FALSE)
+  }
+  root <- normalizePath(root, winslash = "/")
+  activate <- file.path(root, "renv", "activate.R")
+  if (!file.exists(activate)) {
+    stop("renv/activate.R not found in the project folder: ", root, call. = FALSE)
+  }
+  active_project <- normalizePath(Sys.getenv("RENV_PROJECT", unset = ""), winslash = "/",
+                                  mustWork = FALSE)
+  already <- identical(active_project, root) &&
+    startsWith(normalizePath(.libPaths()[1], winslash = "/"), paste0(root, "/renv/"))
+  if (!already) {
+    old_wd <- setwd(root)
+    on.exit(setwd(old_wd), add = TRUE)
+    Sys.setenv(RENV_PROJECT = root)
+    source(activate, local = new.env())
+  }
+  missing <- packages[!vapply(packages, requireNamespace, logical(1), quietly = TRUE)]
+  if (length(missing) > 0) {
+    stop("The project's R packages are not installed (missing: ", paste(missing, collapse = ", "),
+         "). Open R in the project folder ", root, " and run renv::restore(), then run this ",
+         "script again. Nothing was done.", call. = FALSE)
+  }
+  invisible(root)
+}
