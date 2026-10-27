@@ -1,7 +1,8 @@
 # Generates a SYNTHETIC (fake) dataset in the NBC template layout, for developing and testing
 # the quality control pipeline. No real patient data is read or used.
 #
-# Usage (from the project folder):
+# Usage (from any working directory; the project's renv library is activated automatically.
+# If it reports missing packages, run renv::restore() once in R opened in the project folder):
 #   Rscript scripts/generate_synthetic_nbc.R [n] [seed] [--corrupt]
 #   n         number of fake patients, default 100
 #   seed      random seed, default 1 (the same seed always gives the same file)
@@ -38,6 +39,7 @@ for (f in c("project_paths.R", "codebook.R", "generate_synthetic.R", "qc_rules.R
             "corrupt_synthetic.R")) {
   source(file.path(project_root, "R", f))
 }
+activate_project_renv(project_root)
 
 args <- commandArgs(trailingOnly = TRUE)
 corrupt <- "--corrupt" %in% args
