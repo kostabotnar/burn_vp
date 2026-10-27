@@ -615,9 +615,9 @@ local({
   all_ip <- list_packages(unique(c(project_lib[!is.na(project_lib)], .libPaths())))
   pkg_order <- order(tolower(all_ip[, "Package"]))
   in_project <- !is.na(project_lib) & all_ip[, "LibPath"] == project_lib
-  add(trimws(sprintf("%s %s %s%s", all_ip[, "Package"], all_ip[, "Version"],
-                     ifelse(is.na(all_ip[, "Priority"]), "", all_ip[, "Priority"]),
-                     ifelse(in_project, " (project library)", "")))[pkg_order])
+  priority <- ifelse(is.na(all_ip[, "Priority"]), "", paste0(" ", all_ip[, "Priority"]))
+  add(paste0(all_ip[, "Package"], " ", all_ip[, "Version"], priority,
+             ifelse(in_project, " (project library)", ""))[pkg_order])
 
   # ---- Save and display the report -------------------------------------------
 
@@ -630,12 +630,14 @@ local({
   report_path <- NA_character_
   if (output_status == "yes") {
     target <- file.path(output_dir, "environment_report.txt")
-    # The file is opened with an explicit UTF-8 encoding. writeLines() on a plain
-    # file name would use the native encoding, which is not UTF-8 on every system.
+    # Every line is ASCII or marked UTF-8 (see as_utf8), so useBytes = TRUE writes
+    # the UTF-8 bytes unchanged. Without it, writeLines() first converts to the
+    # native encoding, which is not UTF-8 on every system and would replace or
+    # re-encode letters such as a-ring.
     con <- NULL
     saved <- tryCatch({
-      con <- file(target, open = "w", encoding = "UTF-8")
-      writeLines(out, con)
+      con <- file(target, open = "w")
+      writeLines(out, con, useBytes = TRUE)
       TRUE
     }, error = function(e) FALSE, warning = function(w) FALSE)
     if (!is.null(con)) close(con)
