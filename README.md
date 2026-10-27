@@ -18,4 +18,4 @@ Patient-level data must stay out of version control. Only code and de-identified
 
 ## Requirements
 
-R 4.3.3. Packages are pinned in `renv.lock`; run `renv::restore()` after cloning.
+R 4.5.2. Packages are pinned in `renv.lock`; run `renv::restore()` after cloning.
