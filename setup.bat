@@ -13,7 +13,7 @@ if /i "%~1"=="--find-r" set "FINDONLY=1"
 rem Confirm this is the project folder before anything is written.
 set "MARKED="
 if exist "%ROOT%\PROJECT_VERSION" (
-  findstr /r /c:"^Project: burn_vp *$" "%ROOT%\PROJECT_VERSION" >nul 2>&1 && set "MARKED=1"
+  for /f "usebackq eol=# delims=" %%L in ("%ROOT%\PROJECT_VERSION") do if "%%L"=="Project: burn_vp" set "MARKED=1"
 )
 if not defined MARKED (
   echo This file must stay inside the unzipped project folder, next to the file
@@ -65,9 +65,19 @@ if not exist "%ROOT%\output\tmp" (
   set "CODE=1"
   goto :finish
 )
-set "TMPDIR=%ROOT%\output\tmp"
-set "TMP=%ROOT%\output\tmp"
-set "TEMP=%ROOT%\output\tmp"
+rem R stops with a fatal error when its temporary folder path has a space, so the short
+rem (8.3) form of the path is used. If Windows has no short form, the path cannot be used.
+for %%I in ("%ROOT%\output\tmp") do set "TMPSHORT=%%~sI"
+if not "!TMPSHORT: =!"=="!TMPSHORT!" (
+  echo The project folder path contains a space, and R cannot keep its temporary
+  echo files there. Please move the whole project folder to a short path without
+  echo spaces, for example C:\burn_vp, and double-click setup.bat again.
+  set "CODE=1"
+  goto :finish
+)
+set "TMPDIR=!TMPSHORT!"
+set "TMP=!TMPSHORT!"
+set "TEMP=!TMPSHORT!"
 
 echo Starting setup. The first run can take several minutes. Please wait.
 echo.
