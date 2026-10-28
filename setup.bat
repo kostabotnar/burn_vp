@@ -43,9 +43,7 @@ for /d %%d in ("%LOCALAPPDATA%\Programs\R\R-4.5.*") do call :consider "%%~nxd" "
 
 if not defined RSCRIPT (
   echo R 4.5 was not found on this computer.
-  echo Please install R 4.5.2 from
-  echo https://cran.r-project.org/bin/windows/base/old/4.5.2/
-  echo Another R version will not work with this tool.
+  echo Setup cannot continue. Please contact the project team.
   set "CODE=1"
   goto :finish
 )
@@ -59,6 +57,11 @@ if defined FINDONLY (
 echo Using R: !RSCRIPT!
 
 rem Keep R's temporary files inside the project (R on Windows reads TMPDIR, then TMP, then TEMP).
+rem Only what this run creates is removed again at the end (see :cleanup).
+set "OUTCREATED="
+set "TMPCREATED="
+if not exist "%ROOT%\output" set "OUTCREATED=1"
+if not exist "%ROOT%\output\tmp" set "TMPCREATED=1"
 if not exist "%ROOT%\output\tmp" mkdir "%ROOT%\output\tmp"
 if not exist "%ROOT%\output\tmp" (
   echo Could not create the folder output\tmp in the project folder.
@@ -73,6 +76,7 @@ if not "!TMPSHORT: =!"=="!TMPSHORT!" (
   echo files there. Please move the whole project folder to a short path without
   echo spaces, for example C:\burn_vp, and double-click setup.bat again.
   set "CODE=1"
+  call :cleanup
   goto :finish
 )
 set "TMPDIR=!TMPSHORT!"
@@ -84,6 +88,7 @@ echo.
 rem --no-init-file keeps .Rprofile from starting renv before setup is ready for it.
 "!RSCRIPT!" --no-init-file "%ROOT%\scripts\setup_environment.R"
 set "CODE=!ERRORLEVEL!"
+call :cleanup
 echo.
 if "!CODE!"=="0" (
   echo Setup has finished. You can close this window.
@@ -91,6 +96,15 @@ if "!CODE!"=="0" (
   echo Setup did not finish. Please send the log file in the folder output\setup.
 )
 goto :finish
+
+:cleanup
+rem Runs only after the PROJECT_VERSION check passed. R has exited and removed its own temporary
+rem folder inside output\tmp. Only this exact folder is removed, and output itself only when
+rem this run created it and nothing else is in it.
+if defined TMPCREATED if exist "%ROOT%\output\tmp" rd /s /q "%ROOT%\output\tmp"
+if exist "%ROOT%\output\tmp" echo Note: the folder output\tmp could not be removed. You can delete it.
+if defined OUTCREATED rd "%ROOT%\output" 2>nul
+goto :eof
 
 :consider
 rem %1 = version text such as 4.5.2 or R-4.5.2, %2 = R install folder.

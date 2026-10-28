@@ -1,6 +1,7 @@
 # Helpers for scripts/setup_environment.R. Base R only: they run before any project package is
-# installed. They read and check; the only file they write is the setup log (setup_write_log),
-# which goes inside output/ of a confirmed project folder.
+# installed. They read and check; they write the setup log (setup_write_log) inside output/ of a
+# confirmed project folder, and setup_cleanup removes files setup created, only inside output/
+# and renv/staging.
 # nolint start: object_usage_linter. is_project_root() and project_output_dir() come from
 # project_paths.R, which is sourced first.
 
@@ -71,7 +72,8 @@ setup_lock_r_version <- function(root) {
 # Each check returns list(status, message). status is "ok", "warning", "fail" or "note".
 setup_result <- function(status, ...) list(status = status, message = paste0(...))
 
-# Same major.minor is fine, a different patch is a warning, anything else fails.
+# Same major.minor is fine, a different patch is a warning, anything else fails. Windows binary
+# packages are built per major.minor, so every patch release of that R shares them.
 setup_check_r_version <- function(locked, running = getRversion()) {
   running <- as.character(running)
   if (is.na(locked)) {
@@ -81,9 +83,8 @@ setup_check_r_version <- function(locked, running = getRversion()) {
   major_minor <- function(v) sub("^([0-9]+\\.[0-9]+).*$", "\\1", v)
   if (major_minor(locked) != major_minor(running)) {
     return(setup_result(
-      "fail", "R version: you have R ", running, " but this project needs R ", major_minor(locked),
-      ".x (it was built with R ", locked, "). Install R ", locked,
-      " from https://cran.r-project.org/bin/windows/base/ or ask IT to install it."
+      "fail", "R version: this tool needs R ", major_minor(locked), ". This computer has R ",
+      running, ". Setup cannot continue. Please contact the project team."
     ))
   }
   if (locked != running) {
@@ -286,5 +287,70 @@ setup_write_log <- function(root, lines, stamp = format(Sys.time(), "%Y%m%d_%H%M
   on.exit(close(con))
   writeLines(setup_mask(lines, private), con, useBytes = TRUE)
   path
+}
+
+# Removes the files and folders in `created` after a setup run, then any parent folder that is
+# left empty. Only paths inside <root>/output or <root>/renv/staging are touched; others are
+# refused. A folder listed in `existed_before` is never removed, and neither is a parent folder
+# that is not empty. Nothing here stops setup: problems come back as warnings.
+# Returns list(removed = paths relative to root, warnings = text).
+setup_cleanup <- function(root, created, existed_before = character()) {
+  windows <- .Platform$OS.type == "windows"
+  norm <- function(p) {
+    p <- normalizePath(p, winslash = "/", mustWork = FALSE)
+    sub("/+$", "", p)
+  }
+  key <- function(p) if (windows) tolower(p) else p
+  root <- norm(root)
+  output <- key(file.path(root, "output"))
+  staging <- key(file.path(root, "renv", "staging"))
+  inside <- function(p) {
+    k <- key(p)
+    startsWith(k, paste0(output, "/")) || k == staging || startsWith(k, paste0(staging, "/"))
+  }
+  relative <- function(p) substring(p, nchar(root) + 2)
+  kept <- key(vapply(existed_before, norm, character(1), USE.NAMES = FALSE))
+  removed <- character()
+  warnings <- character()
+  parents <- character()
+
+  for (path in unique(as.character(created))) {
+    if (is.na(path) || !nzchar(path)) {
+      warnings <- c(warnings, "Not removed, empty path.")
+      next
+    }
+    parts <- strsplit(path, "[/\\\\]")[[1]]
+    absolute <- grepl("^([A-Za-z]:|[/\\\\])", path)
+    target <- norm(if (absolute) path else file.path(root, path))
+    if (".." %in% parts || !inside(target)) {
+      warnings <- c(warnings, paste0("Not removed, outside the allowed folders: ", path))
+      next
+    }
+    if (key(target) %in% kept || !file.exists(target)) next
+    unlink(target, recursive = TRUE, force = TRUE)
+    if (file.exists(target)) {
+      warnings <- c(warnings, paste0("Could not remove ", relative(target),
+                                     ". It may be open in another program."))
+    } else {
+      removed <- c(removed, relative(target))
+      parents <- c(parents, dirname(target))
+    }
+  }
+
+  # Deepest folders first, so a chain of new empty folders goes in one pass.
+  parents <- unique(parents)
+  for (parent in parents[order(nchar(parents), decreasing = TRUE)]) {
+    while (inside(parent) && !key(parent) %in% kept && dir.exists(parent) &&
+             length(list.files(parent, all.files = TRUE, no.. = TRUE)) == 0) {
+      unlink(parent, recursive = TRUE)
+      if (dir.exists(parent)) {
+        warnings <- c(warnings, paste0("Could not remove ", relative(parent), "."))
+        break
+      }
+      removed <- c(removed, relative(parent))
+      parent <- dirname(parent)
+    }
+  }
+  list(removed = removed, warnings = warnings)
 }
 # nolint end
