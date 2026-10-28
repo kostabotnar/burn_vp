@@ -128,7 +128,9 @@ test_that("setup_check_r_version separates match, patch difference and minor dif
   expect_match(patch$message, "4.5.1")
   minor <- setup_check_r_version("4.5.2", "4.4.3")
   expect_equal(minor$status, "fail")
-  expect_match(minor$message, "4.5.2")
+  expect_match(minor$message, "needs R 4.5. This computer has R 4.4.3", fixed = TRUE)
+  expect_match(minor$message, "Please contact the project team", fixed = TRUE)
+  expect_no_match(minor$message, "install", ignore.case = TRUE)
   expect_equal(setup_check_r_version("4.5.2", "4.6.0")$status, "fail")
   expect_equal(setup_check_r_version("4.5.2", "5.5.2")$status, "fail")
   expect_equal(setup_check_r_version(NA_character_, "4.5.2")$status, "warning")
@@ -331,4 +333,112 @@ test_that("activate_project_renv does not change the environment for an unconfir
 test_that("the project settings turn the renv cache off", {
   settings <- paste(readLines(file.path(project_root, "renv", "settings.json")), collapse = "")
   expect_match(settings, '"use.cache"\\s*:\\s*false')
+})
+
+# A fake project with the folders a setup run leaves behind, plus a log and an older log.
+make_setup_leftovers <- function(env = parent.frame()) {
+  root <- make_project(env = env)
+  paths <- file.path(root, c("output/setup", "output/runs/20260101_101010_setup_check/qc",
+                             "output/renv/binary", "renv/staging/1"))
+  for (p in paths) dir.create(p, recursive = TRUE)
+  writeLines("x", file.path(root, "output/setup/setup_check_synthetic.xlsx"))
+  writeLines("x", file.path(root, "output/setup/setup_20260101_101010.txt"))
+  writeLines("x", file.path(root, "output/setup/setup_20250101_101010.txt"))
+  writeLines("x", file.path(root, "output/runs/20260101_101010_setup_check/report.html"))
+  writeLines("x", file.path(root, "output/renv/binary/pkg.zip"))
+  dir.create(file.path(root, "renv/library"), recursive = TRUE)
+  writeLines("x", file.path(root, "renv/library/pkg"))
+  root
+}
+
+cleanup_created <- function(root) {
+  file.path(root, c("output/setup/setup_check_synthetic.xlsx",
+                    "output/runs/20260101_101010_setup_check", "output/renv", "renv/staging"))
+}
+
+test_that("setup_cleanup removes the listed paths and keeps the log and the library", {
+  root <- make_setup_leftovers()
+  result <- setup_cleanup(root, cleanup_created(root), file.path(root, "output/setup"))
+  expect_setequal(result$removed,
+                  c("output/setup/setup_check_synthetic.xlsx",
+                    "output/runs/20260101_101010_setup_check", "output/renv", "renv/staging",
+                    "output/runs"))
+  expect_length(result$warnings, 0)
+  expect_false(file.exists(file.path(root, "output/setup/setup_check_synthetic.xlsx")))
+  expect_false(dir.exists(file.path(root, "output/runs")))
+  expect_false(dir.exists(file.path(root, "output/renv")))
+  expect_false(dir.exists(file.path(root, "renv/staging")))
+  expect_true(file.exists(file.path(root, "output/setup/setup_20260101_101010.txt")))
+  expect_true(file.exists(file.path(root, "output/setup/setup_20250101_101010.txt")))
+  expect_true(file.exists(file.path(root, "renv/library/pkg")))
+  expect_true(file.exists(file.path(root, "renv.lock")))
+})
+
+test_that("setup_cleanup keeps folders that existed before the run", {
+  root <- make_setup_leftovers()
+  before <- file.path(root, c("output", "output/setup", "output/runs", "output/renv"))
+  result <- setup_cleanup(root, cleanup_created(root), before)
+  expect_setequal(result$removed,
+                  c("output/setup/setup_check_synthetic.xlsx",
+                    "output/runs/20260101_101010_setup_check", "renv/staging"))
+  expect_true(dir.exists(file.path(root, "output/runs")))
+  expect_true(file.exists(file.path(root, "output/renv/binary/pkg.zip")))
+  expect_true(dir.exists(file.path(root, "output")))
+})
+
+test_that("setup_cleanup removes only empty parent folders", {
+  root <- make_setup_leftovers()
+  writeLines("x", file.path(root, "output/runs/20250101_101010_setup_check.txt"))
+  result <- setup_cleanup(root, cleanup_created(root), file.path(root, "output/setup"))
+  expect_false("output/runs" %in% result$removed)
+  expect_true(file.exists(file.path(root, "output/runs/20250101_101010_setup_check.txt")))
+  expect_true(dir.exists(file.path(root, "output/setup")))
+})
+
+test_that("setup_cleanup ignores paths that do not exist", {
+  root <- make_setup_leftovers()
+  result <- setup_cleanup(root, file.path(root, "output/not_there"))
+  expect_length(result$removed, 0)
+  expect_length(result$warnings, 0)
+})
+
+test_that("setup_cleanup refuses paths outside output and renv/staging", {
+  root <- make_setup_leftovers()
+  outside <- file.path(root, c("renv.lock", "renv/library", "renv/library/pkg", "scripts",
+                               "renv", "output", "PROJECT_VERSION"))
+  tricky <- c(file.path(root, "output", "..", "renv.lock"),
+              file.path(root, "output/setup/../../scripts"),
+              file.path(root, "output/setup/..", "..", "renv.lock"),
+              "output/../renv.lock", "", NA_character_,
+              file.path(dirname(root), "elsewhere"))
+  dir.create(file.path(dirname(root), "elsewhere"))
+  result <- setup_cleanup(root, c(outside, tricky))
+  expect_length(result$removed, 0)
+  expect_length(result$warnings, length(outside) + length(tricky))
+  expect_true(all(file.exists(file.path(root, c("renv.lock", "PROJECT_VERSION", "scripts",
+                                                "renv/library/pkg")))))
+  expect_true(dir.exists(file.path(root, "output")))
+  expect_true(dir.exists(file.path(dirname(root), "elsewhere")))
+})
+
+test_that("setup_cleanup resolves relative paths against the project folder", {
+  root <- make_setup_leftovers()
+  result <- setup_cleanup(root, c("output/renv", "renv/library"))
+  expect_equal(result$removed, "output/renv")
+  expect_length(result$warnings, 1)
+  expect_true(file.exists(file.path(root, "renv/library/pkg")))
+})
+
+test_that("setup_cleanup reports a path it cannot remove as a warning and goes on", {
+  root <- make_setup_leftovers()
+  # Windows refuses to delete a file that is open.
+  skip_if_not(.Platform$OS.type == "windows")
+  locked <- file.path(root, "output/renv/binary/pkg.zip")
+  con <- file(locked, open = "r")
+  on.exit(close(con))
+  result <- setup_cleanup(root, cleanup_created(root))
+  expect_match(result$warnings, "Could not remove output/renv", all = FALSE)
+  expect_false(file.exists(file.path(root, "output/setup/setup_check_synthetic.xlsx")))
+  expect_false(dir.exists(file.path(root, "renv/staging")))
+  expect_true(file.exists(locked))
 })

@@ -28,7 +28,12 @@
 #     installed into "renv/library".
 #   - A log file, output/setup/setup_<date>_<time>.txt.
 #   - Fake data and results from the test run: output/setup/ and
-#     output/runs/<date>_<time>_setup_check/.
+#     output/runs/<date>_<time>_setup_check/. These are temporary.
+#   - At the end, complete or failed, it deletes what this run created and
+#     no longer needs: the fake data, the test run folder, the downloaded
+#     packages in "output/renv" and "renv/staging". It keeps the log file and
+#     the installed packages in "renv/library". setup.bat then deletes
+#     "output/tmp". Folders that existed before the run are never deleted.
 #   - Nothing is written unless the project folder is confirmed: the folder
 #     above this script's folder must contain a readable file "PROJECT_VERSION"
 #     with the line "Project: burn_vp".
@@ -140,6 +145,9 @@ local({
     }
 
     root <- NA_character_
+    folders_before <- character()
+    runs_before <- character()
+    xlsx_path <- NULL
     project_version <- "unknown"
     failure <- NULL
     package_table <- NULL
@@ -152,6 +160,13 @@ local({
                                    fields = "Version")[1, "Version"]
       say("Project folder: ", root)
       say("Project version: ", project_version)
+      # What exists now is never removed at the end. output/setup is listed because the log
+      # goes there.
+      candidates <- c(file.path(root, "output"), file.path(root, "output", "setup"),
+                      file.path(root, "output", "runs"), file.path(root, "output", "renv"),
+                      file.path(root, "renv", "staging"))
+      folders_before <<- c(candidates[dir.exists(candidates)], candidates[2])
+      runs_before <<- list.files(file.path(root, "output", "runs"))
 
       # Step 2
       say("")
@@ -169,7 +184,7 @@ local({
       for (w in path_warnings) say("[WARNING] ", w)
       if (checks$r_version$status == "fail") {
         fail("This version of R does not match the project.",
-             "Install the R version named above, then run setup again.")
+             "Contact the project team. Do not install or change anything.")
       }
 
       # Step 3
@@ -247,6 +262,7 @@ local({
         codebook <- read_codebook(file.path(root, "metadata", "codebook.csv"))
         data <- generate_synthetic_nbc(codebook, n = 60, seed = 1)
         xlsx <- file.path(project_output_dir(root, "setup"), "setup_check_synthetic.xlsx")
+        xlsx_path <<- xlsx
         write_nbc_xlsx(data, codebook, xlsx)
         run_dir <- suppressMessages(run_pipeline(c(NBC = xlsx), root, run_label = "setup_check"))
         file.path(run_dir, "report.html")
@@ -274,6 +290,32 @@ local({
                                       "not change anything first."))
       "failed"
     })
+
+    # Clean up (only when the project folder is known and confirmed). Only what this run created
+    # is removed; the log is written afterwards, so it can list what was removed. A problem here
+    # is a warning and never changes the outcome.
+    if (!is.na(root)) {
+      runs_now <- list.files(file.path(root, "output", "runs"), pattern = "_setup_check")
+      created <- c(xlsx_path, file.path(root, "output", "runs", setdiff(runs_now, runs_before)),
+                   file.path(root, "output", "renv"), file.path(root, "renv", "staging"))
+      cleaned <- tryCatch(
+        setup_cleanup(root, created, folders_before),
+        error = function(e) {
+          list(removed = character(),
+               warnings = paste("Cleanup stopped with this message:", conditionMessage(e)))
+        }
+      )
+      say("")
+      say("Cleaning up the files that setup created and no longer needs")
+      for (path in cleaned$removed) say("Removed: ", path)
+      if (length(cleaned$removed) == 0) say("Nothing needed to be removed.")
+      for (w in cleaned$warnings) say("[WARNING] ", w)
+      say("Kept: renv/library (the installed packages) and this log file.")
+      temp_dir <- normalizePath(tempdir(), winslash = "/", mustWork = FALSE)
+      if (startsWith(temp_dir, paste0(root, "/output/tmp"))) {
+        say("setup.bat removes output/tmp when R has closed.")
+      }
+    }
 
     # Log (only when the project folder is known and confirmed).
     header <- c(
