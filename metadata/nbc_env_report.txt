@@ -1,0 +1,88 @@
+Environment report, version 1.0
+Date: 2026-10-20
+== Operating system ==
+System: Windows
+Release: 10 x64
+Version: build 26200
+Machine: x86-64
+Description: Windows 11 x64 (build 26200)
+CPU cores: 20
+== R installation ==
+R version: R version 4.5.2 (2025-10-31 ucrt)
+Platform: x86_64-w64-mingw32
+R home: C:/PROGRA~1/R/R-45~1.2
+Rscript path: C:/PROGRA~1/R/R-45~1.2/bin/x64/Rscript.exe
+Rscript exists: TRUE
+Library paths: C:/Program Files/R/R-4.5.2/library
+Library paths writable: FALSE
+Running in RStudio: FALSE
+GUI: Rgui
+== Graphics and interface support ==
+Capabilities: jpeg=TRUE | png=TRUE | tiff=TRUE | 
+tcltk=TRUE | X11=FALSE | aqua=FALSE | http/ftp=TRUE | sockets=TRUE | 
+libxml=FALSE | fifo=TRUE | cledit=TRUE | iconv=TRUE | NLS=TRUE | 
+Rprof=TRUE | profmem=TRUE | cairo=TRUE | ICU=TRUE | long.double=TRUE | 
+libcurl=TRUE
+Tcl/Tk: Tcl 8.6.17, windows available: yes
+Windows dialogs available: choose.files=TRUE | winDialog=TRUE
+== Key packages ==
+survival: 3.8-3, loads
+tcltk: 4.5.2, loads
+shiny: not installed
+jsonlite: not installed
+readxl: not installed
+openxlsx: not installed
+writexl: not installed
+ggplot2: not installed
+data.table: not installed
+rstudioapi: not installed
+== Locale and file handling ==
+Locale: LC_COLLATE=Norwegian 
+BokmÃ¥l_Norway.utf8;LC_CTYPE=Norwegian 
+BokmÃ¥l_Norway.utf8;LC_MONETARY=Norwegian 
+BokmÃ¥l_Norway.utf8;LC_NUMERIC=C;LC_TIME=Norwegian BokmÃ¥l_Norway.utf8
+UTF-8 locale: TRUE
+Decimal mark: .
+Time zone: Europe/Oslo
+Project folder confirmed: no
+Project version: unknown
+Output folder created: no
+Can write to output folder: not checked (project folder not confirmed)
+== All installed packages (name, version, priority) ==
+base 4.5.2 base
+boot 1.3-32 recommended
+class 7.3-23 recommended
+cluster 2.1.8.1 recommended
+codetools 0.2-20 recommended
+compiler 4.5.2 base
+datasets 4.5.2 base
+foreign 0.8-90 recommended
+graphics 4.5.2 base
+grDevices 4.5.2 base
+grid 4.5.2 base
+KernSmooth 2.23-26 recommended
+lattice 0.22-7 recommended
+MASS 7.3-65 recommended
+Matrix 1.7-4 recommended
+methods 4.5.2 base
+mgcv 1.9-3 recommended
+nlme 3.1-168 recommended
+nnet 7.3-20 recommended
+parallel 4.5.2 base
+rpart 4.1.24 recommended
+spatial 7.3-18 recommended
+splines 4.5.2 base
+stats 4.5.2 base
+stats4 4.5.2 base
+survival 3.8-3 recommended
+tcltk 4.5.2 base
+tools 4.5.2 base
+translations 4.5.2 
+utils 4.5.2 base
+The report could not be saved because the project folder could not be 
+confirmed, so nothing was written. The script must be run from the 
+scripts folder of the complete project folder (the folder that contains 
+the file PROJECT_VERSION). 
+Please copy the report text printed above in the console and send that 
+instead.
+It contains no patient data.
