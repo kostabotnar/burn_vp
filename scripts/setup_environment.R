@@ -22,7 +22,8 @@
 #     approved for the package library: the folders "renv/library" and
 #     "renv/staging" in the project folder. Nothing is written to the home
 #     folder, AppData, the Desktop or any other location. (R itself keeps a
-#     temporary folder of its own, which this script cannot move.)
+#     temporary folder of its own. setup.bat moves it to "output/tmp"; when
+#     this file is run from Rgui, it stays in the Windows temporary folder.)
 #   - The packages: downloaded packages are kept in "output/renv" and
 #     installed into "renv/library".
 #   - A log file, output/setup/setup_<date>_<time>.txt.
