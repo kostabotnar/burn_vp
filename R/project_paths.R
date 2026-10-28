@@ -36,6 +36,16 @@ project_output_dir <- function(root, subfolder = NULL) {
 # Packages the scripts need from the project's renv library.
 project_packages <- c("readxl", "openxlsx", "ggplot2", "htmltools", "base64enc", "withr")
 
+# Environment variables that keep renv's own files inside the project's output/ folder (the only
+# place project code may write, apart from renv/library and renv/staging): no user-level cache and
+# no sandbox copy of the system library. They must be set before renv loads.
+project_renv_env <- function(root) {
+  root <- normalizePath(root, winslash = "/")
+  c(RENV_PATHS_ROOT = file.path(root, "output", "renv"),
+    RENV_CONFIG_CACHE_ENABLED = "FALSE",
+    RENV_CONFIG_SANDBOX_ENABLED = "FALSE")
+}
+
 # Makes the project's renv library the active library, whatever the working directory is.
 # renv's activate.R takes the project from RENV_PROJECT, else from the working directory, so
 # both are pointed at `root` for the call and the working directory is restored afterwards.
@@ -51,6 +61,7 @@ activate_project_renv <- function(root, packages = project_packages) {
   if (!file.exists(activate)) {
     stop("renv/activate.R not found in the project folder: ", root, call. = FALSE)
   }
+  do.call(Sys.setenv, as.list(project_renv_env(root)))
   active_project <- normalizePath(Sys.getenv("RENV_PROJECT", unset = ""), winslash = "/",
                                   mustWork = FALSE)
   already <- identical(active_project, root) &&
