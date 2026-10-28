@@ -2,18 +2,19 @@
 
 Comparison of vasopressor use in patients with severe burns.
 
-## Installation for NBC users
+## Installation on Windows
 
-You need Windows, R 4.5.2 and an internet connection. Another R version will not work. If R 4.5.2 is not installed, get it from https://cran.r-project.org/bin/windows/base/old/4.5.2/
+You need Windows, R 4.5 (any 4.5.x version) and an internet connection. You do not install or change R. Setup checks the R version. If it does not fit, setup stops and shows a message. Then contact the project team.
 
-1. Download the project: on the GitHub page click Code, then Download ZIP. Or use the zip file you were sent.
-2. Right-click the zip file and choose Properties. Tick Unblock and click OK. Do this before you extract the zip. Otherwise Windows shows warnings.
-3. Extract the zip to a short folder on your own computer, for example `C:\burn_vp`. Do not use OneDrive.
-4. Open the extracted folder and double-click `setup.bat`.
-5. If Windows shows "Windows protected your PC", click More info, then Run anyway.
-6. Wait. The first run takes several minutes and needs internet. Do not close the window.
-7. When the window says SETUP COMPLETE, you are done. You do not need to run it again.
-8. If the window says SETUP FAILED, send the log file to the project team. You find it in the folder `output\setup`.
+Before you start, the project folder must be on your own computer, for example in `C:\burn_vp`. Use a short path without spaces. Do not use OneDrive. Setup.bat stops if the path has a space.
+
+1. Open the project folder and double-click `setup.bat`.
+2. If Windows shows "Windows protected your PC", click More info, then Run anyway.
+3. Wait. The first run takes several minutes and needs internet. Do not close the window.
+4. When the window says SETUP COMPLETE, you are done. You do not need to run it again.
+5. If the window says SETUP FAILED, send the log file to the project team. You find it in the folder `output\setup`.
+
+Setup removes its temporary files when it ends. It keeps the log file and the installed packages (in `renv\library`).
 
 If `setup.bat` is blocked: open R (Rgui), choose File, then Source R code..., and select `scripts\setup_environment.R` in the project folder. The result is the same, but R's temporary files then go to the normal Windows temporary folder.
 
@@ -33,4 +34,4 @@ Patient-level data must stay out of version control. Only code and de-identified
 
 ## Requirements
 
-R 4.5.2. Packages are pinned in `renv.lock`. NBC users: see "Installation for NBC users" above. Developers: run `renv::restore()` after cloning.
+R 4.5 (any 4.5.x version). Packages are pinned in `renv.lock`. Windows users: see "Installation on Windows" above. Developers: run `renv::restore()` after cloning.
