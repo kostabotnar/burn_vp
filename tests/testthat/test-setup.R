@@ -305,18 +305,21 @@ test_that("project_renv_env keeps renv's files inside output/ and turns cache an
   expect_equal(project_renv_env(root),
                c(RENV_PATHS_ROOT = file.path(root, "output", "renv"),
                  RENV_CONFIG_CACHE_ENABLED = "FALSE",
-                 RENV_CONFIG_SANDBOX_ENABLED = "FALSE"))
+                 RENV_CONFIG_SANDBOX_ENABLED = "FALSE",
+                 RENV_CONFIG_SYNCHRONIZED_CHECK = "FALSE"))
 })
 
 test_that("activate_project_renv sets the renv environment variables for the project root", {
   skip_if_not(startsWith(normalizePath(.libPaths()[1], winslash = "/"),
                          paste0(project_root, "/renv/")))
   withr::local_envvar(c(RENV_PATHS_ROOT = "elsewhere", RENV_CONFIG_CACHE_ENABLED = "TRUE",
-                        RENV_CONFIG_SANDBOX_ENABLED = NA))
+                        RENV_CONFIG_SANDBOX_ENABLED = NA,
+                        RENV_CONFIG_SYNCHRONIZED_CHECK = "TRUE"))
   activate_project_renv(project_root, packages = character())
   expect_equal(Sys.getenv("RENV_PATHS_ROOT"), file.path(project_root, "output", "renv"))
   expect_equal(Sys.getenv("RENV_CONFIG_CACHE_ENABLED"), "FALSE")
   expect_equal(Sys.getenv("RENV_CONFIG_SANDBOX_ENABLED"), "FALSE")
+  expect_equal(Sys.getenv("RENV_CONFIG_SYNCHRONIZED_CHECK"), "FALSE")
 })
 
 test_that("activate_project_renv does not change the environment for an unconfirmed folder", {

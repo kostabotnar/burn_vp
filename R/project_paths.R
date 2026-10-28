@@ -43,7 +43,8 @@ project_renv_env <- function(root) {
   root <- normalizePath(root, winslash = "/")
   c(RENV_PATHS_ROOT = file.path(root, "output", "renv"),
     RENV_CONFIG_CACHE_ENABLED = "FALSE",
-    RENV_CONFIG_SANDBOX_ENABLED = "FALSE")
+    RENV_CONFIG_SANDBOX_ENABLED = "FALSE",
+    RENV_CONFIG_SYNCHRONIZED_CHECK = "FALSE")
 }
 
 # Makes the project's renv library the active library, whatever the working directory is.
