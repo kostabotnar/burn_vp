@@ -23,23 +23,16 @@ if not defined MARKED (
   goto :finish
 )
 
-rem Look for R 4.5.x: registry first, then the usual install folders.
-rem The highest patch number wins. Other R versions are ignored.
-set "RSCRIPT="
-set "BESTPATCH=-1"
-for %%H in (HKLM HKCU) do (
-  set "KEY="
-  for /f "usebackq tokens=1,2,*" %%a in (`reg query "%%H\SOFTWARE\R-core\R" /s /v InstallPath 2^>nul`) do (
-    set "LINE=%%a"
-    if /i "!LINE:~0,4!"=="HKEY" (
-      set "KEY=%%a"
-    ) else if /i "%%a"=="InstallPath" (
-      if defined KEY for %%k in ("!KEY!") do call :consider "%%~nxk" "%%c"
-    )
-  )
+rem Look for R 4.5.x with the shared finder (also used by burn_vp.bat). It sets RSCRIPT
+rem to the highest patch version found, or leaves it undefined.
+if not exist "%ROOT%\scripts\find_r45.bat" (
+  echo The project folder is incomplete: the file scripts\find_r45.bat is missing.
+  echo Please contact the project team.
+  echo Nothing was changed.
+  set "CODE=1"
+  goto :finish
 )
-for /d %%d in ("%ProgramFiles%\R\R-4.5.*") do call :consider "%%~nxd" "%%~fd"
-for /d %%d in ("%LOCALAPPDATA%\Programs\R\R-4.5.*") do call :consider "%%~nxd" "%%~fd"
+call "%ROOT%\scripts\find_r45.bat"
 
 if not defined RSCRIPT (
   echo R 4.5 was not found on this computer.
@@ -104,21 +97,6 @@ rem this run created it and nothing else is in it.
 if defined TMPCREATED if exist "%ROOT%\output\tmp" rd /s /q "%ROOT%\output\tmp"
 if exist "%ROOT%\output\tmp" echo Note: the folder output\tmp could not be removed. You can delete it.
 if defined OUTCREATED rd "%ROOT%\output" 2>nul
-goto :eof
-
-:consider
-rem %1 = version text such as 4.5.2 or R-4.5.2, %2 = R install folder.
-set "V=%~1"
-if /i "!V:~0,2!"=="R-" set "V=!V:~2!"
-if not "!V:~0,4!"=="4.5." goto :eof
-set "P=!V:~4!"
-set /a "N=!P!" 2>nul
-if not "!N!"=="!P!" goto :eof
-if not exist "%~2\bin\Rscript.exe" goto :eof
-if !N! GTR !BESTPATCH! (
-  set "BESTPATCH=!N!"
-  set "RSCRIPT=%~2\bin\Rscript.exe"
-)
 goto :eof
 
 :finish
