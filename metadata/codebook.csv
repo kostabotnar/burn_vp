@@ -1,0 +1,197 @@
+"position","source_name","section","name","type","unit","allowed_values","time_window","dictionary_name","key_variable","notes"
+1,"Patient ID","Demographics","patient_id","text",NA,NA,NA,NA,FALSE,NA
+2,"Age (years)","Demographics","age_years","numeric","years",NA,"admission","Age",TRUE,NA
+3,"Gender","Demographics","gender","categorical",NA,"Male|Female|Others",NA,"Gender",TRUE,NA
+4,"Comorbidities","Demographics","comorbidities_list","categorical",NA,"Hypertension|Diabetes|Coronary artery disease|Chronic kidney disease|Dialysis dependent CKD|Congestive heart failure|Peripheral vascular disease|Stroke|Chronic obstructive pulmonary disease|Cirrhosis|Cancer|Immunosuppression|Psychiatry|Alcohol or opioid addiction","pre-burn","Co-morbidities",FALSE,"Comma separated list, so a cell can hold several levels; QC must split it. Duplicates the comorbidity flag columns, so consistency should be checked."
+5,"Hypertension","Demographics","hypertension","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,NA
+6,"Diabetes","Demographics","diabetes","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,NA
+7,"Coronary artery disease","Demographics","coronary_artery_disease","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,NA
+8,"Chronic kidney disease","Demographics","chronic_kidney_disease","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,NA
+9,"Dialysis (dependent CKD before ICU admission)","Demographics","dialysis_dependent_ckd","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,"Header reads Dialysis (dependent CKD before ICU admission); dictionary level is Dialysis dependent CKD."
+10,"Congestive heart failure","Demographics","congestive_heart_failure","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,NA
+11,"Peripheral vascular disease","Demographics","peripheral_vascular_disease","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,NA
+12,"Stroke","Demographics","stroke","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,NA
+13,"Chronic obstructive pulmonary disease","Demographics","copd","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,NA
+14,"Cirrhosis","Demographics","cirrhosis","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,NA
+15,"Cancer","Demographics","cancer","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,NA
+16,"Immunosuppression","Demographics","immunosuppression","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,NA
+17,"Psychiatry","Demographics","psychiatry","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,NA
+18,"Alcohol or opioid addiction","Demographics","alcohol_opioid_addiction","binary",NA,"Yes|No","pre-burn","Co-morbidities",TRUE,NA
+19,"Others (leave comment)","Demographics","comorbidity_other","binary",NA,"Yes|No","pre-burn",NA,TRUE,"Free-text comment is requested in the header, but only a Yes/No column exists."
+20,"Preadmission antihypertensive treatments","Demographics","preadmission_antihypertensives","binary",NA,"Yes|No","pre-burn",NA,FALSE,NA
+21,"Admission weight (kg)","Demographics","admission_weight_kg","numeric","kg",NA,"admission","Admission weight",TRUE,NA
+22,"Height (cm)","Demographics","height_cm","numeric","cm",NA,"admission","Height",TRUE,NA
+23,"BMI (kg/m2)","Demographics","bmi_kg_m2","numeric","kg/m2",NA,NA,NA,FALSE,"Derived from weight and height; QC can recompute it."
+24,"TBSA estimated prehospital (%)","Demographics","tbsa_prehospital_pct","numeric","%",NA,"pre-ICU",NA,FALSE,NA
+25,"Predicted fluid 24h prehospital (ml)","Demographics","predicted_fluid_24h_prehospital_ml","numeric","ml",NA,"pre-ICU",NA,FALSE,NA
+26,"TBSA burned (%)","Clinical data","tbsa_burned_pct","numeric","%",NA,NA,"% Total body surface area burned",TRUE,NA
+27,"Full thickness","Clinical data","full_thickness","binary",NA,"Yes|No",NA,"Full thickness burn",TRUE,NA
+28,"Full thickness BSA (%)","Clinical data","full_thickness_bsa_pct","numeric","%",NA,NA,NA,FALSE,NA
+29,"Inhalation injury","Clinical data","inhalation_injury","binary",NA,"Yes|No",NA,"Suspected inhalation injury",TRUE,"Dictionary says suspected inhalation injury."
+30,"Inhalation injury grade 3","Clinical data","inhalation_injury_grade3","binary",NA,"Yes|No",NA,NA,FALSE,NA
+31,"Mechanism of burn injury","Clinical data","burn_mechanism","text",NA,NA,NA,"Burn mechanism",TRUE,"The template splits mechanism into Mechanism of burn injury and Sub-mechanism, while the dictionary has one list. Levels of the main mechanism are not defined anywhere, so it is text."
+32,"Sub-mechanism","Clinical data","burn_sub_mechanism","categorical",NA,"Flame|Scald|High voltage electrical|Low voltage electrical|Chemical|Contact|Sauna",NA,"Burn mechanism",TRUE,"The template splits mechanism into Mechanism of burn injury and Sub-mechanism, while the dictionary has one list. Levels are the dictionary list, assumed to apply to the sub-mechanism."
+33,"Prehospital cardiac arrest","Clinical data","prehospital_cardiac_arrest","binary",NA,"Yes|No",NA,NA,FALSE,NA
+34,"Associated trauma","Clinical data","associated_trauma","binary",NA,"Yes|No",NA,NA,FALSE,NA
+35,"SAP admission (mmHg)","Clinical data","sap_admission_mmhg","numeric","mmHg",NA,"admission",NA,FALSE,NA
+36,"MAP admission (mmHg)","Clinical data","map_admission_mmhg","numeric","mmHg",NA,"admission",NA,FALSE,NA
+37,"DAP admission (mmHg)","Clinical data","dap_admission_mmhg","numeric","mmHg",NA,"admission",NA,FALSE,NA
+38,"HR admission (bpm)","Clinical data","hr_admission_bpm","numeric","bpm",NA,"admission",NA,FALSE,NA
+39,"CI admission (L/min/m2)","Clinical data","ci_admission_l_min_m2","numeric","L/min/m2",NA,"admission",NA,FALSE,NA
+40,"CVP admission (mmHg)","Clinical data","cvp_admission_mmhg","numeric","mmHg",NA,"admission",NA,FALSE,NA
+41,"SAP before NE (mmHg)","Clinical data","sap_before_ne_mmhg","numeric","mmHg",NA,"pre-NE",NA,FALSE,NA
+42,"MAP before NE (mmHg)","Clinical data","map_before_ne_mmhg","numeric","mmHg",NA,"pre-NE",NA,FALSE,NA
+43,"DAP before NE (mmHg)","Clinical data","dap_before_ne_mmhg","numeric","mmHg",NA,"pre-NE",NA,FALSE,NA
+44,"HR before NE (bpm)","Clinical data","hr_before_ne_bpm","numeric","bpm",NA,"pre-NE",NA,FALSE,NA
+45,"CI before NE (mmHg)","Clinical data","ci_before_ne_l_min_m2","numeric","mmHg",NA,"pre-NE",NA,FALSE,"The header gives the unit mmHg for CI before NE, but it should be L/min/m2. Unit column keeps the header text."
+46,"CVP before NE (mmHg)","Clinical data","cvp_before_ne_mmhg","numeric","mmHg",NA,"pre-NE",NA,FALSE,NA
+47,"SAP 24h (mmHg)","Clinical data","sap_24h_mmhg","numeric","mmHg",NA,"0-24h",NA,FALSE,NA
+48,"MAP 24h (mmgHg)","Clinical data","map_24h_mmhg","numeric","mmHg",NA,"0-24h",NA,FALSE,"Header typo mmgHg; the unit is mmHg."
+49,"DAP 24h mmHg)","Clinical data","dap_24h_mmhg","numeric","mmHg",NA,"0-24h",NA,FALSE,"Header typo: unbalanced bracket, reads DAP 24h mmHg)."
+50,"HR 24h (bpm)","Clinical data","hr_24h_bpm","numeric","bpm",NA,"0-24h",NA,FALSE,NA
+51,"CI 24h (L/min/m2)","Clinical data","ci_24h_l_min_m2","numeric","L/min/m2",NA,"0-24h",NA,FALSE,NA
+52,"CVP 24h (mmHg)","Clinical data","cvp_24h_mmhg","numeric","mmHg",NA,"0-24h",NA,FALSE,NA
+53,"SAP 48h (mmHg)","Clinical data","sap_48h_mmhg","numeric","mmHg",NA,"0-48h",NA,FALSE,NA
+54,"MAP 48h (mmHg)","Clinical data","map_48h_mmhg","numeric","mmHg",NA,"0-48h",NA,FALSE,NA
+55,"DAP 48h (mmHg)","Clinical data","dap_48h_mmhg","numeric","mmHg",NA,"0-48h",NA,FALSE,NA
+56,"HR 48h (bpm)","Clinical data","hr_48h_bpm","numeric","bpm",NA,"0-48h",NA,FALSE,NA
+57,"CI 48h (L/min/m2)","Clinical data","ci_48h_l_min_m2","numeric","L/min/m2",NA,"0-48h",NA,FALSE,NA
+58,"Lowest MAP in-hospital 24h","Clinical data","lowest_map_24h_mmhg","numeric","mmHg",NA,"0-24h","Lowest MAP in-hospital during the first 24 and 48 hours post-burn",TRUE,"Header has no unit; mmHg per the dictionary."
+59,"Lowest MAP in-hospital 24-48h","Clinical data","lowest_map_24_48h_mmhg","numeric","mmHg",NA,"24-48h","Lowest MAP in-hospital during the first 24 and 48 hours post-burn",TRUE,"Header has no unit; mmHg per the dictionary."
+60,"Highest pulse in-hospital 24h","Clinical data","highest_pulse_24h_bpm","numeric","bpm",NA,"0-24h","Highest pulse in-hospital during the first 24 and 48 hours post-burn",TRUE,"Header has no unit; BPM per the dictionary."
+61,"Highest pulse in-hospital 24-48h","Clinical data","highest_pulse_24_48h_bpm","numeric","bpm",NA,"24-48h","Highest pulse in-hospital during the first 24 and 48 hours post-burn",TRUE,"Header has no unit; BPM per the dictionary."
+62,"CVP 48h (mmHg)","Clinical data","cvp_48h_mmhg","numeric","mmHg",NA,"0-48h",NA,FALSE,"Sits after the in-hospital MAP and pulse columns, out of the order of the other 48h hemodynamic columns."
+63,"Initial GCS","Clinical data","initial_gcs","integer",NA,NA,"admission",NA,FALSE,NA
+64,"Covid 19 status","Clinical data","covid19_status","text",NA,NA,NA,NA,FALSE,"Levels not defined."
+65,"Peak lactate 0-24h (mmol/l)","Lab values","peak_lactate_0_24h_mmol_l","numeric","mmol/l",NA,"0-24h","Highest lactate level during the first 24 hours post-burn",TRUE,NA
+66,"Peak hemoglobin 0-24h (g/dl)","Lab values","peak_hemoglobin_0_24h_g_dl","numeric","g/dl",NA,"0-24h","Highest hemoglobin level during the first 24 hours post-burn",FALSE,NA
+67,"Hematocrit 0-24h (%)","Lab values","hematocrit_0_24h_pct","numeric","%",NA,"0-24h","Highest hematocrit level during the first 24 hours post-burn",FALSE,"Unit is % but the template example is a fraction (0.43). Header does not say peak, the dictionary says highest."
+68,"Peak creatinine 0-72h (umol/l)","Lab values","peak_creatinine_0_72h_umol_l","numeric","umol/l",NA,"0-72h","Highest creatinine level during the first 72 hours post-burn",TRUE,NA
+69,"Diuresis 0-48h (ml/kg/h)","Lab values","diuresis_0_48h_ml_kg_h","numeric","ml/kg/h",NA,"0-48h","Urine output during the first 24 hours post-burn",TRUE,"The dictionary gives diuresis as 0-24h, but the template has 0-48h."
+70,"Date ICU admission","Burn injury","icu_admission_date","date",NA,NA,NA,NA,TRUE,"Header text Date ICU admission appears twice (positions 70 and 189)."
+71,"Time ICU admission","Burn injury","icu_admission_time","time",NA,NA,NA,NA,TRUE,NA
+72,"Date burn injury","Burn injury","burn_date","date",NA,NA,NA,"Time and date of burn",TRUE,"Dictionary has one combined date and time variable; the template splits it."
+73,"Time burn injury","Burn injury","burn_time","time",NA,NA,NA,"Time and date of burn",TRUE,"Dictionary has one combined date and time variable; the template splits it."
+74,"RA before ICU (ml)","Treatment interventions","ra_pre_icu_ml","numeric","ml",NA,"pre-ICU",NA,FALSE,NA
+75,"NaCl before ICU (ml)","Treatment interventions","nacl_pre_icu_ml","numeric","ml",NA,"pre-ICU",NA,FALSE,NA
+76,"Plasmalyte before ICU (ml)","Treatment interventions","plasmalyte_pre_icu_ml","numeric","ml",NA,"pre-ICU",NA,FALSE,NA
+77,"Glucose 5% before ICU (ml)","Treatment interventions","glucose5_pre_icu_ml","numeric","ml",NA,"pre-ICU",NA,FALSE,NA
+78,"Glucose 10% before ICU (ml)","Treatment interventions","glucose10_pre_icu_ml","numeric","ml",NA,"pre-ICU",NA,FALSE,NA
+79,"Glucose 20% before ICU (ml)","Treatment interventions","glucose20_pre_icu_ml","numeric","ml",NA,"pre-ICU",NA,FALSE,NA
+80,"Glucose unknown % before ICU (ml)","Treatment interventions","glucose_unknown_pre_icu_ml","numeric","ml",NA,"pre-ICU",NA,FALSE,NA
+81,"Crystalloids before ICU (ml)","Treatment interventions","crystalloids_pre_icu_ml","numeric","ml",NA,"pre-ICU","Specified amounts of crystalloids during the first 24 and 48 hours post-burn",TRUE,NA
+82,"Total fluids before ICU (ml)","Treatment interventions","total_fluids_pre_icu_ml","numeric","ml",NA,"pre-ICU","Total amount of resuscitation fluids administered during the first 24 and 48 hours post-burn",TRUE,NA
+83,"RA 24h (ml)","Treatment interventions","ra_24h_ml","numeric","ml",NA,"0-24h",NA,FALSE,NA
+84,"NaCl 24h (ml)","Treatment interventions","nacl_24h_ml","numeric","ml",NA,"0-24h",NA,FALSE,NA
+85,"Plasmalyte 24h (ml)","Treatment interventions","plasmalyte_24h_ml","numeric","ml",NA,"0-24h",NA,FALSE,NA
+86,"Glucose 5% 24h (ml)","Treatment interventions","glucose5_24h_ml","numeric","ml",NA,"0-24h",NA,FALSE,NA
+87,"Glucose 10% 24h (ml)","Treatment interventions","glucose10_24h_ml","numeric","ml",NA,"0-24h",NA,FALSE,NA
+88,"Glucose 20% 24h (ml)","Treatment interventions","glucose20_24h_ml","numeric","ml",NA,"0-24h",NA,FALSE,NA
+89,"Crystalloids 24h (ml)","Treatment interventions","crystalloids_24h_ml","numeric","ml",NA,"0-24h","Specified amounts of crystalloids during the first 24 and 48 hours post-burn",TRUE,NA
+90,"Total fluids 24h (ml)","Treatment interventions","total_fluids_24h_ml","numeric","ml",NA,"0-24h","Total amount of resuscitation fluids administered during the first 24 and 48 hours post-burn",TRUE,NA
+91,"RA 48h (ml)","Treatment interventions","ra_48h_ml","numeric","ml",NA,"0-48h",NA,FALSE,"It is unclear whether 48h fluid columns are cumulative 0-48h or 24-48h."
+92,"NaCl 48h (ml)","Treatment interventions","nacl_48h_ml","numeric","ml",NA,"0-48h",NA,FALSE,"It is unclear whether 48h fluid columns are cumulative 0-48h or 24-48h."
+93,"Plasmalyte 48h (ml)","Treatment interventions","plasmalyte_48h_ml","numeric","ml",NA,"0-48h",NA,FALSE,"It is unclear whether 48h fluid columns are cumulative 0-48h or 24-48h."
+94,"Glucose 5% 48h (ml)","Treatment interventions","glucose5_48h_ml","numeric","ml",NA,"0-48h",NA,FALSE,"It is unclear whether 48h fluid columns are cumulative 0-48h or 24-48h."
+95,"Glucose 10% 48h (ml)","Treatment interventions","glucose10_48h_ml","numeric","ml",NA,"0-48h",NA,FALSE,"It is unclear whether 48h fluid columns are cumulative 0-48h or 24-48h."
+96,"Glucose 20% 48h (ml)","Treatment interventions","glucose20_48h_ml","numeric","ml",NA,"0-48h",NA,FALSE,"It is unclear whether 48h fluid columns are cumulative 0-48h or 24-48h."
+97,"Crystalloids 48h (ml)","Treatment interventions","crystalloids_48h_ml","numeric","ml",NA,"0-48h","Specified amounts of crystalloids during the first 24 and 48 hours post-burn",TRUE,"It is unclear whether 48h fluid columns are cumulative 0-48h or 24-48h."
+98,"Total fluids 48h (ml)","Treatment interventions","total_fluids_48h_ml","numeric","ml",NA,"0-48h","Total amount of resuscitation fluids administered during the first 24 and 48 hours post-burn",TRUE,"It is unclear whether 48h fluid columns are cumulative 0-48h or 24-48h."
+99,"RA 72h (ml)","Treatment interventions","ra_72h_ml","numeric","ml",NA,"0-72h",NA,FALSE,"Same cumulative versus interval question as the 48h fluid columns."
+100,"NaCl 72h (ml)","Treatment interventions","nacl_72h_ml","numeric","ml",NA,"0-72h",NA,FALSE,"Same cumulative versus interval question as the 48h fluid columns."
+101,"Plasmalyte 72h (ml)","Treatment interventions","plasmalyte_72h_ml","numeric","ml",NA,"0-72h",NA,FALSE,"Same cumulative versus interval question as the 48h fluid columns."
+102,"Glucose 5% 72h (ml)","Treatment interventions","glucose5_72h_ml","numeric","ml",NA,"0-72h",NA,FALSE,"Same cumulative versus interval question as the 48h fluid columns."
+103,"Glucose 10% 72h (ml)","Treatment interventions","glucose10_72h_ml","numeric","ml",NA,"0-72h",NA,FALSE,"Same cumulative versus interval question as the 48h fluid columns."
+104,"Glucose 20% 72h (ml)","Treatment interventions","glucose20_72h_ml","numeric","ml",NA,"0-72h",NA,FALSE,"Same cumulative versus interval question as the 48h fluid columns."
+105,"Crystalloids 72h (ml)","Treatment interventions","crystalloids_72h_ml","numeric","ml",NA,"0-72h",NA,TRUE,"Same cumulative versus interval question as the 48h fluid columns."
+106,"Total fluids 72h (ml)","Treatment interventions","total_fluids_72h_ml","numeric","ml",NA,"0-72h",NA,TRUE,"Same cumulative versus interval question as the 48h fluid columns."
+107,"Albumin before ICU","Treatment interventions","albumin_pre_icu","binary",NA,"Yes|No","pre-ICU","Specified amounts of albumin during the first 24 and 48 hours post-burn",TRUE,NA
+108,"Albumin 24h","Treatment interventions","albumin_24h","binary",NA,"Yes|No","0-24h","Specified amounts of albumin during the first 24 and 48 hours post-burn",TRUE,NA
+109,"Albumin 48h","Treatment interventions","albumin_48h","binary",NA,"Yes|No","0-48h","Specified amounts of albumin during the first 24 and 48 hours post-burn",TRUE,NA
+110,"Albumin (any) 24h (ml)","Treatment interventions","albumin_any_24h_ml","numeric","ml",NA,"0-24h","Specified amounts of albumin during the first 24 and 48 hours post-burn",TRUE,NA
+111,"Albumin 20% 24h (ml)","Treatment interventions","albumin20_24h_ml","numeric","ml",NA,"0-24h","Specified amounts of albumin during the first 24 and 48 hours post-burn",TRUE,NA
+112,"Albumin 5% 24h (ml)","Treatment interventions","albumin5_24h_ml","numeric","ml",NA,"0-24h","Specified amounts of albumin during the first 24 and 48 hours post-burn",TRUE,NA
+113,"Albumin 20% 48h (ml)","Treatment interventions","albumin20_48h_ml","numeric","ml",NA,"0-48h","Specified amounts of albumin during the first 24 and 48 hours post-burn",TRUE,"It is unclear whether 48h fluid columns are cumulative 0-48h or 24-48h."
+114,"Albumin 5% 48h (ml)","Treatment interventions","albumin5_48h_ml","numeric","ml",NA,"0-48h","Specified amounts of albumin during the first 24 and 48 hours post-burn",TRUE,"It is unclear whether 48h fluid columns are cumulative 0-48h or 24-48h."
+115,"Delay of albumin (h)","Treatment interventions","albumin_delay_h","numeric","h",NA,NA,NA,TRUE,NA
+116,"Venofundin 48h","Treatment interventions","venofundin_48h","binary",NA,"Yes|No","0-48h","Specified amounts of colloids during the first 24 and 48 hours post-burn",FALSE,NA
+117,"Venofundin 48h (ml)","Treatment interventions","venofundin_48h_ml","numeric","ml",NA,"0-48h","Specified amounts of colloids during the first 24 and 48 hours post-burn",FALSE,"It is unclear whether 48h fluid columns are cumulative 0-48h or 24-48h."
+118,"RBC before ICU","Treatment interventions","rbc_pre_icu","binary",NA,"Yes|No","pre-ICU",NA,TRUE,NA
+119,"RBC 48h (number)","Treatment interventions","rbc_48h_units","integer","number",NA,"0-48h","Specified amounts of blood products during first 48 hours",TRUE,"The dictionary gives RBC in mL, but the template gives a number of units."
+120,"Delay of RBC (h)","Treatment interventions","rbc_delay_h","numeric","h",NA,NA,NA,TRUE,NA
+121,"FFP Before ICU","Treatment interventions","ffp_pre_icu","binary",NA,"Yes|No","pre-ICU",NA,TRUE,NA
+122,"FFP 48h (number)","Treatment interventions","ffp_48h_units","integer","number",NA,"0-48h","Specified amounts of plasma during first 48 hours",TRUE,"The dictionary gives FFP in mL, but the template gives a number of units."
+123,"Delay FFP (h)","Treatment interventions","ffp_delay_h","numeric","h",NA,NA,NA,TRUE,NA
+124,"NE Pre Burn ICU","Treatment interventions","ne_pre_burn_icu","binary",NA,"Yes|No","pre-ICU",NA,TRUE,"Meaning of pre burn ICU is not defined."
+125,"Cont_vasopressor_pre_burn_ICU","Treatment interventions","cont_vasopressor_pre_burn_icu","binary",NA,"Yes|No","pre-ICU",NA,TRUE,"Meaning of pre burn ICU is not defined. Header does not follow the style of the others."
+126,"NE 24h","Treatment interventions","ne_24h","binary",NA,"Yes|No","0-24h","Types of vasopressors administered during the first 24 and 48 hours post-burn",TRUE,NA
+127,"NE 48h","Treatment interventions","ne_48h","binary",NA,"Yes|No","0-48h","Types of vasopressors administered during the first 24 and 48 hours post-burn",TRUE,"Overlaps with ne_24h and ne_24_48h; consistency can be checked."
+128,"NE 24-48h","Treatment interventions","ne_24_48h","binary",NA,"Yes|No","24-48h","Types of vasopressors administered during the first 24 and 48 hours post-burn",TRUE,NA
+129,"Delay NE (h)","Treatment interventions","ne_delay_h","numeric","h",NA,NA,"Delay of NE administration during the first 48h post burn",TRUE,NA
+130,"Peak NE 24h (ug/kg/min)","Treatment interventions","peak_ne_24h_ug_kg_min","numeric","ug/kg/min",NA,"0-24h","Maximum infusion rate of vasopressors during the first 24 and 48 hours post-burn.",TRUE,NA
+131,"Peak NE 24-48h (ug/kg/min)","Treatment interventions","peak_ne_24_48h_ug_kg_min","numeric","ug/kg/min",NA,"24-48h","Maximum infusion rate of vasopressors during the first 24 and 48 hours post-burn.",TRUE,NA
+132,"Total NE 48h (ug/kg)","Treatment interventions","total_ne_48h_ug_kg","numeric","ug/kg",NA,"0-48h",NA,TRUE,"Not in the dictionary."
+133,"Other VP/inotropes 24h","Treatment interventions","other_vp_24h","categorical",NA,"Epinephrine|Phenylephrine|Vasopressin|Dobutamine|Dopamine|Others","0-24h","Types of vasopressors administered during the first 24 and 48 hours post-burn",TRUE,"Levels from the dictionary. The level is spelled Phenylephrine here; the dictionary has the typo Phenylepinephrine. Template example uses other names (for example Ephedrine), so later recoding is needed. May hold several drugs."
+134,"Other VP/inotropes 24-48h","Treatment interventions","other_vp_24_48h","categorical",NA,"Epinephrine|Phenylephrine|Vasopressin|Dobutamine|Dopamine|Others","24-48h","Types of vasopressors administered during the first 24 and 48 hours post-burn",TRUE,"Same notes as other_vp_24h. Level spelled Phenylephrine (dictionary typo Phenylepinephrine corrected)."
+135,"Peak other VP/inotropes 24h (ug/kg/min)","Treatment interventions","peak_other_vp_24h_ug_kg_min","numeric","ug/kg/min",NA,"0-24h","Maximum infusion rate of vasopressors during the first 24 and 48 hours post-burn.",TRUE,"Unclear which drug the rate refers to when several are given."
+136,"Peak other VP/inotropes 24-48h (ug/kg/min)","Treatment interventions","peak_other_vp_24_48h_ug_kg_min","numeric","ug/kg/min",NA,"24-48h","Maximum infusion rate of vasopressors during the first 24 and 48 hours post-burn.",TRUE,"Unclear which drug the rate refers to when several are given."
+137,"Days on VP","Treatment interventions","days_on_vp","numeric","days",NA,NA,NA,TRUE,"Header has no unit; days assumed. Not in the dictionary."
+138,"Mechanical ventilation admission","Treatment interventions","mech_vent_admission","binary",NA,"Yes|No","pre-ICU","Intubated prior to arrival at burn center",FALSE,"Probably corresponds to the dictionary's Intubated prior to arrival."
+139,"Cyanokit (hydroxocobalamin)","Treatment interventions","cyanokit","binary",NA,"Yes|No",NA,NA,FALSE,NA
+140,"Escharatomy/fasciotomy 48h","Treatment interventions","escharotomy_fasciotomy_48h","binary",NA,"Yes|No","0-48h",NA,FALSE,NA
+141,"Enzymatic escharatomy 48h","Treatment interventions","enzymatic_escharotomy_48h","binary",NA,"Yes|No","0-48h",NA,FALSE,NA
+142,"Graft surgery 48h","Treatment interventions","graft_surgery_48h","binary",NA,"Yes|No","0-48h",NA,FALSE,NA
+143,"Graft surgery 7d","Treatment interventions","graft_surgery_7d","binary",NA,"Yes|No","0-7d",NA,FALSE,NA
+144,"Number graft surgeries 7d","Treatment interventions","graft_surgeries_7d_n","integer",NA,NA,"0-7d",NA,FALSE,NA
+145,"Number surgeries total","Treatment interventions","surgeries_total_n","integer",NA,NA,NA,"Total number of burn surgeries",FALSE,NA
+146,"Time until first surgery from time of burn (days)","Treatment interventions","first_surgery_days","numeric","days",NA,NA,"Time until first burn surgery",FALSE,"The dictionary unit is days and hours; the template gives days (fractional)."
+147,"PiCCO use 0-48h","Treatment interventions","picco_use_0_48h","binary",NA,"Yes|No","0-48h","PiCCO-use during the first 48 hours post-burn.",FALSE,NA
+148,"Nephrotoxic drugs day 1-7","Treatment interventions","nephrotoxic_drugs_day1_7","binary",NA,"Yes|No","day 1-7",NA,FALSE,NA
+149,"SAPS II admission","Chronic and acute severity scores","saps2_admission","integer",NA,NA,"admission",NA,FALSE,NA
+150,"SAPS III admission","Chronic and acute severity scores","saps3_admission","integer",NA,NA,"admission",NA,FALSE,NA
+151,"ABSI admission","Chronic and acute severity scores","absi_admission","integer",NA,NA,"admission",NA,FALSE,NA
+152,"Charlson Comorbidity Index","Chronic and acute severity scores","charlson_index","integer",NA,NA,NA,NA,FALSE,NA
+153,"SOFA admission","Chronic and acute severity scores","sofa_admission","integer",NA,NA,"admission",NA,FALSE,NA
+154,"Baux admission","Chronic and acute severity scores","baux_admission","numeric",NA,NA,"admission",NA,FALSE,NA
+155,"LV systolic dysfunction 48h","Echo-Cor data","lv_systolic_dysfunction_48h","binary",NA,"Yes|No","0-48h",NA,FALSE,NA
+156,"Acute core pulmonale","Echo-Cor data","acute_cor_pulmonale","binary",NA,"Yes|No",NA,NA,FALSE,NA
+157,"AKI KDIGO ≥ 1","Outcomes","aki_kdigo_1plus","binary",NA,"Yes|No",NA,NA,FALSE,NA
+158,"Date AKI KDIGO ≥ 1","Outcomes","aki_kdigo_1plus_date","date",NA,NA,NA,NA,FALSE,NA
+159,"AKI KDIGO 3","Outcomes","aki_kdigo_3","binary",NA,"Yes|No",NA,NA,FALSE,NA
+160,"Date AKI KDIGO 3","Outcomes","aki_kdigo_3_date","date",NA,NA,NA,NA,FALSE,NA
+161,"CRRT","Outcomes","crrt","binary",NA,"Yes|No",NA,NA,TRUE,NA
+162,"Days on CRRT","Outcomes","crrt_days","numeric","days",NA,NA,NA,TRUE,"Header has no unit; days assumed."
+163,"ARDS","Outcomes","ards","binary",NA,"Yes|No",NA,NA,FALSE,NA
+164,"Date ARDS","Outcomes","ards_date","date",NA,NA,NA,NA,FALSE,NA
+165,"Mesenteric ischemia","Outcomes","mesenteric_ischemia","binary",NA,"Yes|No",NA,NA,FALSE,NA
+166,"Date MI","Outcomes","mesenteric_ischemia_date","date",NA,NA,NA,NA,FALSE,NA
+167,"Abdominal compartment syndrome","Outcomes","abdominal_compartment_syndrome","binary",NA,"Yes|No",NA,NA,FALSE,NA
+168,"Rhabdomyolysis","Outcomes","rhabdomyolysis","binary",NA,"Yes|No",NA,NA,FALSE,"Rhabdomyolysis has no date column, and Date ACS follows it."
+169,"Date ACS","Outcomes","acs_date","date",NA,NA,NA,NA,FALSE,"Date ACS follows Rhabdomyolysis, so it is unclear whether it belongs to abdominal compartment syndrome (two columns earlier) or to rhabdomyolysis."
+170,"Sepsis/septic shock","Outcomes","sepsis","binary",NA,"Yes|No",NA,"Septicemia during hospitalization",TRUE,"Header is Sepsis/septic shock; the dictionary says septicemia."
+171,"Number septic events","Outcomes","septic_events_n","integer",NA,NA,NA,NA,TRUE,NA
+172,"Dates sepsis/septic shock","Outcomes","sepsis_dates","date",NA,NA,NA,NA,TRUE,"Plural header; may hold several dates in one cell."
+173,"Bacteremia","Outcomes","bacteremia","binary",NA,"Yes|No",NA,NA,FALSE,NA
+174,"Dates bacteremia","Outcomes","bacteremia_dates","date",NA,NA,NA,NA,FALSE,"Plural header; may hold several dates in one cell."
+175,"Candidemia","Outcomes","candidemia","binary",NA,"Yes|No",NA,NA,FALSE,NA
+176,"Dates candidemia","Outcomes","candidemia_dates","date",NA,NA,NA,NA,FALSE,"Plural header; may hold several dates in one cell."
+177,"RRT","Outcomes","rrt","binary",NA,"Yes|No",NA,"Use of renal replacement therapy during ICU stay",TRUE,NA
+178,"Time until initiation of RRT from burn injury (days)","Outcomes","rrt_start_days","numeric","days",NA,NA,"Time until initiation of renal replacement therapy during ICU stay",TRUE,NA
+179,"Date first RRT","Outcomes","rrt_start_date","date",NA,NA,NA,NA,TRUE,NA
+180,"Date stop RRT","Outcomes","rrt_stop_date","date",NA,NA,NA,NA,TRUE,NA
+181,"Mechanical ventilation","Outcomes","mech_vent","binary",NA,"Yes|No",NA,NA,FALSE,NA
+182,"Mechanically ventilated 24h","Outcomes","mech_vent_24h","binary",NA,"Yes|No","0-24h","Mechanically ventilated during first 24 hours post-burn",FALSE,NA
+183,"Days on mechanical ventilation","Outcomes","mech_vent_days","numeric","days",NA,NA,"Number of days on mechanical ventilation",FALSE,"The dictionary counts ventilation days inclusively (start and stop day both counted)."
+184,"Date intubated","Outcomes","intubation_date","date",NA,NA,NA,NA,FALSE,NA
+185,"Date stop ventilation","Outcomes","vent_stop_date","date",NA,NA,NA,NA,FALSE,NA
+186,"Date last graft surgery","Outcomes","last_graft_surgery_date","date",NA,NA,NA,NA,FALSE,NA
+187,"In-hospital mortality","Outcomes","hospital_mortality","binary",NA,"Yes|No",NA,"Mortality during hospitalization",TRUE,NA
+188,"In-ICU mortality","Outcomes","icu_mortality","binary",NA,"Yes|No",NA,NA,FALSE,NA
+189,"Date ICU admission","Outcomes","outcome_icu_admission_date","date",NA,NA,NA,NA,FALSE,"Header text Date ICU admission appears twice (positions 70 and 189). Name is distinct from icu_admission_date; the two should agree."
+190,"Date ICU discharge","Outcomes","icu_discharge_date","date",NA,NA,NA,NA,FALSE,NA
+191,"Length of stay in hospital (days)","Outcomes","hospital_los_days","numeric","days",NA,NA,"Length of stay in hospital (require hospital admission and discharge/death)",TRUE,"The dictionary counts length of stay inclusively (admission and discharge day both counted)."
+192,"Length of stay in ICU (days)","Outcomes","icu_los_days","numeric","days",NA,NA,"Length of stay in ICU (require ICU admission and discharge/death)",FALSE,"The dictionary counts length of stay inclusively (admission and discharge day both counted)."
+193,"Date end of follow up","Outcomes","follow_up_end_date","date",NA,NA,NA,NA,FALSE,NA
+194,"Vital status end follow up","Outcomes","vital_status_follow_up","text",NA,NA,NA,NA,FALSE,"Levels not defined."
+195,"ICU readmission","Outcomes","icu_readmission","binary",NA,"Yes|No",NA,NA,FALSE,NA
+196,"Date ICU readmission","Outcomes","icu_readmission_date","date",NA,NA,NA,NA,FALSE,NA
