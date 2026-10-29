@@ -24,6 +24,18 @@ The quality control (QC) pipeline checks one or more site data files in the NBC 
 
 The input is an Excel file (.xlsx). The pipeline reads the first sheet. Row 1 is free text, row 2 holds the column headers, and the data starts in row 3. The headers must match `metadata/codebook.csv` in name and order; if they do not, the pipeline stops and lists every difference. Put the file in `data\raw\` in the project folder, which git ignores.
 
+### Using the program window
+
+1. Open the project folder and double-click `burn_vp.bat`. A black window opens first, then the program window. Keep the black window open while you work.
+2. Click Add files... and select one or more Excel files.
+3. Check the site name next to each file. It is taken from the file name up to the first underscore (`NBC_2026.xlsx` gives NBC). You can change it. Each file needs a different site name.
+4. Click Run QC. The bar and the line below it show the progress. The window does not respond while a step runs; this is normal.
+5. When the run is finished, a message shows the results folder. Click Open report to see the report in your web browser.
+
+If something is wrong with a file, for example a column header, a message explains the problem and no results are written. To remove a file from the list, tick it and click Remove ticked files. The button Run analysis is not available yet. If the black window says the program stopped with an error, send a screenshot of it to the project team.
+
+### Using the command line
+
 1. Open Command Prompt (press Windows, type `cmd`, press Enter).
 2. Go to the project folder, for example `cd C:\burn_vp`.
 3. Run the pipeline. Replace `4.5.2` with your R 4.5 version if it differs, and use your own file name:
