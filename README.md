@@ -18,6 +18,40 @@ Setup removes its temporary files when it ends. It keeps the log file and the in
 
 If `setup.bat` is blocked: open R (Rgui), choose File, then Source R code..., and select `scripts\setup_environment.R` in the project folder. The result is the same, but R's temporary files then go to the normal Windows temporary folder.
 
+## Running the quality control pipeline
+
+The quality control (QC) pipeline checks one or more site data files in the NBC template layout and writes QC tables, a data profile, figures and an HTML report. Run setup first (see above).
+
+The input is an Excel file (.xlsx). The pipeline reads the first sheet. Row 1 is free text, row 2 holds the column headers, and the data starts in row 3. The headers must match `metadata/codebook.csv` in name and order; if they do not, the pipeline stops and lists every difference. Put the file in `data\raw\` in the project folder, which git ignores.
+
+1. Open Command Prompt (press Windows, type `cmd`, press Enter).
+2. Go to the project folder, for example `cd C:\burn_vp`.
+3. Run the pipeline. Replace `4.5.2` with your R 4.5 version if it differs, and use your own file name:
+
+   ```
+   "C:\Program Files\R\R-4.5.2\bin\Rscript.exe" scripts\run_qc_pipeline.R NBC=data\raw\NBC.xlsx
+   ```
+
+4. When it finishes, the window shows `Report:` followed by the path of `report.html`. Open that file in a web browser.
+
+Each `SITE=path` argument gives a site name and its file. To check several sites in one run, list them all, for example `NBC=data\raw\NBC.xlsx UTMB=data\raw\UTMB.xlsx`. Relative paths are read from the project folder, so the command also works from another folder if you give the full path to `scripts\run_qc_pipeline.R`. Add `--label text` at the end to add a label to the run folder name.
+
+Each run writes a new folder `output\runs\<date>_<time>[_<label>]\` with:
+
+- `report.html`: the summary report
+- `qc\`: QC findings, rule summary, missingness, values that could not be read, unrecognised category values, the recode log and the rule catalogue (CSV)
+- `profile\`: variable summaries, site comparison, exposures and outcomes, correlations and counts of values masked after QC (CSV)
+- `figures\`: the figures in the report (PNG)
+
+The QC tables list row numbers and the original values from the data file, so treat the run folder as patient-level data and do not share or commit it. The data rows are numbered from the first data row (row 3 in Excel is row 1).
+
+To try the pipeline without real data, generate a synthetic file with known errors and run the pipeline on it:
+
+```
+"C:\Program Files\R\R-4.5.2\bin\Rscript.exe" scripts\generate_synthetic_nbc.R 100 1 --corrupt
+"C:\Program Files\R\R-4.5.2\bin\Rscript.exe" scripts\run_qc_pipeline.R NBC=output\generated\NBC_synthetic_n100_seed1_corrupt.xlsx --label demo
+```
+
 ## Layout
 
 - `R/`: reusable functions
