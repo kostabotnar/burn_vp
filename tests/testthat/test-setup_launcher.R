@@ -1,4 +1,6 @@
 launcher_source <- normalizePath(testthat::test_path("..", "..", "setup.bat"), winslash = "/")
+finder_source <- normalizePath(testthat::test_path("..", "..", "scripts", "find_r45.bat"),
+                               winslash = "/")
 
 # Runs a copy of setup.bat in `dir` without pausing. Returns the exit status.
 run_launcher <- function(bat, args = character(), env = parent.frame()) {
@@ -61,9 +63,25 @@ test_that("--find-r writes nothing in the project folder", {
   dir <- local_output_dir()
   bat <- file.path(dir, "setup.bat")
   file.copy(launcher_source, bat)
+  dir.create(file.path(dir, "scripts"))
+  file.copy(finder_source, file.path(dir, "scripts", "find_r45.bat"))
   writeLines(c("Project: burn_vp", "Version: 1.0.0"), file.path(dir, "PROJECT_VERSION"))
-  run_launcher(bat, "--find-r")
+  out <- run_launcher(bat, "--find-r")
+  expect_equal(launcher_status(out), 0)
+  expect_equal(tolower(basename(trimws(out[length(out)]))), "rscript.exe")
   expect_false(dir.exists(file.path(dir, "output")))
+})
+
+test_that("the launcher stops and writes nothing when scripts/find_r45.bat is missing", {
+  skip_on_os(c("mac", "linux", "solaris"))
+  dir <- local_output_dir()
+  bat <- file.path(dir, "setup.bat")
+  file.copy(launcher_source, bat)
+  writeLines(c("Project: burn_vp", "Version: 1.0.0"), file.path(dir, "PROJECT_VERSION"))
+  out <- run_launcher(bat)
+  expect_gt(launcher_status(out), 0)
+  expect_false(dir.exists(file.path(dir, "output")))
+  expect_true(any(grepl("project folder is incomplete", out, fixed = TRUE)))
 })
 
 # A fake project folder with a copy of setup.bat and a stub in place of the real setup script.
@@ -73,6 +91,7 @@ make_stub_project <- function(status = 0, env = parent.frame()) {
   testthat::skip_if(grepl(" ", dir, fixed = TRUE), "the test folder path has a space")
   dir.create(file.path(dir, "scripts"))
   file.copy(launcher_source, file.path(dir, "setup.bat"))
+  file.copy(finder_source, file.path(dir, "scripts", "find_r45.bat"))
   writeLines(c("Project: burn_vp", "Version: 1.0.0"), file.path(dir, "PROJECT_VERSION"))
   writeLines(c(
     'root <- dirname(dirname(normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(),',
