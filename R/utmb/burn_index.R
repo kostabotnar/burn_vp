@@ -45,7 +45,8 @@ burn_group_label <- function(group) {
 utmb_flag <- function(x) !is.na(x) & toupper(trimws(as.character(x))) %in% c("1", "TRUE", "YES")
 
 # Burn records from the diagnoses table: StudyID, code_system, Code, group, Type, date,
-# EncounterKey. Missing and negative encounter keys (Caboodle sentinels) become NA.
+# EncounterKey. Missing and negative numeric encounter keys (Caboodle sentinels) become NA;
+# non-numeric keys (pseudonyms from de-identified data) are kept.
 extract_burn_records <- function(diagnoses) {
   dx <- as.data.frame(diagnoses)
   system <- burn_code_system(dx[["CodeType"]], dx[["Code"]])
@@ -53,7 +54,7 @@ extract_burn_records <- function(diagnoses) {
   dx <- dx[keep, , drop = FALSE]
   key <- trimws(as.character(dx[["EncounterKey"]]))
   key_num <- suppressWarnings(as.numeric(key))
-  key[is.na(key_num) | key_num <= 0] <- NA_character_
+  key[is.na(key) | key == "" | (!is.na(key_num) & key_num <= 0)] <- NA_character_
   record_type <- if ("Type" %in% names(dx)) dx[["Type"]] else rep(NA_character_, nrow(dx))
   data.frame(
     StudyID = as.character(dx[["StudyID"]]), code_system = system[keep],
@@ -121,7 +122,8 @@ select_index_encounter <- function(burn, index, encounters) {
   category <- ifelse(utmb_flag(enc$IsHospitalAdmission), "hospital admission",
                      ifelse(utmb_flag(enc$IsEdVisit), "ED visit", "other"))
   rank <- match(category, burn_encounter_categories)
-  pick <- order(cand$StudyID, rank, as.numeric(cand$EncounterKey), method = "radix")
+  pick <- order(cand$StudyID, rank, suppressWarnings(as.numeric(cand$EncounterKey)),
+                cand$EncounterKey, method = "radix")
   best <- pick[!duplicated(cand$StudyID[pick])]
   n_cand <- as.integer(table(factor(cand$StudyID, levels = ids)))
 
