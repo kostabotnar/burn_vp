@@ -64,6 +64,16 @@ To try the pipeline without real data, generate a synthetic file with known erro
 "C:\Program Files\R\R-4.5.2\bin\Rscript.exe" scripts\run_qc_pipeline.R NBC=output\generated\NBC_synthetic_n100_seed1_corrupt.xlsx --label demo
 ```
 
+## Profiling the UTMB data
+
+The raw UTMB extract (13 comma-separated files without an extension, from Epic Caboodle) goes in `data/`, which is ignored by version control. To profile it:
+
+```
+Rscript scripts/utmb/profile_utmb.R [--data <folder>] [--label <text>]
+```
+
+The default data folder is `data/` in the project folder. The run writes `output/utmb/profile_<date>_<time>[_<label>]/` with `column_profile.csv`, `table_stats.csv` (including read and profile seconds per table), `demographics_categorical.csv`, `demographics_numeric.csv` and `summary.txt`. These hold aggregate counts, but some columns list the most frequent values, so keep the run folder out of version control. The script also rewrites `metadata/utmb_dictionary.csv`, a structure-only dictionary (column types, roles, identifier flags and descriptions, no data values) that is committed. The functions are in `R/utmb/`.
+
 ## Layout
 
 - `R/`: reusable functions
