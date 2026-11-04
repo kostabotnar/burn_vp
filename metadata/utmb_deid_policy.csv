@@ -1,0 +1,1633 @@
+table,column,action,domain,reason
+crosswalk,StudyID,keep,,study identifier
+crosswalk,PatientDurableKey,drop,,"patient key, StudyID replaces it"
+crosswalk,PatientEpicId,drop,,identifier
+crosswalk,MRN,drop,,identifier
+crosswalk,PatientName,drop,,identifier
+crosswalk,DOB,drop,,"identifier, BirthDate in demographics is shifted"
+crosswalk,BurnCode,keep,,""
+crosswalk,BurnCodeDate,shift_date,,date shifted
+demographics,StudyID,keep,,study identifier
+demographics,PatientDurableKey,drop,,"patient key, StudyID replaces it"
+demographics,BirthDate,shift_date,,date shifted
+demographics,Sex,keep,,""
+demographics,SexAssignedAtBirth,keep,,""
+demographics,FirstRace,keep,,""
+demographics,SecondRace,keep,,""
+demographics,MultiRacial,keep,,""
+demographics,Ethnicity,keep,,""
+demographics,SmokingStatus,keep,,""
+demographics,DeathDate,shift_date,,date shifted
+demographics,DeathInstant,shift_instant,,date shifted
+demographics,DeathLocation,keep,,""
+demographics,Status,keep,,""
+demographics,IsValid,keep,,""
+demographics,Test,keep,,""
+diagnoses,StudyID,keep,,study identifier
+diagnoses,CodeType,keep,,""
+diagnoses,Code,keep,,"text, review"
+diagnoses,CodeDescription,keep,,"text, review"
+diagnoses,DiagnosisName,keep,,"text, review"
+diagnoses,StartDate,shift_date,,date shifted
+diagnoses,DiagnosisEventKey,remap,diagnosis_event,patient-level key
+diagnoses,DiagnosisKey,keep,,reference dimension key
+diagnoses,PatientKey,drop,,"patient key, StudyID replaces it"
+diagnoses,PatientDurableKey,drop,,"patient key, StudyID replaces it"
+diagnoses,PatientSourceDataDurableKey,drop,,"patient key, StudyID replaces it"
+diagnoses,AgeKey,keep,,reference dimension key
+diagnoses,EncounterKey,remap,encounter,patient-level key
+diagnoses,DepartmentKey,keep,,reference dimension key
+diagnoses,StartDateKey,shift_datekey,,date shifted
+diagnoses,EndDateKey,shift_datekey,,date shifted
+diagnoses,DocumentedByEmployeeKey,remap,person_staff,provider or staff key
+diagnoses,DocumentedByEmployeeDurableKey,remap,person_staff,provider or staff key
+diagnoses,DocumentedByProviderKey,remap,person_staff,provider or staff key
+diagnoses,DocumentedByProviderDurableKey,remap,person_staff,provider or staff key
+diagnoses,DocumentedByProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+diagnoses,SourceKey,keep,,reference dimension key
+diagnoses,SourceComboKey,keep,,reference dimension key
+diagnoses,Type,keep,,""
+diagnoses,SubType,keep,,""
+diagnoses,Status,keep,,""
+diagnoses,PresentOnAdmission,keep,,""
+diagnoses,HospitalDiagnosis,keep,,""
+diagnoses,EmergencyDepartmentDiagnosis,keep,,""
+diagnoses,Chronic,keep,,""
+diagnoses,IsFromSourceAccount,keep,,""
+diagnoses,IsPrimary,keep,,""
+diagnoses,UserEnteredDateKey,shift_datekey,,date shifted
+diagnoses,UserEnteredTimeOfDayKey,keep,,time of day
+diagnoses,UserRemovedDateKey,shift_datekey,,date shifted
+diagnoses,UserRemovedTimeOfDayKey,keep,,time of day
+diagnoses,Count,keep,,""
+diagnoses,_CreationInstant,drop,,audit field
+diagnoses,_LastUpdatedInstant,drop,,audit field
+diagnoses,_IsInferred,drop,,audit field
+diagnoses,_IsDeleted,drop,,audit field
+diagnoses,_PrimaryPackageToImpactRecord,drop,,audit field
+diagnoses,_MostRecentPackageToImpactRecord,drop,,audit field
+diagnoses,_NumberOfSources,drop,,audit field
+diagnoses,_HasSourceClarity,drop,,audit field
+diagnoses,_DeletedFromSourceClarity,drop,,audit field
+diagnoses,_HasSourceClaimBasedEvents,drop,,audit field
+diagnoses,_DeletedFromSourceClaimBasedEvents,drop,,audit field
+diagnoses,SourceComboIdTypeId,keep,,""
+diagnoses,SourceNumericId,keep,,empty in the extract
+diagnoses,SourceComboId,keep,,"text, review"
+diagnoses,_HasSourceCaboodle,drop,,audit field
+diagnoses,_DeletedFromSourceCaboodle,drop,,audit field
+diagnoses,ExternalDiagnosisConceptKey,keep,,reference dimension key
+diagnoses,ExtSupplementalEncounterKey,remap,encounter,patient-level key
+diagnoses,EarliestReceivedDateKey,shift_datekey,,date shifted
+diagnoses,IsAbstractedMedicalRecord,keep,,""
+diagnoses,UseAsAdminStartDateKey,shift_datekey,,date shifted
+ed_visits,StudyID,keep,,study identifier
+ed_visits,EdVisitKey,remap,ed_visit,patient-level key
+ed_visits,PatientKey,drop,,"patient key, StudyID replaces it"
+ed_visits,PatientDurableKey,drop,,"patient key, StudyID replaces it"
+ed_visits,PatientSourceDataDurableKey,drop,,"patient key, StudyID replaces it"
+ed_visits,AgeKey,keep,,reference dimension key
+ed_visits,HospitalAdmissionKey,remap,hospital_admission,patient-level key
+ed_visits,EncounterKey,remap,encounter,patient-level key
+ed_visits,AdmissionDecisionDateKey,shift_datekey,,date shifted
+ed_visits,AdmissionDecisionTimeOfDayKey,keep,,time of day
+ed_visits,ArrivalDateKey,shift_datekey,,date shifted
+ed_visits,ArrivalTimeOfDayKey,keep,,time of day
+ed_visits,AvsPrintDateKey,shift_datekey,,date shifted
+ed_visits,PreviousEdVisitKey,remap,ed_visit,patient-level key
+ed_visits,NextEdVisitKey,remap,ed_visit,patient-level key
+ed_visits,FirstAttendingAssignedKey,remap,person_staff,provider or staff key
+ed_visits,FirstAttendingAssignedDurableKey,remap,person_staff,provider or staff key
+ed_visits,FirstAttendingAssignedSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,LastAttendingAssignedKey,remap,person_staff,provider or staff key
+ed_visits,LastAttendingAssignedDurableKey,remap,person_staff,provider or staff key
+ed_visits,LastAttendingAssignedSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,LongestAttendingAssignedKey,remap,person_staff,provider or staff key
+ed_visits,LongestAttendingAssignedDurableKey,remap,person_staff,provider or staff key
+ed_visits,LongestAttendingAssignedSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,NoteSigningProviderKey,remap,person_staff,provider or staff key
+ed_visits,NoteSigningProviderDurableKey,remap,person_staff,provider or staff key
+ed_visits,NoteSigningProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,FirstMidLevelProviderAssignedKey,remap,person_staff,provider or staff key
+ed_visits,FirstMidLevelProviderAssignedDurableKey,remap,person_staff,provider or staff key
+ed_visits,FirstMidLevelProviderAssignedSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,LastMidlevelProviderAssignedKey,remap,person_staff,provider or staff key
+ed_visits,LastMidlevelProviderAssignedDurableKey,remap,person_staff,provider or staff key
+ed_visits,LastMidlevelProviderAssignedSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,LongestMidLevelProviderAssignedKey,remap,person_staff,provider or staff key
+ed_visits,LongestMidLevelProviderAssignedDurableKey,remap,person_staff,provider or staff key
+ed_visits,LongestMidLevelProviderAssigneSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,FirstResidentAssignedKey,remap,person_staff,provider or staff key
+ed_visits,FirstResidentAssignedDurableKey,remap,person_staff,provider or staff key
+ed_visits,FirstResidentAssignedSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,LastResidentAssignedKey,remap,person_staff,provider or staff key
+ed_visits,LastResidentAssignedDurableKey,remap,person_staff,provider or staff key
+ed_visits,LastResidentAssignedSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,LongestResidentAssignedKey,remap,person_staff,provider or staff key
+ed_visits,LongestResidentAssignedDurableKey,remap,person_staff,provider or staff key
+ed_visits,LongestResidentAssignedSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,FirstNurseAssignedKey,remap,person_staff,provider or staff key
+ed_visits,FirstNurseAssignedDurableKey,remap,person_staff,provider or staff key
+ed_visits,FirstNurseAssignedSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,LastNurseAssignedKey,remap,person_staff,provider or staff key
+ed_visits,LastNurseAssignedDurableKey,remap,person_staff,provider or staff key
+ed_visits,LastNurseAssignedSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,LongestNurseAssignedKey,remap,person_staff,provider or staff key
+ed_visits,LongestNurseAssignedDurableKey,remap,person_staff,provider or staff key
+ed_visits,LongestNurseAssignedSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,AvsPrintTimeOfDayKey,keep,,time of day
+ed_visits,BedRequestDateKey,shift_datekey,,date shifted
+ed_visits,BedRequestTimeOfDayKey,keep,,time of day
+ed_visits,BedAssignedDateKey,shift_datekey,,date shifted
+ed_visits,BedAssignedTimeOfDayKey,keep,,time of day
+ed_visits,BoardingHoursStartDateKey,shift_datekey,,date shifted
+ed_visits,BoardingHoursStartTimeOfDayKey,keep,,time of day
+ed_visits,BoardingHoursEndDateKey,shift_datekey,,date shifted
+ed_visits,BoardingHoursEndTimeOfDayKey,keep,,time of day
+ed_visits,DepartureDateKey,shift_datekey,,date shifted
+ed_visits,DepartureTimeOfDayKey,keep,,time of day
+ed_visits,DispositionDateKey,shift_datekey,,date shifted
+ed_visits,DispositionTimeOfDayKey,keep,,time of day
+ed_visits,FirstArrivalOutsideEdDateKey,shift_datekey,,date shifted
+ed_visits,FirstArrivalOutsideEdTimeOfDayKey,keep,,time of day
+ed_visits,FirstResidentAssignedDateKey,shift_datekey,,date shifted
+ed_visits,FirstResidentAssignedTimeOfDayKey,keep,,time of day
+ed_visits,FirstAttendingAssignedDateKey,shift_datekey,,date shifted
+ed_visits,FirstAttendingAssignedTimeOfDayKey,keep,,time of day
+ed_visits,FirstEdRegisteredNurseAssignedDateKey,shift_datekey,,date shifted
+ed_visits,FirstEdRegisteredNurseAssignedTimeOfDayKey,keep,,time of day
+ed_visits,FirstProviderContactDateKey,shift_datekey,,date shifted
+ed_visits,FirstProviderContactTimeOfDayKey,keep,,time of day
+ed_visits,FirstEkgOrderedDateKey,shift_datekey,,date shifted
+ed_visits,FirstEkgOrderedTimeOfDayKey,keep,,time of day
+ed_visits,FirstEkgCompletedDateKey,shift_datekey,,date shifted
+ed_visits,FirstEkgCompletedTimeOfDayKey,keep,,time of day
+ed_visits,FirstEkgInterpretedDateKey,shift_datekey,,date shifted
+ed_visits,FirstEkgInterpretedTimeOfDayKey,keep,,time of day
+ed_visits,FirstCtOrderedDateKey,shift_datekey,,date shifted
+ed_visits,FirstCtOrderedTimeOfDayKey,keep,,time of day
+ed_visits,FirstCtStartedDateKey,shift_datekey,,date shifted
+ed_visits,FirstCtStartedTimeOfDayKey,keep,,time of day
+ed_visits,FirstCtCompletedDateKey,shift_datekey,,date shifted
+ed_visits,FirstCtCompletedTimeOfDayKey,keep,,time of day
+ed_visits,FirstCtInterpretedDateKey,shift_datekey,,date shifted
+ed_visits,FirstCtInterpretedTimeOfDayKey,keep,,time of day
+ed_visits,FirstUltrasoundOrderedDateKey,shift_datekey,,date shifted
+ed_visits,FirstUltrasoundOrderedTimeOfDayKey,keep,,time of day
+ed_visits,FirstUltrasoundStartedDateKey,shift_datekey,,date shifted
+ed_visits,FirstUltrasoundStartedTimeOfDayKey,keep,,time of day
+ed_visits,FirstUltrasoundCompletedDateKey,shift_datekey,,date shifted
+ed_visits,FirstUltrasoundCompletedTimeOfDayKey,keep,,time of day
+ed_visits,FirstUltrasoundInterpretedDateKey,shift_datekey,,date shifted
+ed_visits,FirstUltrasoundInterpretedTimeOfDayKey,keep,,time of day
+ed_visits,FirstXrayOrderedDateKey,shift_datekey,,date shifted
+ed_visits,FirstXrayOrderedTimeOfDayKey,keep,,time of day
+ed_visits,FirstXrayStartedDateKey,shift_datekey,,date shifted
+ed_visits,FirstXrayStartedTimeOfDayKey,keep,,time of day
+ed_visits,FirstXrayCompletedDateKey,shift_datekey,,date shifted
+ed_visits,FirstXrayCompletedTimeOfDayKey,keep,,time of day
+ed_visits,FirstXrayInterpretedDateKey,shift_datekey,,date shifted
+ed_visits,FirstXrayInterpretedTimeOfDayKey,keep,,time of day
+ed_visits,FirstCbcOrderedDateKey,shift_datekey,,date shifted
+ed_visits,FirstCbcOrderedTimeOfDayKey,keep,,time of day
+ed_visits,FirstCbcCollectedDateKey,shift_datekey,,date shifted
+ed_visits,FirstCbcCollectedTimeOfDayKey,keep,,time of day
+ed_visits,FirstCbcReceivedDateKey,shift_datekey,,date shifted
+ed_visits,FirstCbcReceivedTimeOfDayKey,keep,,time of day
+ed_visits,FirstCbcResultedDateKey,shift_datekey,,date shifted
+ed_visits,FirstCbcResultedTimeOfDayKey,keep,,time of day
+ed_visits,FirstTroponinOrderedDateKey,shift_datekey,,date shifted
+ed_visits,FirstTroponinOrderedTimeOfDayKey,keep,,time of day
+ed_visits,FirstTroponinCollectedDateKey,shift_datekey,,date shifted
+ed_visits,FirstTroponinCollectedTimeOfDayKey,keep,,time of day
+ed_visits,FirstTroponinReceivedDateKey,shift_datekey,,date shifted
+ed_visits,FirstTroponinReceivedTimeOfDayKey,keep,,time of day
+ed_visits,FirstTroponinResultedDateKey,shift_datekey,,date shifted
+ed_visits,FirstTroponinResultedTimeOfDayKey,keep,,time of day
+ed_visits,FirstMetabolicPanelOrderedDateKey,shift_datekey,,date shifted
+ed_visits,FirstMetabolicPanelOrderedTimeOfDayKey,keep,,time of day
+ed_visits,FirstMetabolicPanelCollectedDateKey,shift_datekey,,date shifted
+ed_visits,FirstMetabolicPanelCollectedTimeOfDayKey,keep,,time of day
+ed_visits,FirstMetabolicPanelReceivedDateKey,shift_datekey,,date shifted
+ed_visits,FirstMetabolicPanelReceivedTimeOfDayKey,keep,,time of day
+ed_visits,FirstMetabolicPanelResultedDateKey,shift_datekey,,date shifted
+ed_visits,FirstMetabolicPanelResultedTimeOfDayKey,keep,,time of day
+ed_visits,FirstUrinalysisOrderedDateKey,shift_datekey,,date shifted
+ed_visits,FirstUrinalysisOrderedTimeOfDayKey,keep,,time of day
+ed_visits,FirstUrinalysisCollectedDateKey,shift_datekey,,date shifted
+ed_visits,FirstUrinalysisCollectedTimeOfDayKey,keep,,time of day
+ed_visits,FirstUrinalysisReceivedDateKey,shift_datekey,,date shifted
+ed_visits,FirstUrinalysisReceivedTimeOfDayKey,keep,,time of day
+ed_visits,FirstUrinalysisResultedDateKey,shift_datekey,,date shifted
+ed_visits,FirstUrinalysisResultedTimeOfDayKey,keep,,time of day
+ed_visits,FirstArterialInflationDateKey,shift_datekey,,date shifted
+ed_visits,FirstArterialInflationTimeOfDayKey,keep,,time of day
+ed_visits,FirstThrombolyticTreatmentDateKey,shift_datekey,,date shifted
+ed_visits,FirstThrombolyticTreatmentTimeOfDayKey,keep,,time of day
+ed_visits,FirstPainMedicationAdministrationDateKey,shift_datekey,,date shifted
+ed_visits,FirstPainMedicationAdministrationTimeOfDayKey,keep,,time of day
+ed_visits,FirstTraumaStartDateKey,shift_datekey,,date shifted
+ed_visits,FirstTraumaStartTimeOfDayKey,keep,,time of day
+ed_visits,FirstTraumaEndDateKey,shift_datekey,,date shifted
+ed_visits,FirstTraumaEndTimeOfDayKey,keep,,time of day
+ed_visits,FirstSedationStartDateKey,shift_datekey,,date shifted
+ed_visits,FirstSedationStartTimeOfDayKey,keep,,time of day
+ed_visits,FirstSedationEndDateKey,shift_datekey,,date shifted
+ed_visits,FirstSedationEndTimeOfDayKey,keep,,time of day
+ed_visits,FirstCodeStartDateKey,shift_datekey,,date shifted
+ed_visits,FirstCodeStartTimeOfDayKey,keep,,time of day
+ed_visits,FirstCodeEndDateKey,shift_datekey,,date shifted
+ed_visits,FirstCodeEndTimeOfDayKey,keep,,time of day
+ed_visits,AllergiesReviewedDateKey,shift_datekey,,date shifted
+ed_visits,AllergiesReviewedTimeOfDayKey,keep,,time of day
+ed_visits,MedicationListReviewedDateKey,shift_datekey,,date shifted
+ed_visits,MedicationListReviewedTimeOfDayKey,keep,,time of day
+ed_visits,NonEdPatientClassDateKey,shift_datekey,,date shifted
+ed_visits,NonEdPatientClassTimeOfDayKey,keep,,time of day
+ed_visits,NoteFileDateKey,shift_datekey,,date shifted
+ed_visits,NoteFileTimeOfDayKey,keep,,time of day
+ed_visits,ObservationStartedDateKey,shift_datekey,,date shifted
+ed_visits,ObservationStartedTimeOfDayKey,keep,,time of day
+ed_visits,RegistrationCompleteDateKey,shift_datekey,,date shifted
+ed_visits,RegistrationCompleteTimeOfDayKey,keep,,time of day
+ed_visits,RoomedDateKey,shift_datekey,,date shifted
+ed_visits,RoomedTimeOfDayKey,keep,,time of day
+ed_visits,TriageStartDateKey,shift_datekey,,date shifted
+ed_visits,TriageStartTimeOfDayKey,keep,,time of day
+ed_visits,TriageCompleteDateKey,shift_datekey,,date shifted
+ed_visits,TriageCompleteTimeOfDayKey,keep,,time of day
+ed_visits,EdDepartmentKey,keep,,reference dimension key
+ed_visits,PrimaryCareAreaKey,keep,,reference dimension key
+ed_visits,FirstNonEdDepartmentKey,keep,,reference dimension key
+ed_visits,AdmissionDepartmentKey,keep,,reference dimension key
+ed_visits,PrimaryEdDiagnosisKey,keep,,reference dimension key
+ed_visits,PrimaryChiefComplaintKey,keep,,reference dimension key
+ed_visits,ChiefComplaintComboKey,keep,,reference dimension key
+ed_visits,EdDiagnosisComboKey,keep,,reference dimension key
+ed_visits,LevelOfServiceAuthorizingProviderKey,remap,person_staff,provider or staff key
+ed_visits,LevelOfServiceAuthorizingProviderDurableKey,remap,person_staff,provider or staff key
+ed_visits,LevelOfServiceAuthorizingProviSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,TriageEmployeeKey,remap,person_staff,provider or staff key
+ed_visits,TriageEmployeeDurableKey,remap,person_staff,provider or staff key
+ed_visits,CaseManagerKey,remap,person_staff,provider or staff key
+ed_visits,CaseManagerDurableKey,remap,person_staff,provider or staff key
+ed_visits,CaseManagerSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,AllergiesReviewedUserKey,remap,person_staff,provider or staff key
+ed_visits,AllergiesReviewedUserDurableKey,remap,person_staff,provider or staff key
+ed_visits,MedicationListReviewedUserKey,remap,person_staff,provider or staff key
+ed_visits,MedicationListReviewedUserDurableKey,remap,person_staff,provider or staff key
+ed_visits,GuarantorKey,remap,guarantor,account key
+ed_visits,GuarantorDurableKey,remap,guarantor,account key
+ed_visits,CoverageKey,remap,coverage,coverage key
+ed_visits,ArrivalMethod,keep,,""
+ed_visits,EdDisposition,keep,,""
+ed_visits,DischargeDisposition,keep,,""
+ed_visits,AcuityLevel,keep,,""
+ed_visits,LevelOfCare,keep,,""
+ed_visits,FinancialClass,keep,,""
+ed_visits,FacilityLevelOfService,keep,,""
+ed_visits,ProfessionalLevelOfService,keep,,""
+ed_visits,EncounterEpicCsn,drop,,identifier
+ed_visits,HospitalAccountEpicId,drop,,identifier
+ed_visits,PrimaryProfessionalAccountEpicId,drop,,identifier
+ed_visits,AdmissionDecisionInstant,shift_instant,,date shifted
+ed_visits,ArrivalInstant,shift_instant,,date shifted
+ed_visits,AvsPrintInstant,shift_instant,,date shifted
+ed_visits,BedRequestInstant,shift_instant,,date shifted
+ed_visits,BedAssignedInstant,shift_instant,,date shifted
+ed_visits,BoardingHoursStartInstant,shift_instant,,date shifted
+ed_visits,BoardingHoursEndInstant,shift_instant,,date shifted
+ed_visits,DepartureInstant,shift_instant,,date shifted
+ed_visits,DispositionInstant,shift_instant,,date shifted
+ed_visits,FirstArrivalOutsideEdInstant,shift_instant,,date shifted
+ed_visits,FirstResidentAssignedInstant,shift_instant,,date shifted
+ed_visits,FirstAttendingAssignedInstant,shift_instant,,date shifted
+ed_visits,FirstEdRegisteredNurseAssignedInstant,shift_instant,,date shifted
+ed_visits,FirstProviderContactInstant,shift_instant,,date shifted
+ed_visits,FirstEkgOrderedInstant,shift_instant,,date shifted
+ed_visits,FirstEkgCompletedInstant,shift_instant,,date shifted
+ed_visits,FirstEkgInterpretedInstant,shift_instant,,date shifted
+ed_visits,FirstCtOrderedInstant,shift_instant,,date shifted
+ed_visits,FirstCtStartedInstant,shift_instant,,date shifted
+ed_visits,FirstCtCompletedInstant,shift_instant,,date shifted
+ed_visits,FirstCtInterpretedInstant,shift_instant,,date shifted
+ed_visits,FirstUltrasoundOrderedInstant,shift_instant,,date shifted
+ed_visits,FirstUltrasoundStartedInstant,shift_instant,,date shifted
+ed_visits,FirstUltrasoundCompletedInstant,shift_instant,,date shifted
+ed_visits,FirstUltrasoundInterpretedInstant,shift_instant,,date shifted
+ed_visits,FirstXrayOrderedInstant,shift_instant,,date shifted
+ed_visits,FirstXrayStartedInstant,shift_instant,,date shifted
+ed_visits,FirstXrayCompletedInstant,shift_instant,,date shifted
+ed_visits,FirstXrayInterpretedInstant,shift_instant,,date shifted
+ed_visits,FirstCbcOrderedInstant,shift_instant,,date shifted
+ed_visits,FirstCbcCollectedInstant,shift_instant,,date shifted
+ed_visits,FirstCbcReceivedInstant,shift_instant,,date shifted
+ed_visits,FirstCbcResultedInstant,shift_instant,,date shifted
+ed_visits,FirstTroponinOrderedInstant,shift_instant,,date shifted
+ed_visits,FirstTroponinCollectedInstant,shift_instant,,date shifted
+ed_visits,FirstTroponinReceivedInstant,shift_instant,,date shifted
+ed_visits,FirstTroponinResultedInstant,shift_instant,,date shifted
+ed_visits,FirstMetabolicPanelOrderedInstant,shift_instant,,date shifted
+ed_visits,FirstMetabolicPanelCollectedInstant,shift_instant,,date shifted
+ed_visits,FirstMetabolicPanelReceivedInstant,shift_instant,,date shifted
+ed_visits,FirstMetabolicPanelResultedInstant,shift_instant,,date shifted
+ed_visits,FirstUrinalysisOrderedInstant,shift_instant,,date shifted
+ed_visits,FirstUrinalysisCollectedInstant,shift_instant,,date shifted
+ed_visits,FirstUrinalysisReceivedInstant,shift_instant,,date shifted
+ed_visits,FirstUrinalysisResultedInstant,shift_instant,,date shifted
+ed_visits,FirstArterialInflationInstant,shift_instant,,date shifted
+ed_visits,FirstThrombolyticTreatmentInstant,shift_instant,,date shifted
+ed_visits,FirstPainMedicationAdministrationInstant,shift_instant,,date shifted
+ed_visits,FirstTraumaStartInstant,shift_instant,,date shifted
+ed_visits,FirstTraumaEndInstant,shift_instant,,date shifted
+ed_visits,FirstSedationStartInstant,shift_instant,,date shifted
+ed_visits,FirstSedationEndInstant,shift_instant,,date shifted
+ed_visits,FirstCodeStartInstant,shift_instant,,date shifted
+ed_visits,FirstCodeEndInstant,shift_instant,,date shifted
+ed_visits,NonEdPatientClassInstant,shift_instant,,date shifted
+ed_visits,NoteFileInstant,shift_instant,,date shifted
+ed_visits,ObservationStartedInstant,shift_instant,,date shifted
+ed_visits,RegistrationCompleteInstant,shift_instant,,date shifted
+ed_visits,RoomedInstant,shift_instant,,date shifted
+ed_visits,TriageStartInstant,shift_instant,,date shifted
+ed_visits,TriageCompleteInstant,shift_instant,,date shifted
+ed_visits,AllergiesReviewedInstant,shift_instant,,date shifted
+ed_visits,MedicationListReviewedInstant,shift_instant,,date shifted
+ed_visits,TotalCost,keep,,empty in the extract
+ed_visits,DirectCost,keep,,empty in the extract
+ed_visits,IndirectCost,keep,,empty in the extract
+ed_visits,FixedCost,keep,,empty in the extract
+ed_visits,VariableCost,keep,,empty in the extract
+ed_visits,DirectFixedCost,keep,,empty in the extract
+ed_visits,DirectVariableCost,keep,,empty in the extract
+ed_visits,IndirectFixedCost,keep,,empty in the extract
+ed_visits,IndirectVariableCost,keep,,empty in the extract
+ed_visits,LaborDirectCost,keep,,empty in the extract
+ed_visits,LaborDirectFixedCost,keep,,empty in the extract
+ed_visits,LaborDirectVariableCost,keep,,empty in the extract
+ed_visits,SuppliesCost,keep,,empty in the extract
+ed_visits,OtherDirectCost,keep,,empty in the extract
+ed_visits,OtherDirectFixedCost,keep,,empty in the extract
+ed_visits,OtherDirectVariableCost,keep,,empty in the extract
+ed_visits,UnderObservation,keep,,""
+ed_visits,LeftWithoutBeingSeen,keep,,""
+ed_visits,LeftAgainstMedicalAdvice,keep,,""
+ed_visits,BehavioralHealth,keep,,""
+ed_visits,BehavioralRestraintsUsed,keep,,empty in the extract
+ed_visits,NonBehavioralRestraintsUsed,keep,,empty in the extract
+ed_visits,UsedCheckInKiosk,keep,,""
+ed_visits,FacilityCriticalCareLevelOfService,keep,,""
+ed_visits,ProfessionalCriticalCareLevelOfService,keep,,""
+ed_visits,PresentedWithOpioidOverdose,keep,,""
+ed_visits,EdVisitPrimaryCareAreaKey,keep,,reference dimension key
+ed_visits,EdGenericDispo,keep,,""
+ed_visits,Count,keep,,""
+ed_visits,AdmissionProviderKey,remap,person_staff,provider or staff key
+ed_visits,AdmissionProviderDurableKey,remap,person_staff,provider or staff key
+ed_visits,AdmissionProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,_CreationInstant,drop,,audit field
+ed_visits,_LastUpdatedInstant,drop,,audit field
+ed_visits,_IsInferred,drop,,audit field
+ed_visits,_IsDeleted,drop,,audit field
+ed_visits,_PrimaryPackageToImpactRecord,drop,,audit field
+ed_visits,_MostRecentPackageToImpactRecord,drop,,audit field
+ed_visits,_NumberOfSources,drop,,audit field
+ed_visits,_HasSourceClarity,drop,,audit field
+ed_visits,_DeletedFromSourceClarity,drop,,audit field
+ed_visits,ChiefComplaintComboIdTypeId,keep,,""
+ed_visits,ChiefComplaintNumericId,keep,,""
+ed_visits,ChiefComplaintComboId,keep,,empty in the extract
+ed_visits,EdDiagnosisComboIdTypeId,keep,,""
+ed_visits,EdDiagnosisNumericId,keep,,""
+ed_visits,EdDiagnosisComboId,keep,,empty in the extract
+ed_visits,DispositionProviderDurableKey,remap,person_staff,provider or staff key
+ed_visits,DispositionProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+ed_visits,DepartureUTCDateKey,shift_datekey,,date shifted
+ed_visits,DepartureUTCTimeOfDayKey,keep,,time of day
+ed_visits,DepartureUTCInstant,shift_instant,,date shifted
+ed_visits,SelfArrivalAllowed,keep,,empty in the extract
+ed_visits,SelfArrivalType,keep,,""
+ed_visits,EdEncounterSource,keep,,""
+ed_visits,ArrivalUTCInstant,shift_instant,,date shifted
+ed_visits,ArrivalUTCDateKey,shift_datekey,,date shifted
+ed_visits,ArrivalUTCTimeOfDayKey,keep,,time of day
+ed_visits,RoomedUTCInstant,shift_instant,,date shifted
+ed_visits,InfusionChargingBatchFlag,keep,,""
+ed_visits,InfusionChargingBatchFailureReason,keep,,empty in the extract
+encounters,StudyID,keep,,study identifier
+encounters,EncounterKey,remap,encounter,patient-level key
+encounters,PatientKey,drop,,"patient key, StudyID replaces it"
+encounters,PatientDurableKey,drop,,"patient key, StudyID replaces it"
+encounters,PatientSourceDataDurableKey,drop,,"patient key, StudyID replaces it"
+encounters,PrimaryDiagnosisKey,keep,,reference dimension key
+encounters,ChiefComplaintComboKey,keep,,reference dimension key
+encounters,PrimaryProcedureKey,keep,,reference dimension key
+encounters,PrimaryProcedureDurableKey,keep,,reference dimension key
+encounters,BillingDrgKey,keep,,reference dimension key
+encounters,PrimaryCoverageKey,remap,coverage,coverage key
+encounters,AgeKey,keep,,reference dimension key
+encounters,DateKey,shift_datekey,,date shifted
+encounters,EndDateKey,shift_datekey,,date shifted
+encounters,AdmissionDateKey,shift_datekey,,date shifted
+encounters,DischargeDateKey,shift_datekey,,date shifted
+encounters,ProviderKey,remap,person_staff,provider or staff key
+encounters,ProviderDurableKey,remap,person_staff,provider or staff key
+encounters,ProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+encounters,AttendingProviderKey,remap,person_staff,provider or staff key
+encounters,AttendingProviderDurableKey,remap,person_staff,provider or staff key
+encounters,AttendingProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+encounters,OperatingProviderKey,remap,person_staff,provider or staff key
+encounters,OperatingProviderDurableKey,remap,person_staff,provider or staff key
+encounters,OperatingProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+encounters,AdmittingProviderKey,remap,person_staff,provider or staff key
+encounters,AdmittingProviderDurableKey,remap,person_staff,provider or staff key
+encounters,AdmittingProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+encounters,DischargeProviderKey,remap,person_staff,provider or staff key
+encounters,DischargeProviderDurableKey,remap,person_staff,provider or staff key
+encounters,DischargeProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+encounters,ReferringProviderKey,remap,person_staff,provider or staff key
+encounters,ReferringProviderDurableKey,remap,person_staff,provider or staff key
+encounters,ReferringProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+encounters,LevelOfServiceKey,keep,,reference dimension key
+encounters,LevelOfServiceDurableKey,keep,,reference dimension key
+encounters,DepartmentKey,keep,,reference dimension key
+encounters,PlaceOfServiceKey,keep,,reference dimension key
+encounters,SourceKey,keep,,reference dimension key
+encounters,SourceComboKey,keep,,reference dimension key
+encounters,BillingDrgType,keep,,""
+encounters,BillingDrgCode,keep,,"text, review"
+encounters,Type,keep,,"text, review"
+encounters,AdmissionTypeCode,keep,,""
+encounters,AdmissionType,keep,,""
+encounters,AdmissionSourceCode,keep,,""
+encounters,AdmissionSource,keep,,""
+encounters,DischargeDispositionCode,keep,,""
+encounters,DischargeDisposition,keep,,""
+encounters,DerivedAdmissionServiceType,keep,,""
+encounters,EncounterEpicCsn,drop,,identifier
+encounters,DerivedOutpatientVisitType,keep,,""
+encounters,DerivedOutpatientVisitSubType,keep,,"text, review"
+encounters,Date,shift_instant,,date shifted
+encounters,EndInstant,shift_instant,,date shifted
+encounters,AdmissionInstant,shift_instant,,date shifted
+encounters,DischargeInstant,shift_instant,,date shifted
+encounters,TotalCost,keep,,empty in the extract
+encounters,DirectCost,keep,,empty in the extract
+encounters,IndirectCost,keep,,empty in the extract
+encounters,FixedCost,keep,,empty in the extract
+encounters,VariableCost,keep,,empty in the extract
+encounters,DirectFixedCost,keep,,empty in the extract
+encounters,DirectVariableCost,keep,,empty in the extract
+encounters,IndirectFixedCost,keep,,empty in the extract
+encounters,IndirectVariableCost,keep,,empty in the extract
+encounters,LaborDirectCost,keep,,empty in the extract
+encounters,LaborDirectFixedCost,keep,,empty in the extract
+encounters,LaborDirectVariableCost,keep,,empty in the extract
+encounters,SuppliesCost,keep,,empty in the extract
+encounters,OtherDirectCost,keep,,empty in the extract
+encounters,OtherDirectFixedCost,keep,,empty in the extract
+encounters,OtherDirectVariableCost,keep,,empty in the extract
+encounters,VisitType,keep,,"text, review"
+encounters,DerivedEncounterStatus,keep,,""
+encounters,PatientClass,keep,,""
+encounters,ArrivalMeans,keep,,""
+encounters,IsDerivedFromBilling,keep,,""
+encounters,IsHospitalAdmission,keep,,""
+encounters,IsEdVisit,keep,,""
+encounters,IsOutpatientFaceToFaceVisit,keep,,""
+encounters,IsHospitalOutpatientVisit,keep,,""
+encounters,IsSkilledNursingFacilityVisit,keep,,""
+encounters,HasFollowingAdmission,keep,,""
+encounters,MarkedDoNotBillInsurance,keep,,""
+encounters,MarkedSelfPay,keep,,""
+encounters,Count,keep,,""
+encounters,_CreationInstant,drop,,audit field
+encounters,_LastUpdatedInstant,drop,,audit field
+encounters,_IsInferred,drop,,audit field
+encounters,_IsDeleted,drop,,audit field
+encounters,_PrimaryPackageToImpactRecord,drop,,audit field
+encounters,_MostRecentPackageToImpactRecord,drop,,audit field
+encounters,_NumberOfSources,drop,,audit field
+encounters,_HasSourceClarity,drop,,audit field
+encounters,_DeletedFromSourceClarity,drop,,audit field
+encounters,_HasSourceClaimBasedEvents,drop,,audit field
+encounters,_DeletedFromSourceClaimBasedEvents,drop,,audit field
+encounters,ChiefComplaintComboIdTypeId,keep,,""
+encounters,ChiefComplaintNumericId,keep,,""
+encounters,ChiefComplaintComboId,keep,,empty in the extract
+encounters,SourceComboIdTypeId,keep,,""
+encounters,SourceNumericId,keep,,empty in the extract
+encounters,SourceComboId,keep,,"text, review"
+encounters,_HasSourceCaboodle,drop,,audit field
+encounters,_DeletedFromSourceCaboodle,drop,,audit field
+encounters,TypeCategoryKey,keep,,reference dimension key
+encounters,ExternalType,keep,,empty in the extract
+encounters,ExternalTypeCategoryKey,keep,,reference dimension key
+encounters,Hl7Type,keep,,empty in the extract
+encounters,Hl7TypeCategoryKey,keep,,reference dimension key
+encounters,AdmissionTypeCategoryKey,keep,,reference dimension key
+encounters,MedicationListStatusInstant,shift_instant,,date shifted
+encounters,VisitTypeKey,keep,,reference dimension key
+encounters,PatientClassCategoryKey,keep,,reference dimension key
+encounters,MedicationListStatus,keep,,""
+encounters,MedicationListStatusCategoryKey,keep,,reference dimension key
+encounters,MedicationListStatusProviderDurableKey,remap,person_staff,provider or staff key
+encounters,MedicationListStatusProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+encounters,MedicationListStatusUserDurableKey,remap,person_staff,provider or staff key
+encounters,MedicationListStatusDateKey,shift_datekey,,date shifted
+encounters,PatientSelectedLocation,keep,,""
+encounters,PatientSelectedSublocation,keep,,""
+encounters,AuthorizationDateKey,shift_datekey,,date shifted
+encounters,AuthorizationStatus,keep,,""
+encounters,AuthorizationStatusAtEncounter,keep,,""
+encounters,StateOfAuthorization,keep,,""
+encounters,IsInpatientAdmission,keep,,""
+encounters,IsObservation,keep,,""
+encounters,PriorAuthorizationRequired,keep,,""
+encounters,AuthorizedOnTime,keep,,""
+encounters,IsVideoVisit,keep,,""
+encounters,IsSuccessfulVideoVisit,keep,,""
+encounters,VideoVisitFailureReason,keep,,""
+encounters,EncCreateUserID_X,remap,person_staff,staff user id
+encounters,AppointmentSchedulingMode,keep,,""
+encounters,AppointmentSchedulingDuration,keep,,""
+encounters,AuthorizationInstant,shift_instant,,date shifted
+encounters,AuthorizationLeadDays,keep,,""
+encounters,AttributedDepartmentKey,keep,,reference dimension key
+encounters,InMyChartActivationDenominator,keep,,""
+encounters,FinalProviderDurableKey,remap,person_staff,provider or staff key
+encounters,FinalProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+encounters,MyChartActivationDenominatorFinalDate,shift_date,,date shifted
+encounters,MyChartActivationDenominatorFinalDateKey,shift_datekey,,date shifted
+encounters,EarliestReceivedDateKey,shift_datekey,,date shifted
+encounters,IsImmediateClaimEligible,keep,,""
+encounters,BillingExchangeSourceOrganizationEpicId,drop,,identifier
+encounters,BasePatientClass,keep,,""
+flowsheets,StudyID,keep,,study identifier
+flowsheets,FlowsheetRowEpicId,keep,,""
+flowsheets,RowName,keep,,"text, review"
+flowsheets,RowDisplayName,keep,,"text, review"
+flowsheets,RowUnit,keep,,"text, review"
+flowsheets,RowValueType,keep,,""
+flowsheets,FlowsheetValueKey,remap,flowsheet_value,patient-level key
+flowsheets,PatientKey,drop,,"patient key, StudyID replaces it"
+flowsheets,PatientDurableKey,drop,,"patient key, StudyID replaces it"
+flowsheets,PatientSourceDataDurableKey,drop,,"patient key, StudyID replaces it"
+flowsheets,FlowsheetRowKey,keep,,reference dimension key
+flowsheets,FlowsheetTemplateKey,keep,,reference dimension key
+flowsheets,EncounterKey,remap,encounter,patient-level key
+flowsheets,DateKey,shift_datekey,,date shifted
+flowsheets,TimeOfDayKey,keep,,time of day
+flowsheets,TakenByEmployeeKey,remap,person_staff,provider or staff key
+flowsheets,TakenByEmployeeDurableKey,remap,person_staff,provider or staff key
+flowsheets,DocumentedByEmployeeKey,remap,person_staff,provider or staff key
+flowsheets,DocumentedByEmployeeDurableKey,remap,person_staff,provider or staff key
+flowsheets,CosignedByEmployeeKey,remap,person_staff,provider or staff key
+flowsheets,CosignedByEmployeeDurableKey,remap,person_staff,provider or staff key
+flowsheets,PortalAccountKey,remap,portal_account,account key
+flowsheets,PortalAccountDurableKey,remap,portal_account,account key
+flowsheets,SourceComboKey,keep,,reference dimension key
+flowsheets,Abnormal,keep,,""
+flowsheets,DocumentationSource,keep,,""
+flowsheets,ThirdPartySource,keep,,""
+flowsheets,PatientReportedStatus,keep,,""
+flowsheets,Value,blank_free_text_values,,kept only for listed RowValueType values
+flowsheets,NumericValue,keep,,""
+flowsheets,DateValue,shift_date,,date shifted
+flowsheets,TimeValue,keep,,"text, review"
+flowsheets,Occurrence,keep,,""
+flowsheets,Comment,drop,,free text
+flowsheets,FirstDocumentedInstant,shift_instant,,date shifted
+flowsheets,TakenInstant,shift_instant,,date shifted
+flowsheets,MinutesBetweenTakenAndFirstDoc,keep,,""
+flowsheets,Accepted,keep,,""
+flowsheets,FromDevice,keep,,""
+flowsheets,Significant,keep,,""
+flowsheets,LinkedToPatientEnteredFlowsheetEpisode,keep,,""
+flowsheets,Count,keep,,""
+flowsheets,_CreationInstant,drop,,audit field
+flowsheets,_LastUpdatedInstant,drop,,audit field
+flowsheets,_IsInferred,drop,,audit field
+flowsheets,_IsDeleted,drop,,audit field
+flowsheets,_PrimaryPackageToImpactRecord,drop,,audit field
+flowsheets,_MostRecentPackageToImpactRecord,drop,,audit field
+flowsheets,_NumberOfSources,drop,,audit field
+flowsheets,_HasSourceClarity,drop,,audit field
+flowsheets,_DeletedFromSourceClarity,drop,,audit field
+flowsheets,SourceComboIdTypeId,keep,,""
+flowsheets,SourceNumericId,keep,,empty in the extract
+flowsheets,SourceComboId,keep,,"text, review"
+flowsheets,SourceKey,keep,,reference dimension key
+flowsheets,FlowsheetValueCategoryKey,keep,,reference dimension key
+flowsheets,PumpDocumentationKey,remap,pump_documentation,patient-level key
+flowsheets,DocumentationMethod,keep,,""
+flowsheets,MacroEpicId,keep,,""
+flowsheets,FlowsheetRowEpicId_1,keep,,""
+flowsheets,LdaKey,remap,lda,patient-level key
+flowsheets,ReceivedInstant,shift_instant,,date shifted
+flowsheets,EstimatedActionsIfDocumentedManually,keep,,""
+flowsheets,FromVoice,keep,,""
+flowsheets,IsPatientEnteredFlowsheet,keep,,""
+flowsheets,Instant,shift_instant,,date shifted
+flowsheets,PatientLocationEventKey,remap,patient_location_event,patient-level key
+flowsheets,PatientDepartmentKey,keep,,reference dimension key
+flowsheets,EarliestReceivedDateKey,shift_datekey,,date shifted
+flowsheets,SpeechEnteredMethod,keep,,""
+flowsheets,ClientApplication,keep,,""
+hospital_admissions,StudyID,keep,,study identifier
+hospital_admissions,HospitalAdmissionKey,remap,hospital_admission,patient-level key
+hospital_admissions,PatientKey,drop,,"patient key, StudyID replaces it"
+hospital_admissions,PatientDurableKey,drop,,"patient key, StudyID replaces it"
+hospital_admissions,PatientSourceDataDurableKey,drop,,"patient key, StudyID replaces it"
+hospital_admissions,AgeKey,keep,,reference dimension key
+hospital_admissions,EncounterKey,remap,encounter,patient-level key
+hospital_admissions,AdmissionDateKey,shift_datekey,,date shifted
+hospital_admissions,AdmissionTimeOfDayKey,keep,,time of day
+hospital_admissions,InpatientAdmissionDateKey,shift_datekey,,date shifted
+hospital_admissions,InpatientAdmissionTimeOfDayKey,keep,,time of day
+hospital_admissions,DischargeDateKey,shift_datekey,,date shifted
+hospital_admissions,DischargeTimeOfDayKey,keep,,time of day
+hospital_admissions,AdmittingDepartmentKey,keep,,reference dimension key
+hospital_admissions,DepartmentKey,keep,,reference dimension key
+hospital_admissions,AdmittingProviderKey,remap,person_staff,provider or staff key
+hospital_admissions,AdmittingProviderDurableKey,remap,person_staff,provider or staff key
+hospital_admissions,AdmittingProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+hospital_admissions,DischargingProviderKey,remap,person_staff,provider or staff key
+hospital_admissions,DischargingProviderDurableKey,remap,person_staff,provider or staff key
+hospital_admissions,DischargingProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+hospital_admissions,FollowUpProviderKey,remap,person_staff,provider or staff key
+hospital_admissions,FollowUpProviderDurableKey,remap,person_staff,provider or staff key
+hospital_admissions,FollowUpProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+hospital_admissions,PresentOnAdmissionDiagnosisComboKey,keep,,reference dimension key
+hospital_admissions,HospitalAcquiredDiagnosisComboKey,keep,,reference dimension key
+hospital_admissions,DischargeDiagnosisComboKey,keep,,reference dimension key
+hospital_admissions,PrincipalProblemKey,drop,,"unclassified key, review"
+hospital_admissions,PrimaryCodedDiagnosisKey,keep,,reference dimension key
+hospital_admissions,PrimaryCodedProcedureKey,keep,,reference dimension key
+hospital_admissions,DrgKey,keep,,reference dimension key
+hospital_admissions,GuarantorKey,remap,guarantor,account key
+hospital_admissions,GuarantorDurableKey,remap,guarantor,account key
+hospital_admissions,PrimaryCoverageKey,remap,coverage,coverage key
+hospital_admissions,EncounterType,keep,,""
+hospital_admissions,FinancialClass,keep,,""
+hospital_admissions,PatientClass,keep,,""
+hospital_admissions,HospitalService,keep,,""
+hospital_admissions,AdmissionConfirmationStatus,keep,,""
+hospital_admissions,AdmissionType,keep,,""
+hospital_admissions,AdmissionSource,keep,,""
+hospital_admissions,DischargeDisposition,keep,,""
+hospital_admissions,EncounterEpicCsn,drop,,identifier
+hospital_admissions,HospitalAccountEpicId,drop,,identifier
+hospital_admissions,PrimaryProfessionalAccountEpicId,drop,,identifier
+hospital_admissions,LengthOfStayInDays,keep,,""
+hospital_admissions,InpatientLengthOfStayInDays,keep,,""
+hospital_admissions,ExpectedInpatientLengthOfStayInDays,keep,,""
+hospital_admissions,TotalCost,keep,,empty in the extract
+hospital_admissions,DirectCost,keep,,empty in the extract
+hospital_admissions,IndirectCost,keep,,empty in the extract
+hospital_admissions,FixedCost,keep,,empty in the extract
+hospital_admissions,VariableCost,keep,,empty in the extract
+hospital_admissions,DirectFixedCost,keep,,empty in the extract
+hospital_admissions,DirectVariableCost,keep,,empty in the extract
+hospital_admissions,IndirectFixedCost,keep,,empty in the extract
+hospital_admissions,IndirectVariableCost,keep,,empty in the extract
+hospital_admissions,LaborDirectCost,keep,,empty in the extract
+hospital_admissions,LaborDirectFixedCost,keep,,empty in the extract
+hospital_admissions,LaborDirectVariableCost,keep,,empty in the extract
+hospital_admissions,SuppliesCost,keep,,empty in the extract
+hospital_admissions,OtherDirectCost,keep,,empty in the extract
+hospital_admissions,OtherDirectFixedCost,keep,,empty in the extract
+hospital_admissions,OtherDirectVariableCost,keep,,empty in the extract
+hospital_admissions,Count,keep,,""
+hospital_admissions,_CreationInstant,drop,,audit field
+hospital_admissions,_LastUpdatedInstant,drop,,audit field
+hospital_admissions,_IsInferred,drop,,audit field
+hospital_admissions,_IsDeleted,drop,,audit field
+hospital_admissions,_PrimaryPackageToImpactRecord,drop,,audit field
+hospital_admissions,_MostRecentPackageToImpactRecord,drop,,audit field
+hospital_admissions,_NumberOfSources,drop,,audit field
+hospital_admissions,_HasSourceClarity,drop,,audit field
+hospital_admissions,_DeletedFromSourceClarity,drop,,audit field
+hospital_admissions,DischargeDiagnosisComboIdTypeId,keep,,""
+hospital_admissions,DischargeDiagnosisNumericId,keep,,""
+hospital_admissions,DischargeDiagnosisComboId,keep,,empty in the extract
+hospital_admissions,PresentOnAdmissionDiagnosisComboIdTypeId,keep,,""
+hospital_admissions,PresentOnAdmissionDiagnosisNumericId,keep,,""
+hospital_admissions,PresentOnAdmissionDiagnosisComboId,keep,,empty in the extract
+hospital_admissions,HospitalAcquiredDiagnosisComboIdTypeId,keep,,""
+hospital_admissions,HospitalAcquiredDiagnosisNumericId,keep,,""
+hospital_admissions,HospitalAcquiredDiagnosisComboId,keep,,empty in the extract
+hospital_admissions,DischargeInstant,shift_instant,,date shifted
+hospital_admissions,DischargeOrderDateKey,shift_datekey,,date shifted
+hospital_admissions,DischargeOrderTimeOfDayKey,keep,,time of day
+hospital_admissions,DischargeOrderInstant,shift_instant,,date shifted
+hospital_admissions,AdmissionBedRequestKey,remap,bed_request,patient-level key
+hospital_admissions,AdmissionEmployeeDurableKey,remap,person_staff,provider or staff key
+hospital_admissions,DischargeEmployeeDurableKey,remap,person_staff,provider or staff key
+hospital_admissions,MsDrgKey,keep,,reference dimension key
+hospital_admissions,InpatientAdmissionPatientClass,keep,,""
+hospital_admissions,DischargePatientClass,keep,,""
+hospital_admissions,AdmissionOrigin,keep,,""
+hospital_admissions,LaborStatus,keep,,""
+hospital_admissions,MsDrgGeometricMeanLengthOfStayInDays,keep,,""
+hospital_admissions,InpatientAdmissionInstant,shift_instant,,date shifted
+hospital_admissions,IsObservation,keep,,""
+hospital_admissions,CosmosMedianLengthOfStay,keep,,""
+hospital_admissions,HoursBeforeDischargeEDDWasCorrect,keep,,""
+hospital_admissions,EDDSetWithin24HoursOfAdmissionEvent,keep,,""
+hospital_admissions,EDDSetWithin24HoursOfFirstInpatientInEvent,keep,,""
+hospital_admissions,EDDAccurateOneCalendarDayBeforeDischarge,keep,,""
+hospital_admissions,EDDAccurateTwoCalendarDaysBeforeDischarge,keep,,""
+hospital_admissions,MedReadyInstant,shift_instant,,date shifted
+hospital_admissions,MedReadySource,keep,,""
+hospital_admissions,EncounterVerificationEmployeeDurableKey,remap,person_staff,provider or staff key
+hospital_admissions,FirstObservationInstant,shift_instant,,date shifted
+hospital_admissions,LastEDDWasSetAutomatically,keep,,""
+hospital_admissions,DischargeEntryInstant,shift_instant,,date shifted
+hospital_admissions,DischargeEntryTimeOfDayKey,keep,,time of day
+hospital_admissions,DischargeEntryDateKey,shift_datekey,,date shifted
+hospital_admissions,MappedDischargeDisposition,keep,,""
+labs,StudyID,keep,,study identifier
+labs,ComponentName,keep,,"text, review"
+labs,ComponentCommonName,keep,,"text, review"
+labs,LoincCode,keep,,"text, review"
+labs,LoincName,keep,,"text, review"
+labs,DefaultUnit,keep,,"text, review"
+labs,LabComponentResultKey,remap,lab_result,patient-level key
+labs,LabComponentKey,keep,,reference dimension key
+labs,ResultingLabKey,keep,,reference dimension key
+labs,ResultingLabDurableKey,keep,,reference dimension key
+labs,ProcedureKey,keep,,reference dimension key
+labs,ProcedureDurableKey,keep,,reference dimension key
+labs,PatientKey,drop,,"patient key, StudyID replaces it"
+labs,PatientDurableKey,drop,,"patient key, StudyID replaces it"
+labs,PatientSourceDataDurableKey,drop,,"patient key, StudyID replaces it"
+labs,LabTestingSourceKey,keep,,reference dimension key
+labs,EncounterKey,remap,encounter,patient-level key
+labs,AuthorizedByProviderKey,remap,person_staff,provider or staff key
+labs,AuthorizedByProviderDurableKey,remap,person_staff,provider or staff key
+labs,AuthorizedByProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+labs,ResultDateKey,shift_datekey,,date shifted
+labs,ResultTimeOfDayKey,keep,,time of day
+labs,OrderedDateKey,shift_datekey,,date shifted
+labs,OrderedTimeOfDayKey,keep,,time of day
+labs,PrioritizedDateKey,shift_datekey,,date shifted
+labs,CollectionDateKey,shift_datekey,,date shifted
+labs,CollectionTimeOfDayKey,keep,,time of day
+labs,LoincKey,keep,,reference dimension key
+labs,LabOrderEpicId,drop,,identifier
+labs,Flag,keep,,""
+labs,ResultStatus,keep,,""
+labs,Value,keep,,"text, review"
+labs,NumericValue,keep,,""
+labs,Unit,keep,,"text, review"
+labs,ReferenceValues,keep,,"text, review"
+labs,CollectionInstant,shift_instant,,date shifted
+labs,ResultInstant,shift_instant,,date shifted
+labs,Abnormal,keep,,""
+labs,IsFinal,keep,,""
+labs,IsBlankOrUnsuccessfulAttempt,keep,,""
+labs,IsFromOutsideSource,keep,,""
+labs,Count,keep,,""
+labs,_CreationInstant,drop,,audit field
+labs,_LastUpdatedInstant,drop,,audit field
+labs,_IsInferred,drop,,audit field
+labs,_IsDeleted,drop,,audit field
+labs,_PrimaryPackageToImpactRecord,drop,,audit field
+labs,_MostRecentPackageToImpactRecord,drop,,audit field
+labs,_NumberOfSources,drop,,audit field
+labs,_HasSourceClarity,drop,,audit field
+labs,_DeletedFromSourceClarity,drop,,audit field
+labs,SourceKey,keep,,reference dimension key
+labs,SourceComboKey,keep,,reference dimension key
+labs,SourceComboIdTypeId,keep,,""
+labs,SourceNumericId,keep,,empty in the extract
+labs,SourceComboId,keep,,"text, review"
+labs,_HasSourceCaboodle,drop,,audit field
+labs,_DeletedFromSourceCaboodle,drop,,audit field
+labs,LabOrganismKey,keep,,reference dimension key
+labs,IsReportable,keep,,""
+labs,ExternalLoincConceptKey,keep,,reference dimension key
+labs,ExternalProcedureConceptKey,keep,,reference dimension key
+labs,IsAccredited,keep,,""
+labs,ExternalOrganizationKey,drop,,"unclassified key, review"
+labs,OrderEncounterKey,remap,encounter,patient-level key
+labs,EarliestReceivedDateKey,shift_datekey,,date shifted
+medication_administrations,StudyID,keep,,study identifier
+medication_administrations,MedicationName,keep,,"text, review"
+medication_administrations,GenericName,keep,,"text, review"
+medication_administrations,TherapeuticClass,keep,,""
+medication_administrations,PharmaceuticalClass,keep,,"text, review"
+medication_administrations,PharmaceuticalSubclass,keep,,"text, review"
+medication_administrations,SimpleGenericName,keep,,"text, review"
+medication_administrations,Strength,keep,,"text, review"
+medication_administrations,Form,keep,,"text, review"
+medication_administrations,MedRoute,keep,,""
+medication_administrations,MedicationAdministrationKey,remap,medication_administration,patient-level key
+medication_administrations,PatientKey,drop,,"patient key, StudyID replaces it"
+medication_administrations,PatientDurableKey,drop,,"patient key, StudyID replaces it"
+medication_administrations,PatientSourceDataDurableKey,drop,,"patient key, StudyID replaces it"
+medication_administrations,AgeKey,keep,,reference dimension key
+medication_administrations,EncounterKey,remap,encounter,patient-level key
+medication_administrations,MedicationOrderKey,remap,medication_order,patient-level key
+medication_administrations,PrimaryComponentKey,keep,,reference dimension key
+medication_administrations,SecondComponentKey,keep,,reference dimension key
+medication_administrations,ThirdComponentKey,keep,,reference dimension key
+medication_administrations,FourthComponentKey,keep,,reference dimension key
+medication_administrations,FifthComponentKey,keep,,reference dimension key
+medication_administrations,AdministrationDepartmentKey,keep,,reference dimension key
+medication_administrations,ScheduledAdministrationDateKey,shift_datekey,,date shifted
+medication_administrations,ScheduledAdministrationTimeOfDayKey,keep,,time of day
+medication_administrations,AdministrationDateKey,shift_datekey,,date shifted
+medication_administrations,AdministrationTimeOfDayKey,keep,,time of day
+medication_administrations,AdministeringEmployeeKey,remap,person_staff,provider or staff key
+medication_administrations,AdministeringEmployeeDurableKey,remap,person_staff,provider or staff key
+medication_administrations,MedicationKey,keep,,reference dimension key
+medication_administrations,PainReassessmentFlowsheetRowKey,keep,,reference dimension key
+medication_administrations,AdministrationAction,keep,,""
+medication_administrations,PrimaryComponentNdc,keep,,"text, review"
+medication_administrations,SecondComponentNdc,keep,,"text, review"
+medication_administrations,ThirdComponentNdc,keep,,"text, review"
+medication_administrations,FourthComponentNdc,keep,,"text, review"
+medication_administrations,FifthComponentNdc,keep,,"text, review"
+medication_administrations,TimelyThresholdMinutes,keep,,""
+medication_administrations,MinutesLate,keep,,""
+medication_administrations,MinutesEarly,keep,,""
+medication_administrations,MinutesFromScheduledTime,keep,,""
+medication_administrations,TimelyReassessmentWindowStartMinutes,keep,,""
+medication_administrations,TimelyReassessmentWindowEndMinutes,keep,,""
+medication_administrations,MinutesFromAdministrationToPainReassessment,keep,,""
+medication_administrations,ScheduledAdministrationInstant,shift_instant,,date shifted
+medication_administrations,AdministrationInstant,shift_instant,,date shifted
+medication_administrations,EncounterAdmissionInstant,shift_instant,,date shifted
+medication_administrations,PainReassessmentTakenInstant,shift_instant,,date shifted
+medication_administrations,EncounterEpicCsn,drop,,identifier
+medication_administrations,ChargeAmount,keep,,""
+medication_administrations,MedicationRepresentativeCost,keep,,""
+medication_administrations,MedicationAcquisitionCost,keep,,""
+medication_administrations,MedicationOrderEpicId,drop,,identifier
+medication_administrations,MedicationScanRequiredAtAdministration,keep,,""
+medication_administrations,MedicationScannedAtAdministration,keep,,""
+medication_administrations,PatientScanRequiredAtAdministration,keep,,""
+medication_administrations,PatientScannedAtAdministration,keep,,""
+medication_administrations,IsPrn,keep,,""
+medication_administrations,IsPainReassessmentRequired,keep,,""
+medication_administrations,IsPainReassessmentTimely,keep,,""
+medication_administrations,IsPainReassessmentAccepted,keep,,""
+medication_administrations,SpecialMedicationType,keep,,""
+medication_administrations,TimelyAdministrationStatus,keep,,""
+medication_administrations,AdministrationRoute,keep,,"text, review"
+medication_administrations,PatientUnscannedReason,keep,,""
+medication_administrations,ProductUnscannedReason,keep,,""
+medication_administrations,AdministrationType,keep,,""
+medication_administrations,PainReassessmentFlowsheetValue,keep,,""
+medication_administrations,Dose,keep,,"text, review"
+medication_administrations,DoseUnit,keep,,"text, review"
+medication_administrations,EquivalentMilligramsOfMorphineAdministered,keep,,""
+medication_administrations,EquivalentMilligramsOfMorphineEndInstant,shift_instant,,date shifted
+medication_administrations,Count,keep,,""
+medication_administrations,_CreationInstant,drop,,audit field
+medication_administrations,_LastUpdatedInstant,drop,,audit field
+medication_administrations,_IsInferred,drop,,audit field
+medication_administrations,_IsDeleted,drop,,audit field
+medication_administrations,_PrimaryPackageToImpactRecord,drop,,audit field
+medication_administrations,_MostRecentPackageToImpactRecord,drop,,audit field
+medication_administrations,_NumberOfSources,drop,,audit field
+medication_administrations,_HasSourceClarity,drop,,audit field
+medication_administrations,_DeletedFromSourceClarity,drop,,audit field
+medication_administrations,AdsOverride,keep,,""
+medication_administrations,ClientType,keep,,""
+medication_administrations,AdministeredBeforeVerification,keep,,""
+medication_administrations,CupScannedAtAdministration,keep,,""
+medication_administrations,CupScanRequiredAtAdministration,keep,,""
+medication_administrations,CupIdentifier,drop,,"identifier-like name, review"
+medication_administrations,SavedTime_X,shift_instant,,date shifted
+medication_administrations,PatientSpecificPackageScanRequiredAtAdmin,keep,,""
+medication_administrations,PatientSpecificPackageScannedAtAdministration,keep,,""
+medication_administrations,PatientSpecificPackageNotScannedReason,keep,,""
+medication_administrations,PatientSpecificPackageIdentifier,drop,,"identifier-like name, review"
+medication_administrations,AnesthesiaAdministrationWasScanned,keep,,""
+medication_administrations,MedicationComponentComboKey,keep,,reference dimension key
+medication_administrations,MedicationComponentComboIdTypeId,keep,,""
+medication_administrations,MedicationComponentNumericId,keep,,""
+medication_administrations,MedicationComponentComboId,keep,,empty in the extract
+medication_administrations,CustomAdministrationActionInfoKey,drop,,"unclassified key, review"
+medication_administrations,ActionIsMedAdministration,keep,,""
+medication_administrations,IsDualSigned,keep,,""
+medication_administrations,Rate,keep,,""
+medication_administrations,Concentration,keep,,empty in the extract
+medication_administrations,ConcentrationUnit,keep,,empty in the extract
+medication_administrations,Duration,keep,,""
+medication_administrations,DurationUnit,keep,,""
+medication_administrations,EquivalentMorphineDose,keep,,""
+medication_administrations,EquivalentMorphineDosePerHourRate,keep,,""
+medication_administrations,IsCupAdministration,keep,,""
+medication_administrations,IsPatientSpecificPackageAdministration,keep,,""
+medication_orders,StudyID,keep,,study identifier
+medication_orders,MedicationName,keep,,"text, review"
+medication_orders,GenericName,keep,,"text, review"
+medication_orders,TherapeuticClass,keep,,""
+medication_orders,PharmaceuticalClass,keep,,"text, review"
+medication_orders,PharmaceuticalSubclass,keep,,"text, review"
+medication_orders,SimpleGenericName,keep,,"text, review"
+medication_orders,Strength,keep,,"text, review"
+medication_orders,Form,keep,,"text, review"
+medication_orders,MedRoute,keep,,""
+medication_orders,MedicationOrderKey,remap,medication_order,patient-level key
+medication_orders,PatientKey,drop,,"patient key, StudyID replaces it"
+medication_orders,PatientDurableKey,drop,,"patient key, StudyID replaces it"
+medication_orders,PatientSourceDataDurableKey,drop,,"patient key, StudyID replaces it"
+medication_orders,EncounterKey,remap,encounter,patient-level key
+medication_orders,DepartmentKey,keep,,reference dimension key
+medication_orders,PharmacyKey,keep,,reference dimension key
+medication_orders,MedicationKey,keep,,reference dimension key
+medication_orders,MedicationComponentComboKey,keep,,reference dimension key
+medication_orders,AssociatedDiagnosisComboKey,keep,,reference dimension key
+medication_orders,OrderedByEmployeeKey,remap,person_staff,provider or staff key
+medication_orders,OrderedByEmployeeDurableKey,remap,person_staff,provider or staff key
+medication_orders,OrderedByProviderKey,remap,person_staff,provider or staff key
+medication_orders,OrderedByProviderDurableKey,remap,person_staff,provider or staff key
+medication_orders,OrderedByProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+medication_orders,AuthorizedByProviderKey,remap,person_staff,provider or staff key
+medication_orders,AuthorizedByProviderDurableKey,remap,person_staff,provider or staff key
+medication_orders,AuthorizedByProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+medication_orders,FirstVerificationEmployeeKey,remap,person_staff,provider or staff key
+medication_orders,FirstVerificationEmployeeDurableKey,remap,person_staff,provider or staff key
+medication_orders,SecondVerificationEmployeeKey,remap,person_staff,provider or staff key
+medication_orders,SecondVerificationEmployeeDurableKey,remap,person_staff,provider or staff key
+medication_orders,FinalVerificationEmployeeKey,remap,person_staff,provider or staff key
+medication_orders,FinalVerificationEmployeeDurableKey,remap,person_staff,provider or staff key
+medication_orders,OrderedDateKey,shift_datekey,,date shifted
+medication_orders,OrderedTimeOfDayKey,keep,,time of day
+medication_orders,PrescriptionWrittenDateKey,shift_datekey,,date shifted
+medication_orders,ReleaseDateKey,shift_datekey,,date shifted
+medication_orders,ReleaseTimeOfDayKey,keep,,time of day
+medication_orders,StartDateKey,shift_datekey,,date shifted
+medication_orders,StartTimeOfDayKey,keep,,time of day
+medication_orders,FinalVerificationDateKey,shift_datekey,,date shifted
+medication_orders,FinalVerificationTimeOfDayKey,keep,,time of day
+medication_orders,EndDateKey,shift_datekey,,date shifted
+medication_orders,EndTimeOfDayKey,keep,,time of day
+medication_orders,OrderName,keep,,"text, review"
+medication_orders,Frequency,keep,,"text, review"
+medication_orders,Route,keep,,"text, review"
+medication_orders,QuantityUnit,keep,,""
+medication_orders,DoseUnit,keep,,"text, review"
+medication_orders,CalculatedDoseUnit,keep,,""
+medication_orders,Class,keep,,""
+medication_orders,Mode,keep,,""
+medication_orders,OrderPriority,keep,,""
+medication_orders,OriginCode,keep,,""
+medication_orders,Source,keep,,""
+medication_orders,SetSource,keep,,"text, review"
+medication_orders,PreferenceList,keep,,"text, review"
+medication_orders,FirstPrnReason,keep,,"text, review"
+medication_orders,NonFormularyExceptionReason,keep,,""
+medication_orders,OrderedUtcInstant,shift_instant,,date shifted
+medication_orders,SecondPrnReason,keep,,"text, review"
+medication_orders,ThirdPrnReason,keep,,""
+medication_orders,FourthPrnReason,keep,,""
+medication_orders,FifthPrnReason,keep,,""
+medication_orders,SixthPrnReason,keep,,""
+medication_orders,DiscontinueReason,keep,,""
+medication_orders,FirstIndicationForUse,keep,,""
+medication_orders,SecondIndicationForUse,keep,,""
+medication_orders,ThirdIndicationForUse,keep,,empty in the extract
+medication_orders,FourthIndicationForUse,keep,,empty in the extract
+medication_orders,FifthIndicationForUse,keep,,empty in the extract
+medication_orders,SixthIndicationForUse,keep,,empty in the extract
+medication_orders,DurationKey,keep,,reference dimension key
+medication_orders,MedicationOrderEpicId,drop,,identifier
+medication_orders,OrderSetEpicId,keep,,""
+medication_orders,OrderedInstant,shift_instant,,date shifted
+medication_orders,ReleaseInstant,shift_instant,,date shifted
+medication_orders,FirstVerificationInstant,shift_instant,,date shifted
+medication_orders,SecondVerificationInstant,shift_instant,,date shifted
+medication_orders,FinalVerificationInstant,shift_instant,,date shifted
+medication_orders,FinalVerificationOutcome,keep,,""
+medication_orders,MinutesToFirstDue,keep,,""
+medication_orders,MinutesToManualFinalVerification,keep,,""
+medication_orders,Quantity,keep,,""
+medication_orders,MinimumDose,keep,,""
+medication_orders,MaximumDose,keep,,""
+medication_orders,CalculatedMinimumDose,keep,,""
+medication_orders,CalculatedMaximumDose,keep,,""
+medication_orders,NumberOfDoses,keep,,""
+medication_orders,RefillsWritten,keep,,""
+medication_orders,RefillsRemaining,keep,,""
+medication_orders,DaysSupply,keep,,""
+medication_orders,TotalDaysSupply,keep,,""
+medication_orders,Sig,keep,,"text, review"
+medication_orders,MorphineEquivalentDailyDosage,keep,,""
+medication_orders,PainAgreement,keep,,""
+medication_orders,Cpoe,keep,,""
+medication_orders,DispenseAsWritten,keep,,""
+medication_orders,OrderedAsNonFormulary,keep,,""
+medication_orders,VerifiedAsNonFormulary,keep,,""
+medication_orders,AutomaticallyVerified,keep,,""
+medication_orders,PharmacyInterventionPriorToVerify,keep,,""
+medication_orders,ReorderedFromPrescription,keep,,""
+medication_orders,Verbal,keep,,""
+medication_orders,RequiresCosign,keep,,""
+medication_orders,Cosigned,keep,,""
+medication_orders,VerbalSigned,keep,,""
+medication_orders,Protocol,keep,,""
+medication_orders,HighPriority,keep,,""
+medication_orders,Prn,keep,,""
+medication_orders,IsOutpatientMode,keep,,""
+medication_orders,AdsOverride,keep,,""
+medication_orders,NonClinicalOverride,keep,,""
+medication_orders,Count,keep,,""
+medication_orders,_CreationInstant,drop,,audit field
+medication_orders,_LastUpdatedInstant,drop,,audit field
+medication_orders,_IsInferred,drop,,audit field
+medication_orders,_IsDeleted,drop,,audit field
+medication_orders,_PrimaryPackageToImpactRecord,drop,,audit field
+medication_orders,_MostRecentPackageToImpactRecord,drop,,audit field
+medication_orders,_NumberOfSources,drop,,audit field
+medication_orders,_HasSourceClarity,drop,,audit field
+medication_orders,_DeletedFromSourceClarity,drop,,audit field
+medication_orders,AssociatedDiagnosisComboIdTypeId,keep,,""
+medication_orders,AssociatedDiagnosisNumericId,keep,,""
+medication_orders,AssociatedDiagnosisComboId,keep,,empty in the extract
+medication_orders,MedicationComponentComboIdTypeId,keep,,""
+medication_orders,MedicationComponentNumericId,keep,,""
+medication_orders,MedicationComponentComboId,keep,,empty in the extract
+medication_orders,InterfaceOrder,keep,,""
+medication_orders,SentToPharmacyKey,keep,,reference dimension key
+medication_orders,SupervisedByProviderDurableKey,remap,person_staff,provider or staff key
+medication_orders,SupervisedByProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+medication_orders,ExpirationDateKey,shift_datekey,,date shifted
+medication_orders,SerialNumber,drop,,"identifier-like name, review"
+medication_orders,PrescriptionComments,drop,,free text
+medication_orders,SmartGroupKey,drop,,"unclassified key, review"
+medication_orders,OrdersetKey,keep,,reference dimension key
+medication_orders,MedicationOrderTemplateKey,keep,,reference dimension key
+medication_orders,OriginalVersionTemplateKey,drop,,"unclassified key, review"
+medication_orders,OrdersetSession,keep,,""
+medication_orders,OrderedFromUserOrderSet,keep,,""
+medication_orders,OriginalOrderProviderDurableKey,remap,person_staff,provider or staff key
+medication_orders,OriginalOrderProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+medication_orders,OriginalAuthorizingProviderDurableKey,remap,person_staff,provider or staff key
+medication_orders,OriginalAuthorizingProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+medication_orders,VerbalOrderMode,keep,,""
+medication_orders,Type,keep,,""
+medication_orders,PathwayInstanceSmartGroupKey,drop,,"unclassified key, review"
+medication_orders,EPrescribingDestination,keep,,""
+medication_orders,ProvisionalVerificationEmployeeDurableKey,remap,person_staff,provider or staff key
+medication_orders,ProvisionalVerificationDateKey,shift_datekey,,date shifted
+medication_orders,ProvisionalVerificationTimeOfDayKey,keep,,time of day
+medication_orders,ProvisionalVerificationInstant,shift_instant,,date shifted
+medication_orders,ProvisionalVerifyComment,drop,,free text
+medication_orders,ProvisionallyVerified,keep,,""
+medication_orders,ProvisionalVerificationReverted,keep,,""
+medication_orders,ChangesMadeInProvisionalVerify,keep,,""
+medication_orders,ChangesMadeInPharmacistVerify,keep,,""
+medication_orders,IsPending,keep,,""
+medication_orders,IsControlledSubstance,keep,,""
+medication_orders,PhaseOfCare,keep,,""
+medication_orders,DiscontinuedLocalDateKey,shift_datekey,,date shifted
+medication_orders,DiscontinuedLocalTimeOfDayKey,keep,,time of day
+medication_orders,DiscontinuedUtcDateKey,shift_datekey,,date shifted
+medication_orders,DiscontinuedUtcTimeOfDayKey,keep,,time of day
+medication_orders,AnesthesiaOrderWasScanned,keep,,""
+medication_orders,OneStepMed,keep,,""
+procedures_coded,StudyID,keep,,study identifier
+procedures_coded,ProcedureName,keep,,"text, review"
+procedures_coded,ProcedureCategory,keep,,"text, review"
+procedures_coded,ProcedureEventKey,remap,procedure_event,patient-level key
+procedures_coded,ProcedureKey,keep,,reference dimension key
+procedures_coded,ProcedureDurableKey,keep,,reference dimension key
+procedures_coded,PatientKey,drop,,"patient key, StudyID replaces it"
+procedures_coded,PatientDurableKey,drop,,"patient key, StudyID replaces it"
+procedures_coded,PatientSourceDataDurableKey,drop,,"patient key, StudyID replaces it"
+procedures_coded,AgeAtProcedureDateKey,shift_datekey,,date shifted
+procedures_coded,EncounterKey,remap,encounter,patient-level key
+procedures_coded,ProcedureStartDateKey,shift_datekey,,date shifted
+procedures_coded,ProcedureStartTimeOfDayKey,keep,,time of day
+procedures_coded,ProcedureEndDateKey,shift_datekey,,date shifted
+procedures_coded,ProcedureEndTimeOfDayKey,keep,,time of day
+procedures_coded,PerformingProviderKey,remap,person_staff,provider or staff key
+procedures_coded,PerformingProviderDurableKey,remap,person_staff,provider or staff key
+procedures_coded,PerformingProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+procedures_coded,AnesthesiaProviderKey,remap,person_staff,provider or staff key
+procedures_coded,AnesthesiaProviderDurableKey,remap,person_staff,provider or staff key
+procedures_coded,AnesthesiaProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+procedures_coded,ReferringProviderKey,remap,person_staff,provider or staff key
+procedures_coded,ReferringProviderDurableKey,remap,person_staff,provider or staff key
+procedures_coded,ReferringProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+procedures_coded,SourceKey,keep,,reference dimension key
+procedures_coded,SourceComboKey,keep,,reference dimension key
+procedures_coded,Type,keep,,""
+procedures_coded,FirstModifier,keep,,"text, review"
+procedures_coded,SecondModifier,keep,,"text, review"
+procedures_coded,ThirdModifier,keep,,"text, review"
+procedures_coded,FourthModifier,keep,,""
+procedures_coded,ProcedureCodeSet,keep,,""
+procedures_coded,ProcedureCode,keep,,"text, review"
+procedures_coded,Quantity,keep,,""
+procedures_coded,ProcedureStartInstant,shift_instant,,date shifted
+procedures_coded,ProcedureEndInstant,shift_instant,,date shifted
+procedures_coded,IsUnsuccessfulAttempt,keep,,""
+procedures_coded,IsOrderFromOutsideSource,keep,,""
+procedures_coded,Count,keep,,""
+procedures_coded,_CreationInstant,drop,,audit field
+procedures_coded,_LastUpdatedInstant,drop,,audit field
+procedures_coded,_IsInferred,drop,,audit field
+procedures_coded,_IsDeleted,drop,,audit field
+procedures_coded,_PrimaryPackageToImpactRecord,drop,,audit field
+procedures_coded,_MostRecentPackageToImpactRecord,drop,,audit field
+procedures_coded,_NumberOfSources,drop,,audit field
+procedures_coded,_HasSourceClarity,drop,,audit field
+procedures_coded,_DeletedFromSourceClarity,drop,,audit field
+procedures_coded,_HasSourceClaimBasedEvents,drop,,audit field
+procedures_coded,_DeletedFromSourceClaimBasedEvents,drop,,audit field
+procedures_coded,SourceComboIdTypeId,keep,,""
+procedures_coded,SourceNumericId,keep,,""
+procedures_coded,SourceComboId,keep,,"text, review"
+procedures_coded,EarliestDocumentedDateKey,shift_datekey,,date shifted
+procedures_coded,_HasSourceCaboodle,drop,,audit field
+procedures_coded,_DeletedFromSourceCaboodle,drop,,audit field
+procedures_coded,ExternalProcedureConceptKey,keep,,reference dimension key
+procedures_coded,FirstModifierConceptKey,keep,,reference dimension key
+procedures_coded,IsEpicLabOrder,keep,,""
+procedures_coded,BillingProviderDurableKey,remap,person_staff,provider or staff key
+procedures_coded,BillingProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+procedures_coded,FirstModifierCategoryKey,keep,,reference dimension key
+procedures_coded,EarliestReceivedDateKey,shift_datekey,,date shifted
+procedures_coded,TerminologyComboKey,keep,,reference dimension key
+procedures_coded,TerminologyComboIdTypeId,keep,,empty in the extract
+procedures_coded,TerminologyNumericId,keep,,empty in the extract
+procedures_coded,TerminologyComboId,keep,,empty in the extract
+procedures_coded,ExtSupplementalEncounterKey,remap,encounter,patient-level key
+procedures_coded,IsAbstractedMedicalRecord,keep,,""
+procedures_coded,UseAsAdminStartDateKey,shift_datekey,,date shifted
+surgical_cases,StudyID,keep,,study identifier
+surgical_cases,SurgicalCaseKey,remap,surgical_case,patient-level key
+surgical_cases,SurgicalCaseEpicId,drop,,identifier
+surgical_cases,PatientKey,drop,,"patient key, StudyID replaces it"
+surgical_cases,PatientDurableKey,drop,,"patient key, StudyID replaces it"
+surgical_cases,PatientSourceDataDurableKey,drop,,"patient key, StudyID replaces it"
+surgical_cases,AgeKey,keep,,reference dimension key
+surgical_cases,PrimarySurgeonKey,remap,person_staff,provider or staff key
+surgical_cases,PrimarySurgeonDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimarySurgeonSourceDataDurableKey,remap,person_staff,provider or staff key
+surgical_cases,ResponsibleAnesthesiologistKey,remap,person_staff,provider or staff key
+surgical_cases,ResponsibleAnesthesiologistDurableKey,remap,person_staff,provider or staff key
+surgical_cases,ResponsibleAnesthesiologistSourceDataDurableKey,remap,person_staff,provider or staff key
+surgical_cases,FirstAnesthesiaProviderKey,remap,person_staff,provider or staff key
+surgical_cases,FirstAnesthesiaProviderDurableKey,remap,person_staff,provider or staff key
+surgical_cases,FirstAnesthesiaProviderSourceDataDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryCirculatorKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryCirculatorDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryCirculatorSourceDataDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimarySurgicalTechKey,remap,person_staff,provider or staff key
+surgical_cases,PrimarySurgicalTechDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimarySurgicalTechSourceDataDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryScrubNurseKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryScrubNurseDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryScrubNurseSourceDataDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryPreprocedureNurseKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryPreprocedureNurseDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryPreprocedureNurseSourceDataDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryPacuNurseKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryPacuNurseDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryPacuNurseSourceDataDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryPostOpNurseKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryPostOpNurseDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryPostOpNurseSourceDataDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryProcedureKey,keep,,reference dimension key
+surgical_cases,PrimaryProcedureDurableKey,keep,,reference dimension key
+surgical_cases,PrimaryProcedureCodeKey,keep,,reference dimension key
+surgical_cases,PrimaryProcedureCodeDurableKey,keep,,reference dimension key
+surgical_cases,CodedProcedureComboKey,keep,,reference dimension key
+surgical_cases,AnesthesiaRegistryMetricKey,drop,,"unclassified key, review"
+surgical_cases,PreliminaryCauseOfDeathDiagnosisKey,keep,,reference dimension key
+surgical_cases,SurgeryDateKey,shift_datekey,,date shifted
+surgical_cases,PreprocedureDepartmentKey,keep,,reference dimension key
+surgical_cases,IntraOpDepartmentKey,keep,,reference dimension key
+surgical_cases,OperatingRoomKey,keep,,reference dimension key
+surgical_cases,PacuDepartmentKey,keep,,reference dimension key
+surgical_cases,PostOpDepartmentKey,keep,,reference dimension key
+surgical_cases,CaseDiagnosisComboKey,keep,,reference dimension key
+surgical_cases,BillingDiagnosisComboKey,keep,,reference dimension key
+surgical_cases,HospitalEncounterKey,remap,encounter,patient-level key
+surgical_cases,HospitalAdmissionPrimaryCoverageKey,remap,coverage,coverage key
+surgical_cases,SurgeryEncounterKey,remap,encounter,patient-level key
+surgical_cases,PrecedingCaseInRoomKey,remap,surgical_case,patient-level key
+surgical_cases,PrecedingCaseBySurgeonKey,remap,surgical_case,patient-level key
+surgical_cases,ReturnToSurgerySurgicalCaseKey,remap,surgical_case,patient-level key
+surgical_cases,CaseRequestDateKey,shift_datekey,,date shifted
+surgical_cases,CaseRequestTimeOfDayKey,keep,,time of day
+surgical_cases,AdmissionDateKey,shift_datekey,,date shifted
+surgical_cases,ScheduledSetupStartDateKey,shift_datekey,,date shifted
+surgical_cases,ScheduledSetupStartTimeOfDayKey,keep,,time of day
+surgical_cases,ScheduledInRoomDateKey,shift_datekey,,date shifted
+surgical_cases,ScheduledInRoomTimeOfDayKey,keep,,time of day
+surgical_cases,ScheduledOutOfRoomDateKey,shift_datekey,,date shifted
+surgical_cases,ScheduledOutOfRoomTimeOfDayKey,keep,,time of day
+surgical_cases,ScheduledCleanupCompleteDateKey,shift_datekey,,date shifted
+surgical_cases,ScheduledCleanupCompleteTimeOfDayKey,keep,,time of day
+surgical_cases,PatientInFacilityDateKey,shift_datekey,,date shifted
+surgical_cases,PatientInFacilityTimeOfDayKey,keep,,time of day
+surgical_cases,PatientInPreprocedureDateKey,shift_datekey,,date shifted
+surgical_cases,PatientInPreprocedureTimeOfDayKey,keep,,time of day
+surgical_cases,RoomSetupStartDateKey,shift_datekey,,date shifted
+surgical_cases,RoomSetupStartTimeOfDayKey,keep,,time of day
+surgical_cases,RoomReadyDateKey,shift_datekey,,date shifted
+surgical_cases,RoomReadyTimeOfDayKey,keep,,time of day
+surgical_cases,AnesthesiaStartDateKey,shift_datekey,,date shifted
+surgical_cases,AnesthesiaStartTimeOfDayKey,keep,,time of day
+surgical_cases,PreprocedureCompleteDateKey,shift_datekey,,date shifted
+surgical_cases,PreprocedureCompleteTimeOfDayKey,keep,,time of day
+surgical_cases,PatientInRoomDateKey,shift_datekey,,date shifted
+surgical_cases,PatientInRoomTimeOfDayKey,keep,,time of day
+surgical_cases,AnesthesiaInductionDateKey,shift_datekey,,date shifted
+surgical_cases,AnesthesiaInductionTimeOfDayKey,keep,,time of day
+surgical_cases,AnesthesiaReadyDateKey,shift_datekey,,date shifted
+surgical_cases,AnesthesiaReadyTimeOfDayKey,keep,,time of day
+surgical_cases,ProcedureStartDateKey,shift_datekey,,date shifted
+surgical_cases,ProcedureStartTimeOfDayKey,keep,,time of day
+surgical_cases,ProcedureCompleteDateKey,shift_datekey,,date shifted
+surgical_cases,ProcedureCompleteTimeOfDayKey,keep,,time of day
+surgical_cases,PatientOutOfRoomDateKey,shift_datekey,,date shifted
+surgical_cases,PatientOutOfRoomTimeOfDayKey,keep,,time of day
+surgical_cases,RoomCleanupStartDateKey,shift_datekey,,date shifted
+surgical_cases,RoomCleanupStartTimeOfDayKey,keep,,time of day
+surgical_cases,RoomCleanupCompleteDateKey,shift_datekey,,date shifted
+surgical_cases,RoomCleanupCompleteTimeOfDayKey,keep,,time of day
+surgical_cases,PatientInPacuDateKey,shift_datekey,,date shifted
+surgical_cases,PatientInPacuTimeOfDayKey,keep,,time of day
+surgical_cases,AnesthesiaStopDateKey,shift_datekey,,date shifted
+surgical_cases,AnesthesiaStopTimeOfDayKey,keep,,time of day
+surgical_cases,PacuCareCompleteDateKey,shift_datekey,,date shifted
+surgical_cases,PacuCareCompleteTimeOfDayKey,keep,,time of day
+surgical_cases,PatientOutOfPacuDateKey,shift_datekey,,date shifted
+surgical_cases,PatientOutOfPacuTimeOfDayKey,keep,,time of day
+surgical_cases,PatientInPostOpDateKey,shift_datekey,,date shifted
+surgical_cases,PatientInPostOpTimeOfDayKey,keep,,time of day
+surgical_cases,PostOpCareCompleteDateKey,shift_datekey,,date shifted
+surgical_cases,PostOpCareCompleteTimeOfDayKey,keep,,time of day
+surgical_cases,PatientOutOfPostOpDateKey,shift_datekey,,date shifted
+surgical_cases,PatientOutOfPostOpTimeOfDayKey,keep,,time of day
+surgical_cases,AnesthesiaCloseEncounterDateKey,shift_datekey,,date shifted
+surgical_cases,LastAnesthesiaAddendumDateKey,shift_datekey,,date shifted
+surgical_cases,DischargeDateKey,shift_datekey,,date shifted
+surgical_cases,DeathDateKey,shift_datekey,,date shifted
+surgical_cases,CaseRequestInstant,shift_instant,,date shifted
+surgical_cases,AdmissionInstant,shift_instant,,date shifted
+surgical_cases,ScheduledSetupStartInstant,shift_instant,,date shifted
+surgical_cases,ScheduledInRoomInstant,shift_instant,,date shifted
+surgical_cases,ScheduledOutOfRoomInstant,shift_instant,,date shifted
+surgical_cases,ScheduledCleanupCompleteInstant,shift_instant,,date shifted
+surgical_cases,PatientInFacilityInstant,shift_instant,,date shifted
+surgical_cases,PatientInPreprocedureInstant,shift_instant,,date shifted
+surgical_cases,AnesthesiaSignoffInstant,shift_instant,,date shifted
+surgical_cases,RoomSetupStartInstant,shift_instant,,date shifted
+surgical_cases,RoomReadyInstant,shift_instant,,date shifted
+surgical_cases,AnesthesiaStartInstant,shift_instant,,date shifted
+surgical_cases,PreprocedureCompleteInstant,shift_instant,,date shifted
+surgical_cases,PatientInRoomInstant,shift_instant,,date shifted
+surgical_cases,AnesthesiaInductionInstant,shift_instant,,date shifted
+surgical_cases,AnesthesiaReadyInstant,shift_instant,,date shifted
+surgical_cases,ProcedureStartInstant,shift_instant,,date shifted
+surgical_cases,ProcedureCompleteInstant,shift_instant,,date shifted
+surgical_cases,AnesthesiaEmergenceInstant,shift_instant,,date shifted
+surgical_cases,PatientOutOfRoomInstant,shift_instant,,date shifted
+surgical_cases,RoomCleanupStartInstant,shift_instant,,date shifted
+surgical_cases,RoomCleanupCompleteInstant,shift_instant,,date shifted
+surgical_cases,PatientInPacuInstant,shift_instant,,date shifted
+surgical_cases,AnesthesiaStopInstant,shift_instant,,date shifted
+surgical_cases,PacuCareCompleteInstant,shift_instant,,date shifted
+surgical_cases,PatientOutOfPacuInstant,shift_instant,,date shifted
+surgical_cases,PatientInPostOpInstant,shift_instant,,date shifted
+surgical_cases,PostOpCareCompleteInstant,shift_instant,,date shifted
+surgical_cases,PatientOutOfPostOpInstant,shift_instant,,date shifted
+surgical_cases,PostOpIcuStartInstant,shift_instant,,date shifted
+surgical_cases,PostOpIcuEndInstant,shift_instant,,date shifted
+surgical_cases,AnesthesiaCloseEncounterInstant,shift_instant,,date shifted
+surgical_cases,LastAnesthesiaAddendumInstant,shift_instant,,date shifted
+surgical_cases,DischargeInstant,shift_instant,,date shifted
+surgical_cases,PreprocedureLevel,keep,,""
+surgical_cases,PrimaryService,keep,,""
+surgical_cases,ProcedureLevel,keep,,""
+surgical_cases,Classification,keep,,""
+surgical_cases,SurgeryPatientClass,keep,,""
+surgical_cases,AdmissionPatientClass,keep,,""
+surgical_cases,PrimaryAnesthesiaType,keep,,""
+surgical_cases,PrimaryProcedureApproach,keep,,""
+surgical_cases,PrimaryProcedureLaterality,keep,,""
+surgical_cases,PrimaryProcedureWoundClass,keep,,""
+surgical_cases,ReasonNotPerformed,keep,,""
+surgical_cases,CountsSummary,keep,,""
+surgical_cases,LogStatus,keep,,""
+surgical_cases,DelayType,keep,,""
+surgical_cases,DelayReason,keep,,""
+surgical_cases,CaseLengthAccuracyOverUnder,keep,,""
+surgical_cases,PacuLevel,keep,,""
+surgical_cases,PostOpLevel,keep,,""
+surgical_cases,DischargeDisposition,keep,,""
+surgical_cases,BilledAsaScore,keep,,""
+surgical_cases,FollowUpNausea,keep,,""
+surgical_cases,FollowUpSoreThroat,keep,,""
+surgical_cases,FollowUpTroubleBreathing,keep,,""
+surgical_cases,TotalCost,keep,,""
+surgical_cases,IndirectCost,keep,,""
+surgical_cases,DirectCost,keep,,""
+surgical_cases,FixedCost,keep,,""
+surgical_cases,VariableCost,keep,,""
+surgical_cases,DirectFixedCost,keep,,""
+surgical_cases,DirectVariableCost,keep,,""
+surgical_cases,IndirectFixedCost,keep,,""
+surgical_cases,IndirectVariableCost,keep,,""
+surgical_cases,LaborDirectCost,keep,,""
+surgical_cases,LaborDirectFixedCost,keep,,""
+surgical_cases,LaborDirectVariableCost,keep,,""
+surgical_cases,OtherDirectCost,keep,,""
+surgical_cases,OtherDirectFixedCost,keep,,""
+surgical_cases,OtherDirectVariableCost,keep,,""
+surgical_cases,SupplyDirectVariableCost,keep,,""
+surgical_cases,HospitalSurgicalCost,keep,,""
+surgical_cases,ProfessionalSurgicalCost,keep,,""
+surgical_cases,HospitalSurgicalCharges,keep,,""
+surgical_cases,ProfessionalSurgicalCharges,keep,,""
+surgical_cases,HospitalAdmissionCharges,keep,,""
+surgical_cases,ProfessionalAdmissionCharges,keep,,""
+surgical_cases,SuppliesUsedCost,keep,,""
+surgical_cases,SuppliesWastedCost,keep,,""
+surgical_cases,NonImplantableSupplyUsedCost,keep,,""
+surgical_cases,NonImplantableSupplyUsedCharge,keep,,""
+surgical_cases,ImplantableSupplyUsedCost,keep,,""
+surgical_cases,ImplantableSupplyUsedCharge,keep,,""
+surgical_cases,NonImplantableSupplyWastedCost,keep,,""
+surgical_cases,NonImplantableSupplyWastedCharge,keep,,""
+surgical_cases,ImplantableSupplyWastedCost,keep,,""
+surgical_cases,ImplantableSupplyWastedCharge,keep,,""
+surgical_cases,SurgeonTotalDurationInMinutes,keep,,""
+surgical_cases,AnesthesiaProviderTotalDurationInMinutes,keep,,""
+surgical_cases,CirculatorTotalDurationInMinutes,keep,,""
+surgical_cases,SurgicalTechTotalDurationInMinutes,keep,,""
+surgical_cases,ScrubNurseTotalDurationInMinutes,keep,,""
+surgical_cases,DelayLengthInMinutes,keep,,""
+surgical_cases,OverrunLengthInMinutes,keep,,""
+surgical_cases,CaseLengthDeviationInMinutes,keep,,""
+surgical_cases,CaseLengthDeviationPercent,keep,,""
+surgical_cases,RoomTurnoverAdjustedRoomDurationInMinutes,keep,,""
+surgical_cases,RoomTurnoverAdjustedProcDurationInMinutes,keep,,""
+surgical_cases,SurgeonTurnoverAdjustedRoomDurationInMinutes,keep,,""
+surgical_cases,SurgeonTurnoverAdjustedProcDurationInMinutes,keep,,""
+surgical_cases,ProcPassAllTasksCompleteHoursPrior,keep,,""
+surgical_cases,ProcPassTypeHAndPNoteCompleteHoursPrior,keep,,""
+surgical_cases,ProcPassTypeDocumentCompleteHoursPrior,keep,,""
+surgical_cases,ProcPassTypeAppointmentCompleteHoursPrior,keep,,""
+surgical_cases,ProcPassTypeProcedureAndLabCompleteHoursPrior,keep,,""
+surgical_cases,ProcPassTypePresenceOfOrdersCompleteHoursPrior,keep,,""
+surgical_cases,ProcPassTypeGenericCompleteHoursPrior,keep,,""
+surgical_cases,ProcPassTypeNoteCompleteHoursPrior,keep,,empty in the extract
+surgical_cases,AddendaCount,keep,,""
+surgical_cases,DaysToPost,keep,,""
+surgical_cases,NumberOfPanels,keep,,""
+surgical_cases,NumberOfProcedures,keep,,""
+surgical_cases,OrderOfCaseByRoom,keep,,""
+surgical_cases,OrderOfCaseBySurgeon,keep,,""
+surgical_cases,MostRecentPriorBodyMassIndex,keep,,empty in the extract
+surgical_cases,MostRecentPriorBloodPressure,keep,,""
+surgical_cases,FirstPacuBloodPressure,keep,,""
+surgical_cases,LastPacuBloodPressure,keep,,""
+surgical_cases,MostRecentPriorHeartRate,keep,,empty in the extract
+surgical_cases,FirstPacuHeartRate,keep,,empty in the extract
+surgical_cases,LastPacuHeartRate,keep,,empty in the extract
+surgical_cases,HighestPacuHeartRate,keep,,empty in the extract
+surgical_cases,LowestPacuHeartRate,keep,,empty in the extract
+surgical_cases,FirstPacuMeanArterialPressure,keep,,empty in the extract
+surgical_cases,LastPacuMeanArterialPressure,keep,,empty in the extract
+surgical_cases,HighestPacuMeanArterialPressure,keep,,empty in the extract
+surgical_cases,LowestPacuMeanArterialPressure,keep,,empty in the extract
+surgical_cases,MostRecentPriorPainScore,keep,,empty in the extract
+surgical_cases,FirstPacuPainScore,keep,,empty in the extract
+surgical_cases,LastPacuPainScore,keep,,empty in the extract
+surgical_cases,HighestPacuPainScore,keep,,empty in the extract
+surgical_cases,LowestPacuPainScore,keep,,empty in the extract
+surgical_cases,FollowUpPainScore,keep,,empty in the extract
+surgical_cases,FirstPacuOxygenSaturation,keep,,empty in the extract
+surgical_cases,LastPacuOxygenSaturation,keep,,empty in the extract
+surgical_cases,HighestPacuOxygenSaturation,keep,,empty in the extract
+surgical_cases,LowestPacuOxygenSaturation,keep,,empty in the extract
+surgical_cases,MostRecentPriorRespiratoryRate,keep,,empty in the extract
+surgical_cases,FirstPacuRespiratoryRate,keep,,empty in the extract
+surgical_cases,LastPacuRespiratoryRate,keep,,empty in the extract
+surgical_cases,HighestPacuRespiratoryRate,keep,,empty in the extract
+surgical_cases,LowestPacuRespiratoryRate,keep,,empty in the extract
+surgical_cases,FirstPacuTemperature,keep,,empty in the extract
+surgical_cases,LastPacuTemperature,keep,,empty in the extract
+surgical_cases,HighestPacuTemperature,keep,,empty in the extract
+surgical_cases,LowestPacuTemperature,keep,,empty in the extract
+surgical_cases,FollowUpTemperature,keep,,empty in the extract
+surgical_cases,MostRecentPriorWeight,keep,,empty in the extract
+surgical_cases,InpatientLengthOfStayInMinutes,keep,,""
+surgical_cases,InpatientLengthOfStayInDays,keep,,""
+surgical_cases,InpatientPatientDays,keep,,""
+surgical_cases,SurgicalSiteInfectionRiskScore,keep,,empty in the extract
+surgical_cases,NumberOfProcsSurveilledSurgicalSiteInfection,keep,,""
+surgical_cases,NumberOfSurgicalSiteInfections,keep,,""
+surgical_cases,DaysToReadmissionAfterDischarge,keep,,empty in the extract
+surgical_cases,ReturnToSurgeryInDays,keep,,""
+surgical_cases,Canceled,keep,,""
+surgical_cases,ProcedureNotPerformed,keep,,""
+surgical_cases,AddOn,keep,,""
+surgical_cases,Confidential,keep,,""
+surgical_cases,IsFirstCase,keep,,""
+surgical_cases,IsLateStart,keep,,""
+surgical_cases,IsCaseLengthAccurate,keep,,""
+surgical_cases,IsRoomTurnoverSameSurgeon,keep,,""
+surgical_cases,IsRoomTurnoverSameService,keep,,""
+surgical_cases,IsSurgeonTurnoverSameRoom,keep,,""
+surgical_cases,IsSurgeonTurnoverSameService,keep,,""
+surgical_cases,IsIncludedInOrgVolumeReporting,keep,,""
+surgical_cases,IsIncludedInOrgOnTimeStartsReporting,keep,,""
+surgical_cases,IsIncludedInOrgCaseLengthAccuracyReporting,keep,,""
+surgical_cases,IsIncludedInOrgRoomTurnoverReporting,keep,,""
+surgical_cases,IsIncludedInOrgSurgeonTurnoverReporting,keep,,""
+surgical_cases,IsProcPassAllTasksComplete,keep,,""
+surgical_cases,IsProcPassTypeHAndPNoteComplete,keep,,""
+surgical_cases,IsProcPassTypeDocumentComplete,keep,,""
+surgical_cases,IsProcPassTypeAppointmentComplete,keep,,""
+surgical_cases,IsProcPassTypeProcedureAndLabComplete,keep,,""
+surgical_cases,IsProcPassTypePresenceOfOrdersComplete,keep,,""
+surgical_cases,IsProcPassTypeGenericComplete,keep,,""
+surgical_cases,IsProcPassTypeNoteComplete,keep,,""
+surgical_cases,IsRequestToRoomCompliant,keep,,""
+surgical_cases,HasDiabetes,keep,,""
+surgical_cases,HasHypertension,keep,,""
+surgical_cases,HasCoronaryArteryDisease,keep,,""
+surgical_cases,HasAsthma,keep,,""
+surgical_cases,HasCopd,keep,,""
+surgical_cases,HasChronicLiverDisease,keep,,""
+surgical_cases,HasChronicKidneyDisease,keep,,""
+surgical_cases,HasCongestiveHeartFailure,keep,,""
+surgical_cases,HasCysticFibrosis,keep,,""
+surgical_cases,HasHiv,keep,,""
+surgical_cases,HasOsteoporosis,keep,,""
+surgical_cases,HasHistoryOfPonv,keep,,""
+surgical_cases,HasHistoryOfDifficultIntubation,keep,,""
+surgical_cases,HasHistoryOfMotionSickness,keep,,""
+surgical_cases,HasHistoryOfSurgicalComplication,keep,,""
+surgical_cases,HasHistoryOfSurgicalTrauma,keep,,""
+surgical_cases,WasPreOpChecklistTimeoutPerformed,keep,,""
+surgical_cases,WasSiteMarkingTimeoutPerformed,keep,,""
+surgical_cases,WasPreprocedureTimeoutPerformed,keep,,""
+surgical_cases,WasPreIncisionTimeoutPerformed,keep,,""
+surgical_cases,WasFireSafetyTimeoutPerformed,keep,,""
+surgical_cases,WasHandOffTimeoutPerformed,keep,,""
+surgical_cases,WereAllStaffPresentDuringTimeout,keep,,""
+surgical_cases,WasTransferredFromIcu,keep,,""
+surgical_cases,WasTransferredToIcu,keep,,""
+surgical_cases,HadSurgicalSiteInfection,keep,,empty in the extract
+surgical_cases,HadBleedingComplication,keep,,""
+surgical_cases,HadCardiovascularComplication,keep,,""
+surgical_cases,HadKidneyComplication,keep,,""
+surgical_cases,HadGastrologicalComplication,keep,,""
+surgical_cases,HadNeurologicalComplication,keep,,""
+surgical_cases,HadRespiratoryComplication,keep,,""
+surgical_cases,HadWoundOrInfectionComplication,keep,,""
+surgical_cases,HadOtherComplication,keep,,""
+surgical_cases,HadAbnormalPacuBloodPressure,keep,,empty in the extract
+surgical_cases,HadAbnormalPacuHeartRate,keep,,empty in the extract
+surgical_cases,HadAbnormalPacuMeanArterialPressure,keep,,empty in the extract
+surgical_cases,HadAbnormalPacuOxygenSaturation,keep,,empty in the extract
+surgical_cases,HadAbnormalPacuRespiratoryRate,keep,,empty in the extract
+surgical_cases,HadAbnormalPacuTemperature,keep,,empty in the extract
+surgical_cases,WasFollowUpCompleted,keep,,""
+surgical_cases,WasReliefStaffDocumented,keep,,""
+surgical_cases,WasPrimaryProcedureChanged,keep,,""
+surgical_cases,HadKnownLatexAllergy,keep,,""
+surgical_cases,HadKnownSuccinylcholineAllergy,keep,,""
+surgical_cases,HadKnownInhalationAnestheticAllergy,keep,,""
+surgical_cases,WasMedicationListReviewed,keep,,""
+surgical_cases,WasReintubated,keep,,""
+surgical_cases,WasBetaBlockerGivenWithin24HoursOfIncision,keep,,""
+surgical_cases,WasReasonBetaBlockNotGiven,keep,,empty in the extract
+surgical_cases,HadDifficultIntubation,keep,,""
+surgical_cases,WasPeripheralNerveBlockPerformed,keep,,""
+surgical_cases,WasInhalationAnestheticGasUsed,keep,,""
+surgical_cases,HadIntentionalHypothermia,keep,,empty in the extract
+surgical_cases,IsUnsuccessfulAttempt,keep,,""
+surgical_cases,Count,keep,,""
+surgical_cases,_CreationInstant,drop,,audit field
+surgical_cases,_LastUpdatedInstant,drop,,audit field
+surgical_cases,_IsInferred,drop,,audit field
+surgical_cases,_IsDeleted,drop,,audit field
+surgical_cases,_PrimaryPackageToImpactRecord,drop,,audit field
+surgical_cases,_MostRecentPackageToImpactRecord,drop,,audit field
+surgical_cases,_NumberOfSources,drop,,audit field
+surgical_cases,_HasSourceClarity,drop,,audit field
+surgical_cases,_DeletedFromSourceClarity,drop,,audit field
+surgical_cases,BillingDiagnosisComboIdTypeId,keep,,""
+surgical_cases,BillingDiagnosisNumericId,keep,,""
+surgical_cases,BillingDiagnosisComboId,keep,,empty in the extract
+surgical_cases,CaseDiagnosisComboIdTypeId,keep,,""
+surgical_cases,CaseDiagnosisNumericId,keep,,""
+surgical_cases,CaseDiagnosisComboId,keep,,empty in the extract
+surgical_cases,CodedProcedureComboIdTypeId,keep,,""
+surgical_cases,CodedProcedureNumericId,keep,,""
+surgical_cases,CodedProcedureComboId,keep,,empty in the extract
+surgical_cases,PreprocedureDiagnosisComboKey,keep,,reference dimension key
+surgical_cases,PreprocedureDiagnosisComboIdTypeId,keep,,""
+surgical_cases,PreprocedureDiagnosisNumericId,keep,,""
+surgical_cases,PreprocedureDiagnosisComboId,keep,,empty in the extract
+surgical_cases,PostopDiagnosisComboKey,keep,,reference dimension key
+surgical_cases,PostopDiagnosisComboIdTypeId,keep,,""
+surgical_cases,PostopDiagnosisNumericId,keep,,""
+surgical_cases,PostopDiagnosisComboId,keep,,empty in the extract
+surgical_cases,LocationKey,drop,,"unclassified key, review"
+surgical_cases,CaseType_X,keep,,""
+surgical_cases,PatClass_X,keep,,""
+surgical_cases,SurgicalService_X,keep,,""
+surgical_cases,SchedStatus_X,keep,,""
+surgical_cases,CaseLengthModifiedUserDurableKey,remap,person_staff,provider or staff key
+surgical_cases,CaseLengthAccuracyWithin15PercentOverUnder,keep,,""
+surgical_cases,DefaultedCaseLengthInMinutes,keep,,""
+surgical_cases,DefaultedInRoomToOutOfRoomLengthInMinutes,keep,,""
+surgical_cases,RequestedCaseLengthInMinutes,keep,,""
+surgical_cases,RequestedInRoomToOutOfRoomLengthInMinutes,keep,,""
+surgical_cases,CaseLengthConfidence,keep,,""
+surgical_cases,IsCaseLengthAccurateWithin15Percent,keep,,""
+surgical_cases,WasCaseLengthModified,keep,,""
+surgical_cases,ScheduledCaseLengthInMinutes,keep,,""
+surgical_cases,ScheduledInRoomToOutOfRoomLengthInMinutes,keep,,""
+surgical_cases,PrimaryPreferenceCardDurableKey,drop,,"unclassified key, review"
+surgical_cases,DecisionDateKey,shift_datekey,,date shifted
+surgical_cases,DecisionTimeOfDayKey,keep,,time of day
+surgical_cases,DecisionInstant,shift_instant,,date shifted
+surgical_cases,CesareanType,keep,,""
+surgical_cases,UsedSupplyCostBenchmark,keep,,""
+surgical_cases,UsedImplantCostBenchmark,keep,,""
+surgical_cases,UsedSupplyCostDifference,keep,,""
+surgical_cases,UsedImplantCostDifference,keep,,""
+surgical_cases,RequestToPerformedLeadTimeInMinutes,keep,,""
+surgical_cases,NumberOfDaysSooner,keep,,empty in the extract
+surgical_cases,IsEligibleForEarlierDates,keep,,""
+surgical_cases,HasOptedOutOfEarlierDates,keep,,""
+surgical_cases,IsCesarean,keep,,""
+surgical_cases,WasSchedulingReviewed,keep,,empty in the extract
+surgical_cases,WasEverScheduledFromMarketplace,keep,,empty in the extract
+surgical_cases,BasePatientClass,keep,,""
+surgical_cases,OrderAndCaseProceduresMatch,keep,,""
+surgical_cases,CaseAndLogProceduresMatch,keep,,""
+surgical_cases,WasProcedureQuickButtonOrComboShown,keep,,""
+surgical_cases,WasProcedureQuickButtonOrComboUsed,keep,,""
+surgical_cases,IsQuickCase,keep,,""
+surgical_cases,IsRoomTurnoverSamePerformingSurgeon,keep,,""
+surgical_cases,PrimaryPerformingSurgeonDurableKey,remap,person_staff,provider or staff key
+surgical_cases,PrimaryPerformingSurgeonSourceDataDurableKey,remap,person_staff,provider or staff key
+surgical_cases,SourceKey,keep,,reference dimension key
+surgical_cases,ProcedureMismatchStatus,keep,,""
+surgical_procedures,StudyID,keep,,study identifier
+surgical_procedures,SurgicalProcedureEventKey,remap,surgical_procedure_event,patient-level key
+surgical_procedures,PatientKey,drop,,"patient key, StudyID replaces it"
+surgical_procedures,PatientDurableKey,drop,,"patient key, StudyID replaces it"
+surgical_procedures,PatientSourceDataDurableKey,drop,,"patient key, StudyID replaces it"
+surgical_procedures,AgeKey,keep,,reference dimension key
+surgical_procedures,SurgicalCaseKey,remap,surgical_case,patient-level key
+surgical_procedures,ProcedureKey,keep,,reference dimension key
+surgical_procedures,ProcedureDurableKey,keep,,reference dimension key
+surgical_procedures,ProcedureCodeKey,keep,,reference dimension key
+surgical_procedures,ProcedureCodeDurableKey,keep,,reference dimension key
+surgical_procedures,PrimarySurgeonKey,remap,person_staff,provider or staff key
+surgical_procedures,PrimarySurgeonDurableKey,remap,person_staff,provider or staff key
+surgical_procedures,PrimarySurgeonSourceDataDurableKey,remap,person_staff,provider or staff key
+surgical_procedures,SecondSurgeonKey,remap,person_staff,provider or staff key
+surgical_procedures,SecondSurgeonDurableKey,remap,person_staff,provider or staff key
+surgical_procedures,SecondSurgeonSourceDataDurableKey,remap,person_staff,provider or staff key
+surgical_procedures,ThirdSurgeonKey,remap,person_staff,provider or staff key
+surgical_procedures,ThirdSurgeonDurableKey,remap,person_staff,provider or staff key
+surgical_procedures,ThirdSurgeonSourceDataDurableKey,remap,person_staff,provider or staff key
+surgical_procedures,SurgeryDateKey,shift_datekey,,date shifted
+surgical_procedures,OperatingRoomKey,keep,,reference dimension key
+surgical_procedures,HospitalEncounterKey,remap,encounter,patient-level key
+surgical_procedures,SurgeryEncounterKey,remap,encounter,patient-level key
+surgical_procedures,Service,keep,,""
+surgical_procedures,Site,keep,,""
+surgical_procedures,Laterality,keep,,""
+surgical_procedures,AnesthesiaType,keep,,""
+surgical_procedures,WoundClass,keep,,""
+surgical_procedures,Panel,keep,,""
+surgical_procedures,Scheduled,keep,,""
+surgical_procedures,Performed,keep,,""
+surgical_procedures,Possible,keep,,""
+surgical_procedures,Count,keep,,""
+surgical_procedures,_CreationInstant,drop,,audit field
+surgical_procedures,_LastUpdatedInstant,drop,,audit field
+surgical_procedures,_IsInferred,drop,,audit field
+surgical_procedures,_IsDeleted,drop,,audit field
+surgical_procedures,_PrimaryPackageToImpactRecord,drop,,audit field
+surgical_procedures,_MostRecentPackageToImpactRecord,drop,,audit field
+surgical_procedures,_NumberOfSources,drop,,audit field
+surgical_procedures,_HasSourceClarity,drop,,audit field
+surgical_procedures,_DeletedFromSourceClarity,drop,,audit field
+surgical_procedures,SourceKey,keep,,reference dimension key
+surgical_procedures,IsPrimary,keep,,""
+surgical_procedures,ProcedureCodeComboKey,keep,,reference dimension key
+surgical_procedures,ProcedureCodeComboIdTypeId,keep,,""
+surgical_procedures,ProcedureCodeNumericId,keep,,empty in the extract
+surgical_procedures,ProcedureCodeComboId,keep,,"text, review"

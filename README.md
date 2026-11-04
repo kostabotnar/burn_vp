@@ -84,6 +84,20 @@ Burn records are `diagnoses` rows with ICD-10-CM `T31.*` or ICD-9-CM `948.*`. Th
 
 `index_events.csv` in the run folder is patient-level (one row per StudyID, with index date, code, encounter and age). It stays in `output/`, which is ignored by version control, and must not be shared. All other files are aggregate counts. The functions are in `R/utmb/burn_index.R`.
 
+## De-identifying the UTMB data
+
+```
+Rscript scripts/utmb/deid_utmb.R [--data <folder>] [--label <text>] [--secret <file>]
+```
+
+The run writes two folders under `output/utmb/`. `deid_<date>_<time>[_<label>]/` holds `data/` (the 13 tables with the same file names and format, so `profile_utmb.R --data output/utmb/deid_.../data` and `burn_index.R` work on them), `summary.txt` and `column_actions.csv` (counts only). `deid_keys_<date>_<time>[_<label>]/` holds `secret.txt` (the random run secret) and `offsets.csv` (the date shift of each StudyID). The keys folder can re-identify dates: store it apart from the de-identified data and never share it. `--secret <file>` reuses the `secret.txt` of an earlier run, so a later extract gets the same offsets and pseudonyms.
+
+What happens to each column is listed in `metadata/utmb_deid_policy.csv` (table, column, action, domain, reason), which a person can review and edit. Actions: `keep`; `drop`; `shift_date`, `shift_instant` and `shift_datekey` (every date of a patient moves by the same number of days, between 1 and 30 earlier or later, never 0, so intervals stay exact and the time of day is kept); `remap` (a key is replaced by a 16 character pseudonym; columns with the same `domain` get the same pseudonym for the same value, so joins still work, and negative "unknown" values stay as they are); `blank_free_text_values` (flowsheet `Value` is kept only when `RowValueType` is Custom List, Numeric Type, Blood Pressure or Temperature). Identifiers, free text, ETL audit fields and patient surrogate keys are dropped, since StudyID identifies the patient. Rows marked `text, review` are kept text columns that need a human check, and `unclassified key, review` marks keys that were dropped because they could not be classified. Columns in the data that the policy does not list are dropped and reported. Rows without a StudyID are dropped and counted.
+
+The run ends with a leak check on the written files: any cell equal to an original MRN, Epic id, patient name (any case), dropped identifier value, or the patient's own original birth date in an unshifted column is counted in `summary.txt`, and the script exits with status 1 if there is any. Offsets and pseudonyms come from SHA-256 of the secret and the value, so nothing needs to be stored to keep the tables joinable. This needs `/dev/urandom` (Linux) for a new secret.
+
+To rebuild the policy from `metadata/utmb_dictionary.csv`, run `Rscript scripts/utmb/deid_policy.R [--label <text>]`. It writes `output/utmb/deid_policy_<date>_<time>[_<label>]/utmb_deid_policy.csv`; review it and copy it by hand to `metadata/`. The functions are in `R/utmb/deid.R`.
+
 ## Layout
 
 - `R/`: reusable functions
