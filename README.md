@@ -4,19 +4,19 @@ Comparison of vasopressor use in patients with severe burns.
 
 ## Installation on Windows
 
-You need Windows, R 4.5 (any 4.5.x version) and an internet connection. You do not install or change R. Setup checks the R version. If it does not fit, setup stops and shows a message. Then contact the project team.
+You need Windows, R 4.5 (any 4.5.x version) and an internet connection. You do not install or change R. The start file checks the R version. If it does not fit, it stops and shows a message. Then contact the project team.
 
-Before you start, the project folder must be on your own computer, for example in `C:\burn_vp`. Use a short path without spaces. Do not use OneDrive. Setup.bat stops if the path has a space.
+Before you start, the project folder must be on your own computer, for example in `C:\burn_vp`. Use a short path. Do not use OneDrive.
 
-1. Open the project folder and double-click `setup.bat`.
-2. If Windows shows "Windows protected your PC", click More info, then Run anyway.
-3. Wait. The first run takes several minutes and needs internet. Do not close the window.
-4. When the window says SETUP COMPLETE, you are done. You do not need to run it again.
-5. If the window says SETUP FAILED, send the log file to the project team. You find it in the folder `output\setup`.
+1. Open R (Rgui) from the Start menu.
+2. In R, choose File, then Source R code..., and select `start_burn_vp.R` in the project folder.
+3. The first time, a window asks whether to run the one-time setup. Click Yes. Wait: it takes several minutes and needs internet. Do not close R.
+4. When the R window (the console) says SETUP COMPLETE, the program window opens. You do not need to run the setup again.
+5. If the R window says SETUP FAILED, send the log file to the project team. You find it in the folder `output\setup`.
 
-Setup removes its temporary files when it ends. It keeps the log file and the installed packages (in `renv\library`).
+The next times, repeat steps 1 and 2. The program window opens straight away.
 
-If `setup.bat` is blocked: open R (Rgui), choose File, then Source R code..., and select `scripts\setup_environment.R` in the project folder. The result is the same, but R's temporary files then go to the normal Windows temporary folder.
+Setup removes its temporary files when it ends. It keeps the log file and the installed packages (in `renv\library`). R's own temporary files stay in the normal Windows temporary folder, where R removes them.
 
 ## Running the quality control pipeline
 
@@ -26,15 +26,17 @@ The input is an Excel file (.xlsx). The pipeline reads the first sheet. Row 1 is
 
 ### Using the program window
 
-1. Open the project folder and double-click `burn_vp.bat`. A black window opens first, then the program window. Keep the black window open while you work.
+1. Start the program as described in "Installation on Windows": open R, choose File, then Source R code..., and select `start_burn_vp.R`. The program window opens. Keep R open while you work. When you close the program window, you return to R.
 2. Click Add files... and select one or more Excel files.
 3. Check the site name next to each file. It is taken from the file name up to the first underscore (`NBC_2026.xlsx` gives NBC). You can change it. Each file needs a different site name.
 4. Click Run QC. The bar and the line below it show the progress. The window does not respond while a step runs; this is normal.
 5. When the run is finished, a message shows the results folder. Click Open report to see the report in your web browser.
 
-If something is wrong with a file, for example a column header, a message explains the problem and no results are written. To remove a file from the list, tick it and click Remove ticked files. The button Run analysis is not available yet. If the black window says the program stopped with an error, send a screenshot of it to the project team.
+If something is wrong with a file, for example a column header, a message explains the problem and no results are written. To remove a file from the list, tick it and click Remove ticked files. The button Run analysis is not available yet. If the R window says the program stopped with an error, send a screenshot of it to the project team.
 
 ### Using the command line
+
+This section is for the project team (developers). Workstations at Norway Burning Center may not allow the command prompt.
 
 1. Open Command Prompt (press Windows, type `cmd`, press Enter).
 2. Go to the project folder, for example `cd C:\burn_vp`.
@@ -72,6 +74,7 @@ To try the pipeline without real data, generate a synthetic file with known erro
 - `data/raw/`, `data/processed/`: local data only, ignored by git
 - `output/`: generated figures and tables, ignored by git
 - `tests/testthat/`: unit tests
+- `start_burn_vp.R`: the start file for clinicians; source it in Rgui to run setup when needed and open the program window
 - `PROJECT_VERSION`: project name and version; scripts use it to recognise the project folder
 
 ## Data handling
