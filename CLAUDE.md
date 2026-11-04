@@ -7,3 +7,4 @@
 - Locate `output/` relative to the project root, not the working directory or the home folder.
 - If `output/` does not exist, create it at the project root. Never create it anywhere else.
 - `PROJECT_VERSION` at the root identifies the project folder; code locates the root by it and must not write if it is not found.
+- Approved exceptions: renv writes `renv/library` and `renv/staging`. R's own session temporary folder stays in the Windows temporary folder when R is started from Rgui. Project code must not use `tempdir()` or `tempfile()` for its own files.

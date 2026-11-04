@@ -42,8 +42,9 @@ setup_find_root <- function(script_dir, is_interactive = interactive(),
     }
   }
   if (!(is_interactive && is_windows)) {
-    stop("The project folder was not found. Run setup.bat in the project folder, or run this ",
-         "file from the scripts folder of the complete project folder (the folder that contains ",
+    stop("The project folder was not found. Source start_burn_vp.R in the project folder, or ",
+         "run this file from the scripts folder of the complete project folder (the folder ",
+         "that contains ",
          "the file PROJECT_VERSION).", call. = FALSE)
   }
   if (is.null(chooser)) chooser <- utils::choose.dir
