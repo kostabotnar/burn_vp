@@ -591,10 +591,10 @@ flowsheets,Abnormal,keep,,""
 flowsheets,DocumentationSource,keep,,""
 flowsheets,ThirdPartySource,keep,,""
 flowsheets,PatientReportedStatus,keep,,""
-flowsheets,Value,blank_free_text_values,,kept only for listed RowValueType values
+flowsheets,Value,keep_typed_or_common_values,,"free text possible: listed RowValueType kept, others common values only"
 flowsheets,NumericValue,keep,,""
 flowsheets,DateValue,shift_date,,date shifted
-flowsheets,TimeValue,keep,,"text, review"
+flowsheets,TimeValue,keep_common_values,,free text possible: numeric-like or common values only
 flowsheets,Occurrence,keep,,""
 flowsheets,Comment,drop,,free text
 flowsheets,FirstDocumentedInstant,shift_instant,,date shifted
@@ -778,7 +778,7 @@ labs,LoincKey,keep,,reference dimension key
 labs,LabOrderEpicId,drop,,identifier
 labs,Flag,keep,,""
 labs,ResultStatus,keep,,""
-labs,Value,keep,,"text, review"
+labs,Value,keep_common_values,,free text possible: numeric-like or common values only
 labs,NumericValue,keep,,""
 labs,Unit,keep,,"text, review"
 labs,ReferenceValues,keep,,"text, review"
@@ -981,14 +981,14 @@ medication_orders,OriginCode,keep,,""
 medication_orders,Source,keep,,""
 medication_orders,SetSource,keep,,"text, review"
 medication_orders,PreferenceList,keep,,"text, review"
-medication_orders,FirstPrnReason,keep,,"text, review"
+medication_orders,FirstPrnReason,keep_common_values,,free text possible: numeric-like or common values only
 medication_orders,NonFormularyExceptionReason,keep,,""
 medication_orders,OrderedUtcInstant,shift_instant,,date shifted
-medication_orders,SecondPrnReason,keep,,"text, review"
-medication_orders,ThirdPrnReason,keep,,""
-medication_orders,FourthPrnReason,keep,,""
-medication_orders,FifthPrnReason,keep,,""
-medication_orders,SixthPrnReason,keep,,""
+medication_orders,SecondPrnReason,keep_common_values,,free text possible: numeric-like or common values only
+medication_orders,ThirdPrnReason,keep_common_values,,free text possible: numeric-like or common values only
+medication_orders,FourthPrnReason,keep_common_values,,free text possible: numeric-like or common values only
+medication_orders,FifthPrnReason,keep_common_values,,free text possible: numeric-like or common values only
+medication_orders,SixthPrnReason,keep_common_values,,free text possible: numeric-like or common values only
 medication_orders,DiscontinueReason,keep,,""
 medication_orders,FirstIndicationForUse,keep,,""
 medication_orders,SecondIndicationForUse,keep,,""
@@ -1017,7 +1017,7 @@ medication_orders,RefillsWritten,keep,,""
 medication_orders,RefillsRemaining,keep,,""
 medication_orders,DaysSupply,keep,,""
 medication_orders,TotalDaysSupply,keep,,""
-medication_orders,Sig,keep,,"text, review"
+medication_orders,Sig,keep_common_values,,free text possible: numeric-like or common values only
 medication_orders,MorphineEquivalentDailyDosage,keep,,""
 medication_orders,PainAgreement,keep,,""
 medication_orders,Cpoe,keep,,""

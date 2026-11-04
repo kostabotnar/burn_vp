@@ -6,13 +6,25 @@
 # held in a lookup table.
 
 utmb_deid_actions <- c("keep", "drop", "shift_date", "shift_instant", "shift_datekey", "remap",
-                       "blank_free_text_values")
+                       "keep_common_values", "keep_typed_or_common_values")
 
 # RowValueType values whose flowsheet Value is kept. Other types may hold free text or dates.
 utmb_flowsheet_value_types <- c("Custom List", "Numeric Type", "Blood Pressure", "Temperature")
 
 # Allowed offsets in days: 60 values, never 0.
 utmb_deid_offset_days <- c(-30:-1, 1:30)
+
+# A text value in a keep_common_values column survives only if it is numeric-like or occurs for
+# at least this many distinct patients in that column of that table.
+utmb_deid_min_patients <- 20L
+
+# Actions whose output cells can equal original values (checked against the own birth date).
+utmb_deid_unshifted_actions <- c("keep", "keep_common_values", "keep_typed_or_common_values")
+
+# Dates on or before the first, or on or after the second, are Epic placeholders and are never
+# shifted (burn_index.R also treats 1900-01-01 and earlier as a placeholder).
+utmb_placeholder_low <- as.Date("1900-01-01")
+utmb_placeholder_high <- as.Date("9999-01-01")
 
 # Date columns dropped as identifiers are compared patient by patient in the leak check, because
 # a date string also occurs legitimately in other patients' date columns.
@@ -80,9 +92,14 @@ utmb_shift_result <- function(value, changed, unchanged, blanked) {
   list(value = value, changed = changed, unchanged = unchanged, blanked = blanked)
 }
 
+utmb_is_placeholder <- function(d) {
+  !is.na(d) & (d <= utmb_placeholder_low | d >= utmb_placeholder_high)
+}
+
 # Shifts ISO dates and timestamps by `days` (one per element), keeping everything after the
 # first 10 characters (time of day, separator, fraction). Text that is not an ISO date becomes
-# missing. A result outside years 1000 to 9999 (placeholder dates) is left as it was.
+# missing. Placeholder dates (see utmb_placeholder_low and utmb_placeholder_high) and results
+# outside years 1000 to 9999 are left as they were.
 utmb_shift_iso <- function(x, days) {
   x <- as.character(x)
   out <- x
@@ -94,7 +111,8 @@ utmb_shift_iso <- function(x, days) {
   u <- unique(d10)
   parsed <- as.Date(u, format = "%Y-%m-%d")[match(d10, u)]
   moved <- format(parsed + days[idx], "%Y-%m-%d")
-  valid <- !is.na(parsed) & grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", moved)
+  valid <- !is.na(parsed) & grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", moved) &
+    !utmb_is_placeholder(parsed)
   out[idx[valid]] <- paste0(moved[valid], substr(x[idx[valid]], 11L, nchar(x[idx[valid]])))
   out[idx[is.na(parsed)]] <- NA_character_
   blanked <- sum(present & is.na(out))
@@ -111,7 +129,7 @@ utmb_shift_datekey <- function(x, days) {
   u <- unique(x[idx])
   parsed <- as.Date(u, format = "%Y%m%d")[match(x[idx], u)]
   moved <- format(parsed + days[idx], "%Y%m%d")
-  valid <- !is.na(parsed) & grepl("^[0-9]{8}$", moved)
+  valid <- !is.na(parsed) & grepl("^[0-9]{8}$", moved) & !utmb_is_placeholder(parsed)
   out[idx[valid]] <- moved[valid]
   utmb_shift_result(out, sum(valid), sum(!is.na(x)) - sum(valid), 0L)
 }
@@ -195,7 +213,12 @@ utmb_deid_rule <- function(table, column, type, role) {
   }
   if (grepl("User[Ii][Dd]", name)) return(act("remap", "staff user id", "person_staff"))
   if (table == "flowsheets" && name == "Value") {
-    return(act("blank_free_text_values", "kept only for listed RowValueType values"))
+    return(act("keep_typed_or_common_values",
+               "free text possible: listed RowValueType kept, others common values only"))
+  }
+  if ((table == "labs" && name == "Value") || (table == "flowsheets" && name == "TimeValue") ||
+        (table == "medication_orders" && (name == "Sig" || grepl("PrnReason$", name)))) {
+    return(act("keep_common_values", "free text possible: numeric-like or common values only"))
   }
   if (role == "other" && type == "text") return(act("keep", "text, review"))
   if (role == "other" && type == "empty") return(act("keep", "empty in the extract"))
@@ -254,6 +277,28 @@ run_utmb_deid_policy <- function(root, dictionary_path = NULL, label = NULL) {
   path
 }
 
+# Keeps `exempt` values and numeric-like values (optional comparison sign, optional minus, plain
+# or decimal number, after trimming) and values found for at least `min_patients` distinct ids
+# among the other values. Everything else becomes missing.
+utmb_keep_common_values <- function(x, ids, exempt = rep(FALSE, length(x)),
+                                    min_patients = utmb_deid_min_patients) {
+  x <- as.character(x)
+  present <- !is.na(x)
+  numeric_like <- present &
+    grepl("^(<=|>=|<|>)?[[:space:]]*-?([0-9]+[.]?[0-9]*|[.][0-9]+)$", trimws(x))
+  candidate <- present & !exempt & !numeric_like
+  common <- rep(FALSE, length(x))
+  if (any(candidate)) {
+    pairs <- unique(data.frame(v = x[candidate], id = ids[candidate], stringsAsFactors = FALSE))
+    n_ids <- table(pairs$v)
+    common[candidate] <- x[candidate] %in% names(n_ids)[n_ids >= min_patients]
+  }
+  keep <- !present | exempt | numeric_like | common
+  out <- x
+  out[!keep] <- NA_character_
+  utmb_shift_result(out, 0L, sum(present & keep), sum(present & !keep))
+}
+
 # ---- one table --------------------------------------------------------------------------------
 
 # Applies the policy to one table (a data.table of character columns). Returns the de-identified
@@ -308,16 +353,13 @@ deid_utmb_table <- function(dt, table, policy, secret) {
         new <- utmb_deid_remap(old, row$domain, secret)
         res <- utmb_shift_result(new, sum(!is.na(new) & new != old), sum(!is.na(new) & new == old),
                                  0L)
-      } else if (row$action == "blank_free_text_values") {
-        old <- dt[[col]]
-        allowed <- if ("RowValueType" %in% cols) {
-          !is.na(dt[["RowValueType"]]) & dt[["RowValueType"]] %in% utmb_flowsheet_value_types
-        } else {
-          rep(FALSE, length(old))
+      } else if (row$action %in% c("keep_common_values", "keep_typed_or_common_values")) {
+        exempt <- rep(FALSE, nrow(dt))
+        if (row$action == "keep_typed_or_common_values" && "RowValueType" %in% cols) {
+          exempt <- !is.na(dt[["RowValueType"]]) &
+            dt[["RowValueType"]] %in% utmb_flowsheet_value_types
         }
-        new <- old
-        new[!allowed] <- NA_character_
-        res <- utmb_shift_result(new, 0L, sum(allowed & !is.na(old)), sum(!allowed & !is.na(old)))
+        res <- utmb_keep_common_values(dt[[col]], dt[["StudyID"]], exempt)
       }
       if (!is.null(res)) {
         data.table::set(dt, j = col, value = res$value)
@@ -380,7 +422,7 @@ utmb_deid_leak_check <- function(out_data_dir, policy, leak) {
         if (n > 0) leaks[[length(leaks) + 1L]] <- data.frame(table = table, column = col,
                                                              check = "name", n = n)
       }
-      if (!is.null(dob) && row$action %in% c("keep", "blank_free_text_values")) {
+      if (!is.null(dob) && row$action %in% utmb_deid_unshifted_actions) {
         own <- dob$dob[match(dt[["StudyID"]], dob$StudyID)]
         n <- sum(present & !is.na(own) & x == own)
         if (n > 0) {
@@ -508,16 +550,21 @@ utmb_deid_summary <- function(files, counts, stats, unlisted, absent_tables, che
              ", dates shifted: ", n_action("shift_date") + n_action("shift_instant") +
                n_action("shift_datekey"),
              ", keys remapped: ", n_action("remap"),
-             ", values filtered by type: ", n_action("blank_free_text_values")),
+             ", text columns filtered: ", n_action("keep_common_values") +
+               n_action("keep_typed_or_common_values")),
       paste0("  shifted or remapped values: ", sum(s$n_changed),
              ", date values left unchanged (sentinels, out of range): ",
              sum(s$n_unchanged[s$action %in% c("shift_date", "shift_instant",
                                                "shift_datekey")]),
              ", date values blanked (not ISO dates): ",
              sum(s$n_blanked[s$action %in% c("shift_date", "shift_instant")])),
+      paste0("  text values blanked (not numeric-like, fewer than ", utmb_deid_min_patients,
+             " patients): ",
+             sum(s$n_blanked[s$action %in% c("keep_common_values",
+                                             "keep_typed_or_common_values")])),
       if (table == "flowsheets") {
-        paste0("  flowsheet values blanked by RowValueType: ",
-               sum(s$n_blanked[s$action == "blank_free_text_values"]))
+        paste0("  flowsheet Value blanked: ",
+               sum(s$n_blanked[s$action == "keep_typed_or_common_values"]))
       },
       paste0("  columns in the data but not in the policy (dropped): ", n("unlisted_dropped")),
       ""

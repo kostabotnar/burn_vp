@@ -165,7 +165,7 @@ test_that("the policy generator assigns the expected actions", {
   expect_equal(get("crosswalk", "BurnCodeDate")$action, "shift_date")
   expect_equal(get("crosswalk", "StudyID")$action, "keep")
   expect_equal(get("flowsheets", "Comment")$action, "drop")
-  expect_equal(get("flowsheets", "Value")$action, "blank_free_text_values")
+  expect_equal(get("flowsheets", "Value")$action, "keep_typed_or_common_values")
   expect_equal(get("flowsheets", "TakenInstant")$action, "shift_instant")
   expect_equal(get("flowsheets", "_CreationInstant")$action, "drop")
   expect_equal(get("flowsheets", "PatientKey")$action, "drop")
@@ -182,7 +182,11 @@ test_that("the policy generator assigns the expected actions", {
   expect_equal(get("surgical_cases", "PrecedingCaseBySurgeonKey")$domain, "surgical_case")
   expect_equal(get("surgical_cases", "PrimaryPreferenceCardDurableKey")$reason,
                "unclassified key, review")
-  expect_equal(get("labs", "Value")$reason, "text, review")
+  expect_equal(get("labs", "Value")$action, "keep_common_values")
+  expect_equal(get("flowsheets", "TimeValue")$action, "keep_common_values")
+  expect_equal(get("medication_orders", "Sig")$action, "keep_common_values")
+  expect_equal(get("medication_orders", "SecondPrnReason")$action, "keep_common_values")
+  expect_equal(get("labs", "LoincName")$reason, "text, review")
   remap <- policy[policy$action == "remap", ]
   expect_false(anyNA(remap$domain))
   expect_true(all(policy$reason[policy$action == "drop" &
@@ -312,7 +316,7 @@ test_that("the pipeline writes de-identified tables, keys and reports, and passe
 
   summary <- readLines(file.path(res$run_dir, "summary.txt"))
   expect_true(any(grepl("rows dropped for missing StudyID: 1", summary)))
-  expect_true(any(grepl("flowsheet values blanked by RowValueType: 2", summary)))
+  expect_true(any(grepl("flowsheet Value blanked: 2", summary)))
   expect_true(any(grepl("Result: OK", summary)))
   expect_false(any(grepl("MRN00|Doe|1980-05", summary)))
   expect_false(any(grepl(intToUtf8(0x2013), summary, fixed = TRUE)))
@@ -409,4 +413,70 @@ test_that("burn_index runs on the de-identified fixture output", {
   events <- data.table::fread(file.path(burn_dir, "index_events.csv"), colClasses = "character")
   expect_setequal(events$StudyID, c("1", "2", "3"))
   expect_true(file.exists(file.path(burn_dir, "summary.txt")))
+})
+
+test_that("placeholder date bounds stay unchanged in both shift functions", {
+  expect_equal(format(utmb_placeholder_low), "1900-01-01")
+  expect_equal(format(utmb_placeholder_high), "9999-01-01")
+  days <- c(5L, -5L, 5L, -5L, 5L, -5L, 5L, -5L)
+  x <- c("1900-01-01", "1900-01-01 10:00:00", "9999-12-31", "9999-12-31", "9999-01-01",
+         "1900-01-02", "9998-12-31", "1900-01-02")
+  res <- utmb_shift_iso(x, days)
+  expect_equal(res$value, c("1900-01-01", "1900-01-01 10:00:00", "9999-12-31", "9999-12-31",
+                            "9999-01-01", "1899-12-28", "9999-01-05", "1899-12-28"))
+  expect_equal(res$unchanged, 5L)
+  keys <- c("19000101", "99991231", "99990101", "19000102", "99981231", "18991231")
+  kres <- utmb_shift_datekey(keys, c(5L, -5L, 5L, 5L, 5L, 5L))
+  expect_equal(kres$value, c("19000101", "99991231", "99990101", "19000107", "99990105",
+                             "18991231"))
+  expect_equal(kres$changed, 2L)
+})
+
+test_that("1900-01-01 stays a placeholder for burn_index after de-identification", {
+  dir <- local_output_dir()
+  data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
+  dx <- data.table::fread(file.path(data_dir, "diagnoses"), colClasses = "character")
+  dx$StartDate[1] <- "1900-01-01"
+  write_deid_csv(dx, data_dir, "diagnoses")
+  root <- deid_root(dir)
+  res <- run_utmb_deid(data_dir, root, label = "ph", policy_path = deid_policy_file,
+                       progress = quiet)
+  out <- read_out(res$run_dir, "diagnoses")
+  expect_equal(out$StartDate[1], "1900-01-01")
+  expect_true(as.Date(out$StartDate[1]) <= burn_placeholder_cutoff)
+})
+
+test_that("keep_common_values keeps numeric-like values and values shared by enough patients", {
+  expect_equal(utmb_deid_min_patients, 20L)
+  ids <- c(as.character(1:20), as.character(1:19), "1", "1")
+  x <- c(rep("Common text", 20), rep("Almost common", 19), "Rare text", "Rare text")
+  res <- utmb_keep_common_values(x, ids)
+  expect_equal(res$value[1:20], rep("Common text", 20))
+  expect_true(all(is.na(res$value[21:41])))
+  expect_equal(res$blanked, 21L)
+  expect_equal(res$unchanged, 20L)
+  forms <- c("5", "-5", "5.25", ".5", "5.", "<5", ">= 5.5", "<=-3", " 7 ", "5 mg", "1e5", "<", "",
+             NA)
+  kept <- utmb_keep_common_values(forms, rep("1", length(forms)))$value
+  expect_equal(is.na(kept), c(rep(FALSE, 9), rep(TRUE, 5)))
+  ex <- utmb_keep_common_values(rep("words", 25), as.character(1:25),
+                                exempt = c(rep(TRUE, 6), rep(FALSE, 19)))
+  expect_equal(sum(!is.na(ex$value)), 6L)
+})
+
+test_that("keep_common_values columns are filtered in the pipeline and counted", {
+  dir <- local_output_dir()
+  data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
+  n <- 22
+  write_deid_csv(data.frame(
+    StudyID = as.character(1:n), Value = c(rep("Positive", n - 1), "Jane Doe called"),
+    ComponentName = "x"
+  ), data_dir, "labs")
+  root <- deid_root(dir)
+  res <- run_utmb_deid(data_dir, root, label = "cv", policy_path = deid_policy_file,
+                       progress = quiet)
+  labs <- read_out(res$run_dir, "labs")
+  expect_equal(sum(is.na(labs$Value)), 1L)
+  actions <- data.table::fread(file.path(res$run_dir, "column_actions.csv"))
+  expect_equal(actions$n_blanked[actions$table == "labs" & actions$column == "Value"], 1L)
 })
