@@ -190,3 +190,14 @@ gui_build_window <- function(root) {
        add_files = add_files, remove_checked = remove_checked, get_inputs = get_inputs)
 }
 # nolint end
+
+# Opens the window and returns when it is closed. Never quits R, so it is safe to call from Rgui.
+# Stops with a plain message when the project packages are missing.
+# nolint start: object_usage_linter. activate_project_renv() is in project_paths.R.
+gui_main <- function(root) {
+  activate_project_renv(root)
+  window <- gui_build_window(root)
+  tcltk::tkwait.window(window$top)
+  invisible(NULL)
+}
+# nolint end
