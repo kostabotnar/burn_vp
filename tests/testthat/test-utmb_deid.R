@@ -392,6 +392,19 @@ test_that("the leak check rejects an output column the policy drops or does not 
   expect_null(check$leaks)
 })
 
+test_that("the leak check ignores identifier values that equal a shifted date by chance", {
+  dir <- local_output_dir()
+  policy <- read_utmb_deid_policy(deid_policy_file)
+  out <- file.path(dir, "out")
+  dir.create(out)
+  write_deid_csv(data.frame(StudyID = c("1", "2"), StartDate = c("20190314", "2019-03-14"),
+                            Code = c("T31.0", "20190314")), out, "diagnoses")
+  check <- utmb_deid_leak_check(out, policy, list(exact = c("20190314", "2019-03-14"),
+                                                  names = character(0)))
+  expect_equal(check$leaks$column, "Code")
+  expect_equal(check$leaks$n, 1L)
+})
+
 test_that("nothing is written without a confirmed project root", {
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)

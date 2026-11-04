@@ -410,7 +410,9 @@ utmb_deid_leak_check <- function(out_data_dir, policy, leak) {
       }
       x <- dt[[col]]
       present <- !is.na(x)
-      if (length(exact) > 0) {
+      # A shifted date can equal an 8-digit Epic ID by chance; it cannot carry the original ID.
+      shifted <- row$action %in% c("shift_date", "shift_instant", "shift_datekey")
+      if (length(exact) > 0 && !shifted) {
         n <- sum(x[present] %in% exact)
         if (n > 0) leaks[[length(leaks) + 1L]] <- data.frame(table = table, column = col,
                                                              check = "exact", n = n)
