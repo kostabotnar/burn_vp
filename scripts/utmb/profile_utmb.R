@@ -3,13 +3,17 @@
 #
 # Usage (from any working directory):
 #   Rscript scripts/utmb/profile_utmb.R [--data <folder>] [--label <text>]
-#   --data   folder with the UTMB files; default <project folder>/data
+#   --data   folder with the UTMB files; default <project folder>/data. A relative path is
+#            resolved against the project folder, not the working directory.
 #   --label  optional text added to the run folder name
 #
 # Reads:  the files in the data folder and the R/ and R/utmb/ functions.
 # Writes: output/utmb/profile_<YYYYmmdd_HHMMSS>[_<label>]/ (column_profile.csv, table_stats.csv,
-#         demographics_*.csv, summary.txt) and metadata/utmb_dictionary.csv (structure only, no
-#         data values). Writes only when the project folder is confirmed by PROJECT_VERSION.
+#         demographics_*.csv, summary.txt, utmb_dictionary.csv). The dictionary holds structure
+#         only,
+#         no data values; to update the committed metadata/utmb_dictionary.csv, review it and
+#         copy it there by hand. Writes only when the project folder is confirmed by
+#         PROJECT_VERSION.
 
 script_arg <- grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE)
 if (length(script_arg) == 0) {
@@ -46,6 +50,7 @@ opt <- take_option(opt$args, "--label")
 label <- opt$value
 if (length(opt$args) > 0) stop(usage, call. = FALSE)
 if (is.null(data_dir)) data_dir <- file.path(project_root, "data")
+if (!grepl("^(/|~|[A-Za-z]:)", data_dir)) data_dir <- file.path(project_root, data_dir)
 if (!dir.exists(data_dir)) stop("Data folder not found: ", data_dir, call. = FALSE)
 
 run_utmb_profile(data_dir, project_root, label = label)

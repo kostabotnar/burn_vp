@@ -79,17 +79,12 @@ test_that("build_utmb_dictionary has the documented columns and no data values",
   expect_equal(d$position, 1:3)
 })
 
-test_that("write_utmb_dictionary refuses an unconfirmed root and orders rows", {
+test_that("write_utmb_dictionary writes utmb_dictionary.csv ordered by table and position", {
   dir <- local_output_dir()
   d <- rbind(build_utmb_dictionary("b", c("StudyID", "A"), c("text", "integer")),
              build_utmb_dictionary("a", c("StudyID"), c("text")))
-  expect_error(write_utmb_dictionary(d, file.path(dir, "no_marker")), "not confirmed")
-  expect_false(dir.exists(file.path(dir, "no_marker", "metadata")))
-
-  root <- file.path(dir, "fake_root")
-  dir.create(root)
-  file.copy(file.path(testthat::test_path("..", ".."), "PROJECT_VERSION"), root)
-  path <- write_utmb_dictionary(d, root)
+  path <- write_utmb_dictionary(d, dir)
+  expect_equal(basename(path), "utmb_dictionary.csv")
   back <- utils::read.csv(path, stringsAsFactors = FALSE)
   expect_equal(back$table, c("a", "b", "b"))
   expect_equal(back$position, c(1, 1, 2))

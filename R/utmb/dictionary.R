@@ -136,18 +136,10 @@ build_utmb_dictionary <- function(table, names, types,
   )
 }
 
-# Writes the dictionary to <root>/metadata/utmb_dictionary.csv after confirming the project root.
-# Rows are ordered by table, then position.
-write_utmb_dictionary <- function(dictionary, root) {
-  # nolint start: object_usage_linter. is_project_root() comes from project_paths.R.
-  if (!is_project_root(root)) {
-    stop("Project folder not confirmed: no PROJECT_VERSION with 'Project: ", expected_project_name,
-         "' in the given folder. Nothing was written.", call. = FALSE)
-  }
-  # nolint end
+# Writes the dictionary as utmb_dictionary.csv into `dir` (a run folder inside output/), ordered by
+# table, then position. Returns the file path.
+write_utmb_dictionary <- function(dictionary, dir) {
   dictionary <- dictionary[order(dictionary$table, dictionary$position, method = "radix"), ]
-  dir <- file.path(root, "metadata")
-  if (!dir.exists(dir)) dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   path <- file.path(dir, "utmb_dictionary.csv")
   utils::write.csv(dictionary, path, row.names = FALSE, na = "")
   invisible(path)

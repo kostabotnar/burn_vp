@@ -72,7 +72,7 @@ The raw UTMB extract (13 comma-separated files without an extension, from Epic C
 Rscript scripts/utmb/profile_utmb.R [--data <folder>] [--label <text>]
 ```
 
-The default data folder is `data/` in the project folder. The run writes `output/utmb/profile_<date>_<time>[_<label>]/` with `column_profile.csv`, `table_stats.csv` (including read and profile seconds per table), `demographics_categorical.csv`, `demographics_numeric.csv` and `summary.txt`. These hold aggregate counts, but some columns list the most frequent values, so keep the run folder out of version control. The script also rewrites `metadata/utmb_dictionary.csv`, a structure-only dictionary (column types, roles, identifier flags and descriptions, no data values) that is committed. The functions are in `R/utmb/`.
+The default data folder is `data/` in the project folder; a relative `--data` path is resolved against the project folder, not the working directory. The run writes `output/utmb/profile_<date>_<time>[_<label>]/` with `column_profile.csv`, `table_stats.csv` (including read and profile seconds per table), `demographics_categorical.csv`, `demographics_numeric.csv` and `summary.txt` and `utmb_dictionary.csv`. These hold aggregate counts, but some columns list the most frequent values, so keep the run folder out of version control. `utmb_dictionary.csv` is a structure-only dictionary (column types, roles, identifier flags and descriptions, no data values). The script never writes outside `output/`; to update the committed copy `metadata/utmb_dictionary.csv`, review the file and copy it there by hand. The functions are in `R/utmb/`.
 
 ## Layout
 

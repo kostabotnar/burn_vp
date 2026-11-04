@@ -1,9 +1,9 @@
 # nolint start: object_usage_linter. Functions from the other files are not visible here.
 # Profiles every UTMB table found in `data_dir`. Results go to
-# <root>/output/utmb/profile_<YYYYmmdd_HHMMSS>[_<label>]/ and the structure-only dictionary to
-# <root>/metadata/utmb_dictionary.csv (when write_dictionary is TRUE). Nothing is written unless
-# `root` is confirmed by PROJECT_VERSION. Returns the run folder.
-run_utmb_profile <- function(data_dir, root, label = NULL, write_dictionary = TRUE,
+# <root>/output/utmb/profile_<YYYYmmdd_HHMMSS>[_<label>]/ including the structure-only
+# utmb_dictionary.csv. Nothing is written unless `root` is confirmed by PROJECT_VERSION.
+# Returns the run folder.
+run_utmb_profile <- function(data_dir, root, label = NULL,
                              progress = function(...) cat(..., "\n", sep = "")) {
   files <- utmb_table_files(data_dir)
   if (length(files) == 0) stop("No UTMB tables found in ", data_dir, call. = FALSE)
@@ -77,13 +77,11 @@ run_utmb_profile <- function(data_dir, root, label = NULL, write_dictionary = TR
   writeLines(utmb_summary_lines(table_stats, column_profile, demo, total_seconds),
              file.path(run_dir, "summary.txt"))
 
-  if (write_dictionary) {
-    dictionary <- do.call(rbind, lapply(split(column_profile, column_profile$table), function(p) {
-      p <- p[order(p$position), ]
-      build_utmb_dictionary(p$table[1], p$column, p$inferred_type, p$n_distinct)
-    }))
-    write_utmb_dictionary(dictionary, root)
-  }
+  dictionary <- do.call(rbind, lapply(split(column_profile, column_profile$table), function(p) {
+    p <- p[order(p$position), ]
+    build_utmb_dictionary(p$table[1], p$column, p$inferred_type, p$n_distinct)
+  }))
+  write_utmb_dictionary(dictionary, run_dir)
   progress("Output folder: ", run_dir)
   invisible(run_dir)
 }

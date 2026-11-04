@@ -77,7 +77,9 @@ test_that("run_utmb_profile writes the expected files from synthetic tables", {
   expect_match(basename(run_dir), "^profile_[0-9]{8}_[0-9]{6}_unit_test$")
   expect_setequal(list.files(run_dir),
                   c("column_profile.csv", "table_stats.csv", "demographics_categorical.csv",
-                    "demographics_numeric.csv", "summary.txt"))
+                    "demographics_numeric.csv", "summary.txt", "utmb_dictionary.csv"))
+  expect_setequal(list.files(root, all.files = TRUE, no.. = TRUE), c("PROJECT_VERSION", "output"))
+  expect_setequal(list.files(file.path(root, "output")), "utmb")
 
   ts <- utils::read.csv(file.path(run_dir, "table_stats.csv"), stringsAsFactors = FALSE)
   expect_equal(ts$table, c("crosswalk", "demographics", "diagnoses", "hospital_admissions"))
@@ -107,7 +109,7 @@ test_that("run_utmb_profile writes the expected files from synthetic tables", {
                    collapse = "\n")
   expect_false(grepl("Fake One|M2|E3|free text", written))
 
-  dict <- utils::read.csv(file.path(root, "metadata", "utmb_dictionary.csv"),
+  dict <- utils::read.csv(file.path(run_dir, "utmb_dictionary.csv"),
                           stringsAsFactors = FALSE)
   expect_equal(nrow(dict), nrow(cp))
   expect_equal(dict$table, sort(dict$table, method = "radix"))
@@ -123,13 +125,10 @@ test_that("run_utmb_profile writes the expected files from synthetic tables", {
   expect_true(any(grepl("UTMB profile summary", readLines(file.path(run_dir, "summary.txt")))))
 })
 
-test_that("run_utmb_profile can skip the dictionary and needs a confirmed root and a crosswalk", {
+test_that("run_utmb_profile needs a confirmed root and a crosswalk", {
   dir <- local_output_dir()
   data_dir <- make_utmb_dir(dir)
   root <- make_fake_root(dir)
-  run_utmb_profile(data_dir, root, write_dictionary = FALSE, progress = function(...) NULL)
-  expect_false(file.exists(file.path(root, "metadata", "utmb_dictionary.csv")))
-
   bare <- file.path(dir, "bare")
   dir.create(bare)
   expect_error(run_utmb_profile(data_dir, bare, progress = function(...) NULL), "not confirmed")
