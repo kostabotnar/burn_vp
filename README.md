@@ -74,6 +74,16 @@ Rscript scripts/utmb/profile_utmb.R [--data <folder>] [--label <text>]
 
 The default data folder is `data/` in the project folder; a relative `--data` path is resolved against the project folder, not the working directory. The run writes `output/utmb/profile_<date>_<time>[_<label>]/` with `column_profile.csv`, `table_stats.csv` (including read and profile seconds per table), `demographics_categorical.csv`, `demographics_numeric.csv` and `summary.txt` and `utmb_dictionary.csv`. These hold aggregate counts, but some columns list the most frequent values, so keep the run folder out of version control. `utmb_dictionary.csv` is a structure-only dictionary (column types, roles, identifier flags and descriptions, no data values). The script never writes outside `output/`; to update the committed copy `metadata/utmb_dictionary.csv`, review the file and copy it there by hand. The functions are in `R/utmb/`.
 
+## Burn index events in the UTMB data
+
+```
+Rscript scripts/utmb/burn_index.R [--data <folder>] [--label <text>]
+```
+
+Burn records are `diagnoses` rows with ICD-10-CM `T31.*` or ICD-9-CM `948.*`. The index event is each patient's earliest burn record dated 2015-01-01 to 2023-12-31 (highest group when several records share the date). The group is the first digit after the dot: percent of body surface area burned in tenths (0 = under 10%, 9 = 90% or more). The run writes `output/utmb/burn_index_<date>_<time>[_<label>]/` with group, year and month distributions, demographics, index encounter types, burn records before the index event, a comparison with the crosswalk, `figures/` and `summary.txt`. Smoking status and race are the extract's current values, not values at the index date.
+
+`index_events.csv` in the run folder is patient-level (one row per StudyID, with index date, code, encounter and age). It stays in `output/`, which is ignored by version control, and must not be shared. All other files are aggregate counts. The functions are in `R/utmb/burn_index.R`.
+
 ## Layout
 
 - `R/`: reusable functions

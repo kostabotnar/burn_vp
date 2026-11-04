@@ -1,4 +1,15 @@
 # nolint start: object_usage_linter. Functions from the other files are not visible here.
+# Creates <root>/output/utmb/<prefix>_<YYYYmmdd_HHMMSS>[_<label>]/ and returns its path.
+utmb_run_dir <- function(root, prefix, label = NULL) {
+  stamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
+  suffix <- if (is.null(label) || !nzchar(label)) {
+    ""
+  } else {
+    paste0("_", gsub("[^A-Za-z0-9_-]", "_", label))
+  }
+  project_output_dir(root, file.path("utmb", paste0(prefix, "_", stamp, suffix)))
+}
+
 # Profiles every UTMB table found in `data_dir`. Results go to
 # <root>/output/utmb/profile_<YYYYmmdd_HHMMSS>[_<label>]/ including the structure-only
 # utmb_dictionary.csv. Nothing is written unless `root` is confirmed by PROJECT_VERSION.
@@ -10,13 +21,7 @@ run_utmb_profile <- function(data_dir, root, label = NULL,
   if (!"crosswalk" %in% names(files)) {
     stop("The crosswalk table is required but was not found in ", data_dir, call. = FALSE)
   }
-  stamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-  suffix <- if (is.null(label) || !nzchar(label)) {
-    ""
-  } else {
-    paste0("_", gsub("[^A-Za-z0-9_-]", "_", label))
-  }
-  run_dir <- project_output_dir(root, file.path("utmb", paste0("profile_", stamp, suffix)))
+  run_dir <- utmb_run_dir(root, "profile", label)
 
   started <- Sys.time()
   crosswalk_ids <- unique(read_utmb_table(files[["crosswalk"]])[["StudyID"]])
