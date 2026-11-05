@@ -1,9 +1,9 @@
 # nolint start: object_usage_linter. Functions from the other files are not visible here.
 # De-identification of the UTMB extract. A policy file (metadata/utmb_deid_policy.csv) lists one
-# action per table column. Dates move by one random offset per patient, linking keys are replaced
-# by pseudonyms, and identifiers and free text are dropped. Offsets and pseudonyms are derived
-# from one random run secret with SHA-256, so every table stays joinable and nothing has to be
-# held in a lookup table.
+# action per table column. Patients get a new number (written as StudyID), dates move by one
+# random offset per patient, linking keys are replaced by pseudonyms, and identifiers and free
+# text are dropped. Offsets and pseudonyms are derived from one random run secret with SHA-256,
+# so every table stays joinable. Only the patient number needs a lookup file (patients.csv).
 
 utmb_deid_actions <- c("keep", "drop", "shift_date", "shift_instant", "shift_datekey", "remap",
                        "keep_common_values", "keep_typed_or_common_values")
@@ -32,6 +32,13 @@ utmb_deid_date_identifiers <- c("DOB", "BirthDate")
 
 utmb_deid_policy_file <- "utmb_deid_policy.csv"
 
+# Column that identifies a patient in every table of the extract (Epic's stable patient key).
+utmb_default_patient_key <- "PatientDurableKey"
+
+# Names the output uses for the new patient id and in patients.csv.
+utmb_deid_id_column <- "StudyID"
+utmb_deid_extract_id_column <- "extract_StudyID"
+
 # ---- run secret, offsets and pseudonyms -------------------------------------------------------
 
 # 32 random bytes as 64 hex characters from the operating system's random source.
@@ -39,7 +46,7 @@ new_utmb_secret <- function() {
   source <- "/dev/urandom"
   if (!file.exists(source)) {
     stop("No cryptographic random source: ", source, " is not available on this system. ",
-         "Run on Linux, or pass an existing secret with --secret.", call. = FALSE)
+         "Run on Linux, or pass an earlier keys folder with --keys.", call. = FALSE)
   }
   bytes <- tryCatch({
     con <- file(source, open = "rb", raw = TRUE)
@@ -64,7 +71,8 @@ utmb_sha256 <- function(x) {
   digest::getVDigest(algo = "sha256")(x, serialize = FALSE)
 }
 
-# One offset per StudyID: SHA-256 of secret, "offset" and the id, mapped onto the 60 allowed days.
+# One offset per patient key value: SHA-256 of secret, "offset" and the value, mapped onto the 60
+# allowed days.
 utmb_deid_offsets <- function(ids, secret) {
   ids <- as.character(ids)
   out <- rep(NA_integer_, length(ids))
@@ -194,7 +202,9 @@ utmb_deid_rule <- function(table, column, type, role) {
   act <- function(action, reason = "", domain = NA_character_) {
     list(action = action, domain = domain, reason = reason)
   }
-  if (role == "study_id") return(act("keep", "study identifier"))
+  if (role == "study_id") {
+    return(act("drop", "extract study id, replaced by a new patient id"))
+  }
   if (grepl("NumericId$", name)) return(act("drop", "identifier: Epic record id (NumericId)"))
   if (name %in% c("BirthDate", "DeathDate")) return(act("shift_date", "date shifted"))
   if (name == "DeathInstant") return(act("shift_instant", "date shifted"))
@@ -302,20 +312,29 @@ utmb_keep_common_values <- function(x, ids, exempt = rep(FALSE, length(x)),
 
 # ---- one table --------------------------------------------------------------------------------
 
-# Applies the policy to one table (a data.table of character columns). Returns the de-identified
-# table, per column counts, row counts, the StudyIDs seen and what the leak check needs.
-deid_utmb_table <- function(dt, table, policy, secret) {
-  if (!"StudyID" %in% names(dt)) stop("Table ", table, " has no StudyID column.", call. = FALSE)
+# Applies the policy to one table (a data.table of character columns). `id_map` is a character
+# vector of new patient ids named by patient key value. The patient key column and the extract's
+# StudyID column are always dropped; the new id is written first as StudyID. Returns the
+# de-identified table, per column counts, row counts and what the leak check needs.
+deid_utmb_table <- function(dt, table, policy, secret, id_map,
+                            patient_key = utmb_default_patient_key) {
+  if (!patient_key %in% names(dt)) {
+    stop("Table ", table, " has no ", patient_key, " column.", call. = FALSE)
+  }
   pol <- policy[policy$table == table, , drop = FALSE]
   cols <- names(dt)
   listed <- cols %in% pol$column
   rows_in <- nrow(dt)
+  key <- dt[[patient_key]]
+  new_id <- unname(id_map[match(key, names(id_map))])
 
   leak <- list(exact = NULL, names = NULL, dob = NULL)
   pair <- function(values) {
-    has <- !is.na(dt[["StudyID"]]) & !is.na(values)
-    unique(data.table::data.table(StudyID = dt[["StudyID"]][has], value = values[has]))
+    has <- !is.na(new_id) & !is.na(values)
+    unique(data.table::data.table(StudyID = new_id[has], value = values[has]))
   }
+  # The patient key is dropped whatever the policy says, so it is added to the exact pairs here.
+  leak$exact <- pair(key)
   for (col in cols[listed]) {
     row <- pol[match(col, pol$column), ]
     base <- utmb_base_name(col)
@@ -329,24 +348,27 @@ deid_utmb_table <- function(dt, table, policy, secret) {
       }
     }
     if (base %in% utmb_deid_date_identifiers) {
-      has <- !is.na(dt[["StudyID"]]) & !is.na(dt[[col]])
-      leak$dob <- rbind(leak$dob, data.frame(StudyID = dt[["StudyID"]][has], dob = dt[[col]][has],
+      has <- !is.na(new_id) & !is.na(dt[[col]])
+      leak$dob <- rbind(leak$dob, data.frame(StudyID = new_id[has], dob = dt[[col]][has],
                                              stringsAsFactors = FALSE))
     }
   }
 
-  keep_rows <- !is.na(dt[["StudyID"]])
+  keep_rows <- !is.na(key) & !is.na(new_id)
   if (!all(keep_rows)) dt <- dt[keep_rows, ]
-  ids <- unique(dt[["StudyID"]])
-  days <- utmb_deid_offsets(dt[["StudyID"]], secret)
+  days <- utmb_deid_offsets(key[keep_rows], secret)
+  new_id <- new_id[keep_rows]
 
+  always_dropped <- c(patient_key, utmb_deid_id_column)
   stats <- vector("list", length(cols))
   for (i in seq_along(cols)) {
     col <- cols[i]
     s <- data.frame(table = table, column = col, action = "drop", domain = NA_character_,
                     status = "unlisted_dropped", n_changed = 0L, n_unchanged = 0L,
                     n_blanked = 0L, stringsAsFactors = FALSE)
-    if (listed[i]) {
+    if (col %in% always_dropped) {
+      s$status <- "dropped"
+    } else if (listed[i]) {
       row <- pol[match(col, pol$column), ]
       s$action <- row$action
       s$domain <- row$domain
@@ -367,7 +389,7 @@ deid_utmb_table <- function(dt, table, policy, secret) {
           exempt <- !is.na(dt[["RowValueType"]]) &
             dt[["RowValueType"]] %in% utmb_flowsheet_value_types
         }
-        res <- utmb_keep_common_values(dt[[col]], dt[["StudyID"]], exempt)
+        res <- utmb_keep_common_values(dt[[col]], new_id, exempt)
       }
       if (!is.null(res)) {
         data.table::set(dt, j = col, value = res$value)
@@ -389,33 +411,52 @@ deid_utmb_table <- function(dt, table, policy, secret) {
   }
   out_cols <- stats$column[stats$status == "written"]
   dt <- dt[, out_cols, with = FALSE]
+  data.table::set(dt, j = utmb_deid_id_column, value = new_id)
+  data.table::setcolorder(dt, utmb_deid_id_column)
   list(data = dt, stats = stats, rows_in = rows_in, rows_out = nrow(dt),
-       rows_no_id = rows_in - sum(keep_rows), ids = ids, leak = leak,
-       unlisted = cols[!listed])
+       rows_no_key = rows_in - sum(keep_rows), leak = leak, unlisted = cols[!listed])
 }
 
 # ---- leak check -------------------------------------------------------------------------------
 
+# Exact matches in these columns are reported for review but do not fail the run: a catalog code
+# (reference dimension key, flowsheet row id) shared by many patients can equal one patient's own
+# case number or CSN by chance, because Epic id spaces overlap.
+utmb_leak_review_reasons <- "reference dimension key"
+utmb_leak_review_columns <- list(flowsheets = "FlowsheetRowEpicId")
+
+utmb_leak_review_only <- function(table, column, reason) {
+  isTRUE(reason %in% utmb_leak_review_reasons) ||
+    utmb_base_name(column) %in% utmb_leak_review_columns[[table]]
+}
+
 # Scans the written tables. Counts are cells equal to an original identifier value of the same
-# patient (the row's own StudyID): a dropped identifier value ("exact"), the patient name in any
-# case ("name"), and the original birth date in an unshifted column ("own_birth_date"). Matching
-# is per patient because Epic id spaces overlap, so another patient's id can equal a reference key
-# by chance. leak$exact and leak$names are tables of StudyID and value (names lowercased). Also
-# lists every written column that the policy does not allow ("not_allowed"). Counts only.
+# patient (the row's own new StudyID, the first column of every output table, which is exempt
+# from the checks): a dropped identifier value or the original patient key ("exact"), the patient
+# name in any case ("name"), and the original birth date in an unshifted column
+# ("own_birth_date"). Matching is per patient because Epic id spaces overlap, so another patient's
+# id can equal a reference key by chance. leak$exact and leak$names are tables of StudyID and
+# value (names lowercased). Also lists every written column that the policy does not allow
+# ("not_allowed"). Exact matches in catalog code columns (see utmb_leak_review_only) go to
+# `review` instead of `leaks`: cells, distinct colliding values and the fewest distinct patients
+# that have any one colliding value in the column. Counts only.
 utmb_deid_leak_check <- function(out_data_dir, policy, leak) {
   leaks <- list()
+  review <- list()
   violations <- list()
   exact <- leak$exact
   lower_names <- leak$names
-  match_count <- function(pairs, sid, x) {
-    probe <- data.table::data.table(StudyID = sid, value = x)[!is.na(x) & !is.na(sid)]
-    sum(pairs[probe, on = c("StudyID", "value"), nomatch = 0L, .N, by = .EACHI]$N)
+  matched_cells <- function(pairs, sid, x) {
+    probe <- data.table::data.table(StudyID = sid, value = x, cell = seq_along(x))
+    probe <- probe[!is.na(x) & !is.na(sid)]
+    probe[pairs, on = c("StudyID", "value"), nomatch = 0L, cell]
   }
+  match_count <- function(pairs, sid, x) length(matched_cells(pairs, sid, x))
   dob <- leak$dob
   files <- utmb_table_files(out_data_dir)
   for (table in names(files)) {
     dt <- read_utmb_table(files[[table]])
-    for (col in names(dt)) {
+    for (col in setdiff(names(dt), utmb_deid_id_column)) {
       row <- policy[policy$table == table & policy$column == col, , drop = FALSE]
       if (nrow(row) != 1L || row$action == "drop") {
         violations[[length(violations) + 1L]] <- data.frame(table = table, column = col,
@@ -427,9 +468,18 @@ utmb_deid_leak_check <- function(out_data_dir, policy, leak) {
       # A shifted date can equal an 8-digit Epic ID by chance; it cannot carry the original ID.
       shifted <- row$action %in% c("shift_date", "shift_instant", "shift_datekey")
       if (!is.null(exact) && !shifted) {
-        n <- match_count(exact, dt[["StudyID"]], x)
-        if (n > 0) leaks[[length(leaks) + 1L]] <- data.frame(table = table, column = col,
-                                                             check = "exact", n = n)
+        cells <- matched_cells(exact, dt[["StudyID"]], x)
+        if (length(cells) > 0 && utmb_leak_review_only(table, col, row$reason)) {
+          values <- unique(x[cells])
+          all_cells <- data.table::data.table(sid = dt[["StudyID"]], value = x)
+          holders <- unique(all_cells[value %in% values])
+          item <- data.frame(table = table, column = col, n_cells = length(cells),
+                             n_values = length(values), min_patients = min(table(holders$value)))
+          review[[length(review) + 1L]] <- item
+        } else if (length(cells) > 0) {
+          leaks[[length(leaks) + 1L]] <- data.frame(table = table, column = col,
+                                                    check = "exact", n = length(cells))
+        }
       }
       if (!is.null(lower_names)) {
         n <- match_count(lower_names, dt[["StudyID"]], tolower(x))
@@ -447,29 +497,172 @@ utmb_deid_leak_check <- function(out_data_dir, policy, leak) {
     }
     rm(dt)
   }
-  list(leaks = do.call(rbind, leaks), violations = do.call(rbind, violations))
+  list(leaks = do.call(rbind, leaks), violations = do.call(rbind, violations),
+       review = do.call(rbind, review))
 }
 
 # ---- run --------------------------------------------------------------------------------------
 
 utmb_deid_keys_readme <- c(
-  "DATE KEYS: this folder can re-identify dates.",
+  "DATE KEYS: this folder can re-identify patients and dates.",
   "",
-  "secret.txt holds the run secret. offsets.csv lists the shift in days for each StudyID.",
-  "With either file, de-identified dates can be moved back to the real dates, and keys",
-  "replaced by pseudonyms can be matched to the real keys.",
+  "patients.csv links each new StudyID to the Epic patient (the patient key column and, if the",
+  "extract had one, extract_StudyID) and lists the date shift in days of that patient.",
+  "secret.txt holds the run secret. With either file, de-identified dates can be moved back to",
+  "the real dates, and keys replaced by pseudonyms can be matched to the real keys.",
   "",
   "Store this folder separately from the de-identified data and never share it.",
-  "To give a later extract the same offsets and pseudonyms, run the script with",
-  "--secret <path to secret.txt>."
+  "To give a later extract the same patient ids, offsets and pseudonyms, run the script with",
+  "--keys <path to this folder>."
 )
 
-# De-identifies every UTMB table in `data_dir`. Writes the tables, summary.txt and
-# column_actions.csv to <root>/output/utmb/deid_<date>_<time>[_<label>]/ and the secret and
-# offsets to the separate output/utmb/deid_keys_<date>_<time>[_<label>]/. Nothing is written
-# unless `root` is confirmed by PROJECT_VERSION. Returns a list with run_dir, keys_dir, ok,
-# leaks, violations and unlisted; ok is FALSE when the leak check found anything.
-run_utmb_deid <- function(data_dir, root, label = NULL, secret_file = NULL, policy_path = NULL,
+utmb_read_key_column <- function(path, columns) {
+  data.table::fread(path, select = columns, colClasses = "character",
+                    na.strings = utmb_missing_strings, showProgress = FALSE, data.table = TRUE)
+}
+
+# Reads patients.csv of an earlier run. Stops if a patient key has two ids or an id is used twice.
+read_utmb_patients <- function(path, patient_key) {
+  if (!file.exists(path)) stop("Patient file not found: ", path, call. = FALSE)
+  old <- as.data.frame(data.table::fread(path, colClasses = "character", na.strings = "",
+                                         data.table = FALSE))
+  needed <- c(utmb_deid_id_column, patient_key)
+  if (!all(needed %in% names(old))) {
+    stop("The patient file ", path, " needs the columns: ", paste(needed, collapse = ", "),
+         call. = FALSE)
+  }
+  id <- old[[utmb_deid_id_column]]
+  key <- old[[patient_key]]
+  problems <- character(0)
+  if (anyNA(id) || !all(grepl("^[1-9][0-9]*$", id[!is.na(id)]))) {
+    problems <- c(problems, "StudyID is missing or not a positive whole number in some rows")
+  }
+  if (anyNA(key)) problems <- c(problems, "the patient key is missing in some rows")
+  if (anyDuplicated(key[!is.na(key)]) > 0) {
+    problems <- c(problems, paste0(sum(duplicated(key[!is.na(key)])),
+                                   " row(s) repeat a patient key that has another StudyID"))
+  }
+  if (anyDuplicated(id[!is.na(id)]) > 0) {
+    problems <- c(problems, paste0(sum(duplicated(id[!is.na(id)])),
+                                   " row(s) repeat a StudyID used for another patient"))
+  }
+  if (length(problems) > 0) {
+    stop("The patient file ", path, " is inconsistent: ", paste(problems, collapse = "; "), ".",
+         call. = FALSE)
+  }
+  old
+}
+
+# First pass over the extract, before anything is written. Reads only the patient key column of
+# each table (plus StudyID in demographics) and stops, naming tables and counts, unless
+# demographics has exactly one row per patient and every other table's keys are in demographics.
+# Numbers the patients 1..N in the order of SHA-256(secret, "patient_id", key); with `previous`
+# (patients.csv of an earlier run) known patients keep their id and new ones continue from the
+# largest id. Returns list(patients, id_map, n_patients, n_new).
+utmb_deid_prepare_patients <- function(files, patient_key, secret, previous = NULL) {
+  problems <- character(0)
+  if (patient_key %in% c(utmb_deid_id_column, utmb_deid_extract_id_column, "offset_days")) {
+    stop("The patient key column cannot be called ", patient_key, ".", call. = FALSE)
+  }
+  if (!"demographics" %in% names(files)) {
+    stop("The data folder has no demographics table, which defines the patients.", call. = FALSE)
+  }
+  header <- lapply(files, function(f) names(read_utmb_table(f, header_only = TRUE)))
+  no_key <- names(files)[!vapply(header, function(h) patient_key %in% h, logical(1))]
+  if (length(no_key) > 0) {
+    problems <- c(problems, paste0("table ", no_key, " has no ", patient_key, " column"))
+  }
+  demo <- NULL
+  if (!"demographics" %in% no_key) {
+    has_extract_id <- utmb_deid_id_column %in% header$demographics
+    demo <- utmb_read_key_column(files[["demographics"]],
+                                 c(patient_key, if (has_extract_id) utmb_deid_id_column))
+    keys <- demo[[patient_key]]
+    n_missing <- sum(is.na(keys))
+    n_repeated <- sum(duplicated(keys[!is.na(keys)]))
+    if (n_missing > 0) {
+      problems <- c(problems, paste0("demographics: ", n_missing, " row(s) have no ", patient_key))
+    }
+    if (n_repeated > 0) {
+      problems <- c(problems, paste0("demographics: ", n_repeated, " row(s) repeat a ", patient_key,
+                                     " (each patient needs exactly one row)"))
+    }
+    if (n_missing == 0 && n_repeated == 0) {
+      for (table in setdiff(names(files), c("demographics", no_key))) {
+        other <- utmb_read_key_column(files[[table]], patient_key)[[1]]
+        n_unmatched <- sum(!is.na(other) & !other %in% keys)
+        rm(other)
+        if (n_unmatched > 0) {
+          problems <- c(problems, paste0("table ", table, ": ", n_unmatched,
+                                         " row(s) have a ", patient_key,
+                                         " that is not in demographics"))
+        }
+      }
+    }
+  }
+  if (length(problems) > 0) {
+    stop("The patient key checks failed, nothing was written:\n  ",
+         paste(problems, collapse = "\n  "), call. = FALSE)
+  }
+
+  keys <- demo[[patient_key]]
+  extract_id <- if (utmb_deid_id_column %in% names(demo)) demo[[utmb_deid_id_column]] else NULL
+  by_hash <- order(utmb_sha256(paste(secret, "patient_id", keys, sep = "|")), method = "radix")
+  keys_sorted <- keys[by_hash]
+  extract_sorted <- if (is.null(extract_id)) NULL else extract_id[by_hash]
+  if (is.null(previous)) {
+    ids <- seq_along(keys_sorted)
+    n_new <- length(keys_sorted)
+  } else {
+    known <- match(keys_sorted, previous[[patient_key]])
+    ids <- rep(NA_integer_, length(keys_sorted))
+    ids[!is.na(known)] <- as.integer(previous[[utmb_deid_id_column]][known[!is.na(known)]])
+    n_new <- sum(is.na(known))
+    ids[is.na(known)] <- max(c(0L, as.integer(previous[[utmb_deid_id_column]]))) + seq_len(n_new)
+  }
+  current <- data.frame(StudyID = as.character(ids), key = keys_sorted, stringsAsFactors = FALSE)
+  names(current)[2] <- patient_key
+  if (!is.null(extract_sorted)) current[[utmb_deid_extract_id_column]] <- extract_sorted
+
+  patients <- current
+  if (!is.null(previous)) {
+    kept_old <- previous[!previous[[patient_key]] %in% keys, , drop = FALSE]
+    if (utmb_deid_extract_id_column %in% names(previous)) {
+      known <- match(current[[patient_key]], previous[[patient_key]])
+      if (is.null(extract_sorted)) {
+        current[[utmb_deid_extract_id_column]] <- previous[[utmb_deid_extract_id_column]][known]
+      } else {
+        old_value <- previous[[utmb_deid_extract_id_column]][known]
+        current[[utmb_deid_extract_id_column]] <- ifelse(is.na(extract_sorted), old_value,
+                                                         extract_sorted)
+      }
+    }
+    if (utmb_deid_extract_id_column %in% names(current) &&
+          !utmb_deid_extract_id_column %in% names(kept_old)) {
+      kept_old[[utmb_deid_extract_id_column]] <- rep(NA_character_, nrow(kept_old))
+    }
+    cols <- names(current)
+    patients <- rbind(current[cols], kept_old[cols])
+  }
+  patients <- patients[order(as.integer(patients$StudyID)), , drop = FALSE]
+  patients$offset_days <- utmb_deid_offsets(patients[[patient_key]], secret)
+  rownames(patients) <- NULL
+  id_map <- stats::setNames(current$StudyID, current[[patient_key]])
+  list(patients = patients, id_map = id_map, n_patients = length(keys), n_new = n_new)
+}
+
+# De-identifies every UTMB table in `data_dir`. `patient_key` names the column that identifies a
+# patient in every table; demographics must hold exactly one row per key value and all other
+# tables only keys found there, else nothing is written. Patients get a new number, written as
+# the first column StudyID. Writes the tables, summary.txt and column_actions.csv to
+# <root>/output/utmb/deid_<date>_<time>[_<label>]/ and secret.txt, patients.csv and README.txt
+# to the separate output/utmb/deid_keys_<date>_<time>[_<label>]/. `keys_folder` is the keys
+# folder of an earlier run whose secret and patient numbers are reused. Nothing is written unless
+# `root` is confirmed by PROJECT_VERSION. Returns a list with run_dir, keys_dir, ok, leaks,
+# violations, review and unlisted; ok is FALSE when the leak check found anything other than
+# review items (leak_review.csv).
+run_utmb_deid <- function(data_dir, root, label = NULL, keys_folder = NULL,
+                          patient_key = utmb_default_patient_key, policy_path = NULL,
                           progress = function(...) cat(..., "\n", sep = "")) {
   if (!is_project_root(root)) {
     stop("Project folder not confirmed: no PROJECT_VERSION with 'Project: ", expected_project_name,
@@ -481,7 +674,14 @@ run_utmb_deid <- function(data_dir, root, label = NULL, secret_file = NULL, poli
   policy <- read_utmb_deid_policy(policy_path)
   files <- utmb_table_files(data_dir)
   if (length(files) == 0) stop("No UTMB tables found in ", data_dir, call. = FALSE)
-  secret <- if (is.null(secret_file)) new_utmb_secret() else read_utmb_secret(secret_file)
+  previous <- NULL
+  if (is.null(keys_folder)) {
+    secret <- new_utmb_secret()
+  } else {
+    secret <- read_utmb_secret(file.path(keys_folder, "secret.txt"))
+    previous <- read_utmb_patients(file.path(keys_folder, "patients.csv"), patient_key)
+  }
+  prep <- utmb_deid_prepare_patients(files, patient_key, secret, previous)
 
   keys_dir <- utmb_run_dir(root, "deid_keys", label)
   run_dir <- utmb_run_dir(root, "deid", label)
@@ -489,6 +689,7 @@ run_utmb_deid <- function(data_dir, root, label = NULL, secret_file = NULL, poli
   dir.create(out_data_dir, showWarnings = FALSE)
   writeLines(secret, file.path(keys_dir, "secret.txt"))
   writeLines(utmb_deid_keys_readme, file.path(keys_dir, "README.txt"))
+  data.table::fwrite(prep$patients, file.path(keys_dir, "patients.csv"), na = "")
 
   started <- Sys.time()
   step <- function(text) {
@@ -497,15 +698,14 @@ run_utmb_deid <- function(data_dir, root, label = NULL, secret_file = NULL, poli
   }
   stats <- list()
   counts <- list()
-  all_ids <- character(0)
   leak <- list(exact = NULL, names = NULL, dob = NULL)
   for (table in names(files)) {
-    res <- deid_utmb_table(read_utmb_table(files[[table]]), table, policy, secret)
+    res <- deid_utmb_table(read_utmb_table(files[[table]]), table, policy, secret, prep$id_map,
+                           patient_key)
     data.table::fwrite(res$data, file.path(out_data_dir, table), na = "")
     stats[[table]] <- res$stats
     counts[[table]] <- data.frame(table = table, rows_in = res$rows_in, rows_out = res$rows_out,
-                                  rows_no_id = res$rows_no_id, stringsAsFactors = FALSE)
-    all_ids <- unique(c(all_ids, res$ids))
+                                  rows_no_key = res$rows_no_key, stringsAsFactors = FALSE)
     leak$exact <- unique(rbind(leak$exact, res$leak$exact))
     leak$names <- unique(rbind(leak$names, res$leak$names))
     leak$dob <- rbind(leak$dob, res$leak$dob)
@@ -519,35 +719,42 @@ run_utmb_deid <- function(data_dir, root, label = NULL, secret_file = NULL, poli
   rownames(stats) <- rownames(counts) <- NULL
   absent_tables <- setdiff(unique(policy$table), names(files))
 
-  offsets <- data.frame(StudyID = all_ids, offset_days = utmb_deid_offsets(all_ids, secret))
-  data.table::fwrite(offsets, file.path(keys_dir, "offsets.csv"), na = "")
   data.table::fwrite(stats, file.path(run_dir, "column_actions.csv"), na = "")
 
   step("leak check")
   check <- utmb_deid_leak_check(out_data_dir, policy, leak)
   rm(leak)
   ok <- is.null(check$leaks) && is.null(check$violations)
+  if (!is.null(check$review)) {
+    data.table::fwrite(check$review, file.path(run_dir, "leak_review.csv"), na = "")
+  }
   unlisted <- stats[stats$status == "unlisted_dropped", c("table", "column"), drop = FALSE]
 
-  writeLines(utmb_deid_summary(files, counts, stats, unlisted, absent_tables, check, ok,
-                               length(all_ids), basename(keys_dir), !is.null(secret_file)),
+  info <- list(patient_key = patient_key, n_patients = prep$n_patients,
+               n_new = if (is.null(previous)) NULL else prep$n_new,
+               n_in_file = nrow(prep$patients), keys_name = basename(keys_dir),
+               reused = !is.null(keys_folder))
+  writeLines(utmb_deid_summary(files, counts, stats, unlisted, absent_tables, check, ok, info),
              file.path(run_dir, "summary.txt"))
   if (nrow(unlisted) > 0) {
     warning(nrow(unlisted), " column(s) not listed in the policy were dropped: ",
             paste(paste0(unlisted$table, ".", unlisted$column), collapse = ", "), call. = FALSE)
   }
   list(run_dir = run_dir, keys_dir = keys_dir, ok = ok, leaks = check$leaks,
-       violations = check$violations, unlisted = unlisted)
+       violations = check$violations, review = check$review, unlisted = unlisted)
 }
 
-utmb_deid_summary <- function(files, counts, stats, unlisted, absent_tables, check, ok, n_ids,
-                              keys_name, reused_secret) {
+utmb_deid_summary <- function(files, counts, stats, unlisted, absent_tables, check, ok, info) {
   lines <- c(
     "UTMB de-identification",
     paste0("Run time: ", format(Sys.time(), "%Y-%m-%d %H:%M:%S")),
-    paste0("Secret: ", if (reused_secret) "reused from a given file" else "newly generated",
-           "; keys folder output/utmb/", keys_name, " (store apart, never share)"),
-    paste0("Patients (StudyID) found: ", n_ids),
+    paste0("Secret: ", if (info$reused) "reused from a given keys folder" else "newly generated",
+           "; keys folder output/utmb/", info$keys_name, " (store apart, never share)"),
+    paste0("Patient key: ", info$patient_key),
+    paste0("Patients: ", info$n_patients, " in this extract, ", info$n_in_file, " in patients.csv"),
+    if (!is.null(info$n_new)) paste0("New patients not in the earlier keys folder: ", info$n_new),
+    "Patient key checks passed: demographics has one row per patient (no missing or repeated key),",
+    "  every table has the key column, every key in another table is in demographics",
     "This file holds counts only.", ""
   )
   for (table in names(files)) {
@@ -558,7 +765,7 @@ utmb_deid_summary <- function(files, counts, stats, unlisted, absent_tables, che
     lines <- c(lines,
       paste0("Table ", table),
       paste0("  rows in: ", cnt$rows_in, ", rows out: ", cnt$rows_out,
-             ", rows dropped for missing StudyID: ", cnt$rows_no_id),
+             ", rows dropped for missing patient key: ", cnt$rows_no_key),
       paste0("  columns kept unchanged: ", n_action("keep"),
              ", dropped: ", n("dropped") + n("unlisted_dropped"),
              ", dates shifted: ", n_action("shift_date") + n_action("shift_instant") +
@@ -610,6 +817,14 @@ utmb_deid_summary <- function(files, counts, stats, unlisted, absent_tables, che
       lines <- c(lines, "  FAILED: output columns the policy does not allow:",
                  paste0("    ", check$violations$table, ".", check$violations$column))
     }
+  }
+  if (!is.null(check$review)) {
+    r <- check$review
+    lines <- c(lines, "",
+               "Leak check: review items (catalog code columns, do not fail the run)",
+               paste0("  ", r$table, ".", r$column, ": cells ", r$n_cells, ", distinct values ",
+                      r$n_values, ", fewest patients per value ", r$min_patients),
+               "  details in leak_review.csv")
   }
   c(lines, "", paste0("Result: ", if (ok) "OK" else "FAILED, do not use these files"))
 }
