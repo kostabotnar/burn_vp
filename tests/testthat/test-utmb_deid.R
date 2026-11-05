@@ -7,6 +7,7 @@ deid_policy_file <- normalizePath(testthat::test_path("..", "..", "metadata",
                                                       "utmb_deid_policy.csv"))
 deid_secret <- paste(rep("ab12", 16), collapse = "")
 deid_secret_2 <- paste(rep("cd34", 16), collapse = "")
+deid_keys <- c(70011, 70012, 70013)
 
 deid_root <- function(dir) {
   root <- file.path(dir, "fake_root")
@@ -24,19 +25,21 @@ make_deid_data <- function(dir, with_flowsheets = TRUE) {
   data_dir <- file.path(dir, "raw")
   dir.create(data_dir)
   write_deid_csv(data.frame(
-    StudyID = c("1", "2", "3"), PatientDurableKey = c(11, 12, 13),
+    StudyID = c("901", "902", "903"), PatientDurableKey = deid_keys,
     PatientEpicId = c("Z100", "Z200", "Z300"), MRN = c("MRN001", "MRN002", "MRN003"),
     PatientName = c("Doe, Jane", "Roe, Rick", "Poe, Pat"),
     DOB = c("1980-05-17", "1990-12-31", "2001-02-28"), BurnCode = c("T31.2", "T31.1", "948.3"),
     BurnCodeDate = c("2019-06-15", "2020-02-29", "2021-01-02")
   ), data_dir, "crosswalk")
   write_deid_csv(data.frame(
-    StudyID = c("1", "2", "3"), PatientDurableKey = c(11, 12, 13),
+    StudyID = c("901", "902", "903"), PatientDurableKey = deid_keys,
     BirthDate = c("1980-05-17", "1990-12-31", "2001-02-28"), Sex = c("F", "M", "M"),
     DeathDate = c(NA, NA, "2022-03-01"), DeathInstant = c(NA, NA, "2022-03-01 14:30:00")
   ), data_dir, "demographics")
   write_deid_csv(data.frame(
-    StudyID = c("1", "1", "2", "3", NA), DiagnosisEventKey = c(501, 502, 503, 504, 505),
+    StudyID = c("901", "901", "902", "903", NA),
+    PatientDurableKey = c(deid_keys[c(1, 1, 2, 3)], NA),
+    DiagnosisEventKey = c(501, 502, 503, 504, 505),
     EncounterKey = c(101, 101, 202, -1, 303), StartDate = c("2019-06-15", "2014-06-16",
                                                             "2020-02-29", "2021-01-02",
                                                             "2020-01-01"),
@@ -44,7 +47,8 @@ make_deid_data <- function(dir, with_flowsheets = TRUE) {
     DiagnosisKey = c(7, 7, 8, 9, 10), DepartmentKey = c(5, 5, 6, 6, 6), Type = "Billing Diagnosis"
   ), data_dir, "diagnoses")
   write_deid_csv(data.frame(
-    StudyID = c("1", "2", "3"), EncounterKey = c(101, 202, 404),
+    StudyID = c("901", "902", "903"), PatientDurableKey = deid_keys,
+    EncounterKey = c(101, 202, 404),
     DateKey = c("20190615", "20200229", "-1"), AdmissionDateKey = c("20191231", "0", "abc"),
     Date = c("2019-06-15 08:15:00", "2020-02-29T23:59:59", NA),
     EncounterEpicCsn = c(9001, 9002, 9003),
@@ -54,7 +58,8 @@ make_deid_data <- function(dir, with_flowsheets = TRUE) {
   ), data_dir, "encounters")
   if (with_flowsheets) {
     write_deid_csv(data.frame(
-      StudyID = c("1", "1", "1", "2", "2"), FlowsheetValueKey = c(1, 2, 3, 4, 5),
+      StudyID = c("901", "901", "901", "902", "902"),
+      PatientDurableKey = deid_keys[c(1, 1, 1, 2, 2)], FlowsheetValueKey = c(1, 2, 3, 4, 5),
       EncounterKey = c(101, 101, 101, 202, 202), FlowsheetRowKey = c(60, 60, 61, 62, 62),
       TakenByEmployeeKey = c(31, 31, 32, 32, 31),
       RowValueType = c("Numeric Type", "String Type", "Custom List", NA, "Temperature"),
@@ -65,6 +70,31 @@ make_deid_data <- function(dir, with_flowsheets = TRUE) {
     ), data_dir, "flowsheets")
   }
   data_dir
+}
+
+# Demographics and diagnoses for patients with the given keys; the extract StudyID is the position
+# unless `extract_id` is given.
+make_patients <- function(dir, keys, name = "many", extract_id = seq_along(keys)) {
+  data_dir <- file.path(dir, name)
+  dir.create(data_dir)
+  n <- length(keys)
+  write_deid_csv(data.frame(
+    StudyID = extract_id, PatientDurableKey = keys, BirthDate = "1985-01-01",
+    Sex = rep(c("F", "M"), length.out = n)
+  ), data_dir, "demographics")
+  write_deid_csv(data.frame(
+    StudyID = extract_id, PatientDurableKey = keys, DiagnosisEventKey = 9000 + seq_len(n),
+    StartDate = "2020-05-05", CodeType = "ICD-10-CM", Code = "T31.0", Type = "Billing Diagnosis"
+  ), data_dir, "diagnoses")
+  data_dir
+}
+
+# Empty fields stay missing, so a rewritten file keeps its missing keys.
+read_raw <- function(path) data.table::fread(path, colClasses = "character", na.strings = "")
+
+read_patients <- function(keys_dir) {
+  as.data.frame(data.table::fread(file.path(keys_dir, "patients.csv"), colClasses = "character",
+                                  na.strings = "", data.table = FALSE))
 }
 
 read_out <- function(run_dir, table) {
@@ -163,7 +193,10 @@ test_that("the policy generator assigns the expected actions", {
   expect_equal(get("crosswalk", "DOB")$action, "drop")
   expect_equal(get("crosswalk", "MRN")$action, "drop")
   expect_equal(get("crosswalk", "BurnCodeDate")$action, "shift_date")
-  expect_equal(get("crosswalk", "StudyID")$action, "keep")
+  expect_equal(get("crosswalk", "StudyID")$action, "drop")
+  expect_equal(get("demographics", "StudyID")$reason,
+               "extract study id, replaced by a new patient id")
+  expect_false(any(startsWith(policy$reason[policy$column == "StudyID"], "identifier")))
   expect_equal(get("flowsheets", "Comment")$action, "drop")
   expect_equal(get("flowsheets", "Value")$action, "keep_typed_or_common_values")
   expect_equal(get("flowsheets", "TakenInstant")$action, "shift_instant")
@@ -235,30 +268,43 @@ test_that("a policy file with an unknown action or a remap without domain is ref
 test_that("deid_utmb_table blanks flowsheet values by type and drops unlisted columns", {
   policy <- read_utmb_deid_policy(deid_policy_file)
   dt <- data.table::data.table(
-    StudyID = c("1", "1", "1", "1", "1", NA),
+    StudyID = "9", PatientDurableKey = c("k1", "k1", "k1", "k1", "k1", NA),
     RowValueType = c("Numeric Type", "String Type", "Custom List", NA, "Blood Pressure", "x"),
     Value = c("98", "text", "Yes", "other", "120/80", "z"),
     Comment = "c", NewColumn = "n", TakenInstant = "2020-01-01 10:00:00"
   )
-  res <- deid_utmb_table(dt, "flowsheets", policy, deid_secret)
+  res <- deid_utmb_table(dt, "flowsheets", policy, deid_secret, c(k1 = "7"))
   expect_equal(res$data$Value, c("98", NA, "Yes", NA, "120/80"))
+  expect_equal(names(res$data)[1], "StudyID")
+  expect_equal(res$data$StudyID, rep("7", 5))
   expect_equal(res$rows_in, 6L)
   expect_equal(res$rows_out, 5L)
-  expect_equal(res$rows_no_id, 1L)
-  expect_false(any(c("Comment", "NewColumn") %in% names(res$data)))
+  expect_equal(res$rows_no_key, 1L)
+  expect_false(any(c("Comment", "NewColumn", "PatientDurableKey") %in% names(res$data)))
   expect_equal(res$unlisted, "NewColumn")
   expect_equal(res$stats$n_blanked[res$stats$column == "Value"], 2L)
   expect_equal(res$stats$status[res$stats$column == "NewColumn"], "unlisted_dropped")
+  expect_equal(res$stats$status[res$stats$column == "PatientDurableKey"], "dropped")
   expect_true(all(c("FlowsheetValueKey", "Occurrence") %in%
                     res$stats$column[res$stats$status == "absent_in_data"]))
+  expect_error(deid_utmb_table(dt, "flowsheets", policy, deid_secret, c(k1 = "7"), "Nope"),
+               "no Nope column")
 })
+
+pipeline_run <- function(dir, label = "a", ...) {
+  data_dir <- make_deid_data(dir)
+  root <- deid_root(dir)
+  # nolint next: object_usage_linter.
+  res <- run_utmb_deid(data_dir, root, label = label, policy_path = deid_policy_file,
+                       progress = quiet, ...)
+  list(res = res, root = root, data_dir = data_dir)
+}
 
 test_that("the pipeline writes de-identified tables, keys and reports, and passes the leak check", {
   dir <- local_output_dir()
-  data_dir <- make_deid_data(dir)
-  root <- deid_root(dir)
-  res <- run_utmb_deid(data_dir, root, label = "a", secret_file = NULL,
-                       policy_path = deid_policy_file, progress = quiet)
+  run <- pipeline_run(dir)
+  res <- run$res
+  root <- run$root
   expect_true(res$ok)
   expect_null(res$leaks)
   output <- normalizePath(file.path(root, "output"))
@@ -266,44 +312,53 @@ test_that("the pipeline writes de-identified tables, keys and reports, and passe
   expect_true(startsWith(normalizePath(res$keys_dir), output))
   expect_match(basename(res$run_dir), "^deid_[0-9]{8}_[0-9]{6}_a$")
   expect_match(basename(res$keys_dir), "^deid_keys_[0-9]{8}_[0-9]{6}_a$")
-  expect_setequal(list.files(res$keys_dir), c("secret.txt", "offsets.csv", "README.txt"))
+  expect_setequal(list.files(res$keys_dir), c("secret.txt", "patients.csv", "README.txt"))
   expect_setequal(list.files(res$run_dir), c("data", "summary.txt", "column_actions.csv"))
   expect_setequal(list.files(file.path(res$run_dir, "data")),
                   c("crosswalk", "demographics", "diagnoses", "encounters", "flowsheets"))
   expect_match(readLines(file.path(res$keys_dir, "secret.txt")), "^[0-9a-f]{64}$")
+  expect_true(any(grepl("patients.csv links", readLines(file.path(res$keys_dir, "README.txt")))))
 
-  offsets <- data.table::fread(file.path(res$keys_dir, "offsets.csv"), colClasses = "character")
-  expect_setequal(offsets$StudyID, c("1", "2", "3"))
-  off <- stats::setNames(as.integer(offsets$offset_days), offsets$StudyID)
+  pat <- read_patients(res$keys_dir)
+  expect_equal(names(pat), c("StudyID", "PatientDurableKey", "extract_StudyID", "offset_days"))
+  expect_setequal(pat$StudyID, c("1", "2", "3"))
+  expect_setequal(pat$PatientDurableKey, as.character(deid_keys))
+  expect_setequal(pat$extract_StudyID, c("901", "902", "903"))
+  off <- stats::setNames(as.integer(pat$offset_days), pat$StudyID)
   expect_true(all(off != 0 & abs(off) <= 30))
+  new_id <- function(keys) pat$StudyID[match(as.character(keys), pat$PatientDurableKey)]
 
   cw <- read_out(res$run_dir, "crosswalk")
   expect_equal(names(cw), c("StudyID", "BurnCode", "BurnCodeDate"))
+  expect_equal(cw$StudyID, new_id(deid_keys))
   expect_equal(as.Date(cw$BurnCodeDate),
                as.Date(c("2019-06-15", "2020-02-29", "2021-01-02")) + unname(off[cw$StudyID]))
 
   dx <- read_out(res$run_dir, "diagnoses")
   expect_equal(nrow(dx), 4L)
+  expect_equal(dx$StudyID, new_id(deid_keys[c(1, 1, 2, 3)]))
   expect_false(any(c("PatientDurableKey", "_CreationInstant") %in% names(dx)))
   expect_equal(as.Date(dx$StartDate),
                as.Date(c("2019-06-15", "2014-06-16", "2020-02-29", "2021-01-02")) +
                  unname(off[dx$StudyID]))
   enc <- read_out(res$run_dir, "encounters")
   expect_false(any(c("EncounterEpicCsn", "PatientDurableKey") %in% names(enc)))
+  expect_equal(enc$StudyID, new_id(deid_keys))
   expect_equal(enc$DepartmentKey, c("5", "6", "6"))
   run_secret <- read_utmb_secret(file.path(res$keys_dir, "secret.txt"))
   expect_equal(enc$EncounterKey[3], utmb_deid_remap("404", "encounter", run_secret))
   expect_equal(enc$AttendingProviderKey[3], "-2")
   expect_equal(enc$DateKey[3], "-1")
   expect_equal(enc$AdmissionDateKey[2:3], c("0", "abc"))
-  expect_equal(enc$DateKey[1], format(as.Date("2019-06-15") + off[["1"]], "%Y%m%d"))
+  expect_equal(enc$DateKey[1], format(as.Date("2019-06-15") + off[[enc$StudyID[1]]], "%Y%m%d"))
   expect_equal(substr(enc$Date[1], 12, 19), "08:15:00")
   expect_equal(substr(enc$Date[2], 11, 11), "T")
   expect_true(is.na(enc$Date[3]))
 
-  # Same remapped value in two tables and the same offset across tables.
+  # Same remapped value in two tables and the same patient id across tables.
   expect_equal(dx$EncounterKey[1:2], rep(enc$EncounterKey[1], 2))
   fl <- read_out(res$run_dir, "flowsheets")
+  expect_equal(fl$StudyID, new_id(deid_keys[c(1, 1, 1, 2, 2)]))
   expect_equal(fl$EncounterKey[1], enc$EncounterKey[1])
   expect_equal(fl$TakenByEmployeeKey[1], enc$AttendingProviderKey[1])
   expect_equal(fl$Value, c("98", NA, "Yes", NA, "37.1"))
@@ -311,45 +366,286 @@ test_that("the pipeline writes de-identified tables, keys and reports, and passe
   expect_equal(as.Date(fl$TakenInstant[1:3]) - as.Date(dx$StartDate[1]),
                as.Date(c("2019-06-15", "2019-06-15", "2019-06-16")) - as.Date("2019-06-15"),
                ignore_attr = TRUE)
+  joined <- merge(dx, enc, by = c("StudyID", "EncounterKey"))
+  expect_equal(nrow(joined), 3L)
 
   demo <- read_out(res$run_dir, "demographics")
+  expect_equal(demo$StudyID, new_id(deid_keys))
   expect_equal(as.Date(demo$BirthDate), as.Date(c("1980-05-17", "1990-12-31", "2001-02-28")) +
                  unname(off[demo$StudyID]))
   expect_equal(substr(demo$DeathInstant[3], 12, 19), "14:30:00")
   expect_true(is.na(demo$DeathDate[1]))
 
+  # The extract's StudyID is in patients.csv only, never in an output table.
+  for (table in list.files(file.path(res$run_dir, "data"))) {
+    out <- read_out(res$run_dir, table)
+    expect_equal(names(out)[1], "StudyID")
+    expect_equal(sum(names(out) == "StudyID"), 1L)
+    expect_false(any(unlist(out) %in% c("901", "902", "903"), na.rm = TRUE))
+  }
+
   summary <- readLines(file.path(res$run_dir, "summary.txt"))
-  expect_true(any(grepl("rows dropped for missing StudyID: 1", summary)))
+  expect_true(any(grepl("rows dropped for missing patient key: 1", summary)))
+  expect_true(any(grepl("Patient key: PatientDurableKey", summary, fixed = TRUE)))
+  expect_true(any(grepl("Patients: 3 in this extract", summary, fixed = TRUE)))
+  expect_true(any(grepl("Patient key checks passed", summary, fixed = TRUE)))
+  expect_false(any(grepl("New patients not in", summary, fixed = TRUE)))
   expect_true(any(grepl("flowsheet Value blanked: 2", summary)))
   expect_true(any(grepl("Result: OK", summary)))
-  expect_false(any(grepl("MRN00|Doe|1980-05", summary)))
+  expect_false(any(grepl("MRN00|Doe|1980-05|7001", summary)))
   expect_false(any(grepl(intToUtf8(0x2013), summary, fixed = TRUE)))
   expect_false(any(grepl(intToUtf8(0x2014), summary, fixed = TRUE)))
   actions <- data.table::fread(file.path(res$run_dir, "column_actions.csv"))
   expect_true(all(c("table", "column", "action", "status") %in% names(actions)))
 })
 
-test_that("the same secret file gives the same offsets and pseudonyms in a later run", {
+test_that("new ids are 1 to N in hash order, not file, key or extract StudyID order", {
+  dir <- local_output_dir()
+  keys <- 800000 + seq_len(60) * 3
+  data_dir <- make_patients(dir, keys)
+  root <- deid_root(dir)
+  res <- run_utmb_deid(data_dir, root, policy_path = deid_policy_file, progress = quiet)
+  pat <- read_patients(res$keys_dir)
+  secret <- read_utmb_secret(file.path(res$keys_dir, "secret.txt"))
+  expect_equal(sort(as.integer(pat$StudyID)), 1:60)
+  expect_false(anyDuplicated(pat$StudyID) > 0)
+  by_hash <- order(utmb_sha256(paste(secret, "patient_id", keys, sep = "|")), method = "radix")
+  expected <- integer(60)
+  expected[by_hash] <- 1:60
+  expect_equal(as.integer(pat$StudyID[match(as.character(keys), pat$PatientDurableKey)]), expected)
+  demo <- read_out(res$run_dir, "demographics")
+  expect_false(identical(as.integer(demo$StudyID), 1:60))
+  expect_false(identical(as.integer(demo$StudyID), 60:1))
+  extract <- as.integer(pat$extract_StudyID[match(as.character(keys), pat$PatientDurableKey)])
+  expect_false(identical(as.integer(demo$StudyID), extract))
+  expect_lt(abs(stats::cor(as.integer(demo$StudyID), 1:60)), 0.6)
+})
+
+test_that("a table or key problem stops with counts and writes nothing", {
+  run_with <- function(change) {
+    dir <- local_output_dir(env = parent.frame())
+    data_dir <- make_deid_data(dir)
+    root <- deid_root(dir)
+    change(data_dir)
+    attempt <- function() {
+      run_utmb_deid(data_dir, root, label = "x", policy_path = deid_policy_file, progress = quiet)
+    }
+    err <- tryCatch(attempt(), error = conditionMessage)
+    list(err = err, root = root)
+  }
+  rewrite <- function(data_dir, table, fun) {
+    x <- read_raw(file.path(data_dir, table))
+    write_deid_csv(fun(x), data_dir, table)
+  }
+  nothing_written <- function(root) !dir.exists(file.path(root, "output"))
+
+  whole_row <- run_with(function(d) rewrite(d, "demographics", function(x) rbind(x, x[1])))
+  expect_match(whole_row$err, "demographics: 1 row.*repeat a PatientDurableKey")
+  expect_true(nothing_written(whole_row$root))
+
+  # The rows differ (another Sex) but are the same patient.
+  distinct <- run_with(function(d) {
+    rewrite(d, "demographics", function(x) {
+      extra <- x[1]
+      extra$Sex <- "M"
+      rbind(x, extra)
+    })
+  })
+  expect_match(distinct$err, "demographics: 1 row.*repeat a PatientDurableKey")
+  expect_true(nothing_written(distinct$root))
+
+  missing <- run_with(function(d) {
+    rewrite(d, "demographics", function(x) {
+      x$PatientDurableKey[2] <- NA
+      x
+    })
+  })
+  expect_match(missing$err, "demographics: 1 row.*have no PatientDurableKey")
+  expect_true(nothing_written(missing$root))
+
+  unmatched <- run_with(function(d) {
+    rewrite(d, "diagnoses", function(x) {
+      x$PatientDurableKey[c(1, 3)] <- "99999"
+      x
+    })
+  })
+  expect_match(unmatched$err, "table diagnoses: 2 row.*not in demographics")
+  expect_false(grepl("99999", unmatched$err))
+  expect_true(nothing_written(unmatched$root))
+
+  no_column <- run_with(function(d) {
+    rewrite(d, "encounters", function(x) x[, setdiff(names(x), "PatientDurableKey"), with = FALSE])
+  })
+  expect_match(no_column$err, "table encounters has no PatientDurableKey column")
+  expect_true(nothing_written(no_column$root))
+
+  no_demo_key <- run_with(function(d) {
+    rewrite(d, "demographics", function(x) {
+      x[, setdiff(names(x), "PatientDurableKey"), with = FALSE]
+    })
+  })
+  expect_match(no_demo_key$err, "table demographics has no PatientDurableKey column")
+  expect_true(nothing_written(no_demo_key$root))
+
+  no_demo <- run_with(function(d) file.remove(file.path(d, "demographics")))
+  expect_match(no_demo$err, "no demographics table")
+  expect_true(nothing_written(no_demo$root))
+})
+
+test_that("--patient-key can name another column, which is dropped even if the policy lacks it", {
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir)
+  for (table in list.files(data_dir)) {
+    x <- read_raw(file.path(data_dir, table))
+    data.table::setnames(x, "PatientDurableKey", "MyKey")
+    write_deid_csv(x, data_dir, table)
+  }
   root <- deid_root(dir)
+  res <- run_utmb_deid(data_dir, root, policy_path = deid_policy_file, patient_key = "MyKey",
+                       progress = quiet)
+  expect_true(res$ok)
+  expect_false("MyKey" %in% res$unlisted$column)
+  pat <- read_patients(res$keys_dir)
+  expect_equal(names(pat), c("StudyID", "MyKey", "extract_StudyID", "offset_days"))
+  expect_setequal(pat$MyKey, as.character(deid_keys))
+  dx <- read_out(res$run_dir, "diagnoses")
+  expect_false("MyKey" %in% names(dx))
+  expect_equal(dx$StudyID, pat$StudyID[match(as.character(deid_keys[c(1, 1, 2, 3)]), pat$MyKey)])
+  summary <- readLines(file.path(res$run_dir, "summary.txt"))
+  expect_true(any(grepl("Patient key: MyKey", summary, fixed = TRUE)))
+})
+
+test_that("an extract without a StudyID column works and patients.csv has no extract_StudyID", {
+  dir <- local_output_dir()
+  data_dir <- make_deid_data(dir)
+  for (table in list.files(data_dir)) {
+    x <- read_raw(file.path(data_dir, table))
+    write_deid_csv(x[, setdiff(names(x), "StudyID"), with = FALSE], data_dir, table)
+  }
+  root <- deid_root(dir)
+  res <- run_utmb_deid(data_dir, root, policy_path = deid_policy_file, progress = quiet)
+  expect_true(res$ok)
+  expect_equal(names(read_patients(res$keys_dir)),
+               c("StudyID", "PatientDurableKey", "offset_days"))
+  expect_equal(names(read_out(res$run_dir, "demographics"))[1], "StudyID")
+})
+
+test_that("--keys reuse keeps ids, offsets and pseudonyms, numbers new patients, keeps dropped", {
+  dir <- local_output_dir()
+  keys <- 800000 + seq_len(60) * 3
+  root <- deid_root(dir)
+  first <- run_utmb_deid(make_patients(dir, keys, "one"), root, label = "one",
+                         policy_path = deid_policy_file, progress = quiet)
+  p1 <- read_patients(first$keys_dir)
+  secret <- read_utmb_secret(file.path(first$keys_dir, "secret.txt"))
+
+  # Patients 1 to 5 are gone, five new ones are added, extract ids are numbered differently.
+  new_keys <- 900000 + 1:5 * 11
+  keys2 <- c(keys[6:60], new_keys)
+  second <- run_utmb_deid(make_patients(dir, keys2, "two", extract_id = rev(seq_along(keys2))),
+                          root, label = "two", keys_folder = first$keys_dir,
+                          policy_path = deid_policy_file, progress = quiet)
+  expect_true(second$ok)
+  p2 <- read_patients(second$keys_dir)
+  expect_equal(readLines(file.path(second$keys_dir, "secret.txt")), secret)
+  expect_equal(nrow(p2), 65L)
+  expect_equal(sort(as.integer(p2$StudyID)), 1:65)
+
+  kept <- as.character(keys[6:60])
+  same <- function(col, keys) {
+    expect_equal(p2[[col]][match(keys, p2$PatientDurableKey)],
+                 p1[[col]][match(keys, p1$PatientDurableKey)])
+  }
+  same("StudyID", kept)
+  same("offset_days", kept)
+  dropped <- as.character(keys[1:5])
+  same("StudyID", dropped)
+  same("offset_days", dropped)
+  expect_true(all(dropped %in% p2$PatientDurableKey))
+
+  by_hash <- order(utmb_sha256(paste(secret, "patient_id", new_keys, sep = "|")), method = "radix")
+  expect_equal(p2$StudyID[match(as.character(new_keys), p2$PatientDurableKey)][by_hash],
+               as.character(61:65))
+  expect_equal(p2$extract_StudyID[match(as.character(keys2), p2$PatientDurableKey)],
+               as.character(rev(seq_along(keys2))))
+  expect_equal(p2$extract_StudyID[match(dropped, p2$PatientDurableKey)],
+               p1$extract_StudyID[match(dropped, p1$PatientDurableKey)])
+
+  demo <- read_out(second$run_dir, "demographics")
+  expect_equal(demo$StudyID, p2$StudyID[match(as.character(keys2), p2$PatientDurableKey)])
+  summary <- readLines(file.path(second$run_dir, "summary.txt"))
+  expect_true(any(grepl("New patients not in the earlier keys folder: 5", summary, fixed = TRUE)))
+  expect_true(any(grepl("Patients: 60 in this extract, 65 in patients.csv", summary,
+                        fixed = TRUE)))
+
+  # The same extract again gives identical ids, offsets and output, and remapped keys match.
+  third <- run_utmb_deid(make_patients(dir, keys, "three"), root, label = "three",
+                         keys_folder = first$keys_dir, policy_path = deid_policy_file,
+                         progress = quiet)
+  expect_equal(read_patients(third$keys_dir), p1)
+  expect_equal(read_out(third$run_dir, "diagnoses"), read_out(first$run_dir, "diagnoses"))
+  fresh <- run_utmb_deid(make_patients(dir, keys, "four"), root, label = "four",
+                         policy_path = deid_policy_file, progress = quiet)
+  expect_false(identical(read_out(fresh$run_dir, "diagnoses")$DiagnosisEventKey,
+                         read_out(first$run_dir, "diagnoses")$DiagnosisEventKey))
+})
+
+test_that("an inconsistent patients.csv or a missing keys folder is an error, nothing written", {
+  dir <- local_output_dir()
+  keys <- 800000 + seq_len(10) * 3
+  root <- deid_root(dir)
+  data_dir <- make_patients(dir, keys)
   first <- run_utmb_deid(data_dir, root, label = "one", policy_path = deid_policy_file,
                          progress = quiet)
-  second <- run_utmb_deid(data_dir, root, label = "two", policy_path = deid_policy_file,
-                          secret_file = file.path(first$keys_dir, "secret.txt"), progress = quiet)
-  third <- run_utmb_deid(data_dir, root, label = "three", policy_path = deid_policy_file,
-                         progress = quiet)
-  read_off <- function(r) data.table::fread(file.path(r$keys_dir, "offsets.csv"))
-  expect_equal(read_off(first), read_off(second))
-  expect_equal(read_out(first$run_dir, "encounters"), read_out(second$run_dir, "encounters"))
-  expect_false(identical(read_out(first$run_dir, "encounters")$EncounterKey,
-                         read_out(third$run_dir, "encounters")$EncounterKey))
+  before <- list.files(file.path(root, "output", "utmb"))
+  bad_dir <- file.path(dir, "bad_keys")
+  dir.create(bad_dir)
+  file.copy(file.path(first$keys_dir, "secret.txt"), bad_dir)
+  pat <- read_patients(first$keys_dir)
+  run_bad <- function(x) {
+    data.table::fwrite(x, file.path(bad_dir, "patients.csv"), na = "")
+    run_utmb_deid(data_dir, root, label = "bad", keys_folder = bad_dir,
+                  policy_path = deid_policy_file, progress = quiet)
+  }
+  same_key <- pat
+  same_key$StudyID[2] <- "11"
+  expect_error(run_bad(rbind(pat, same_key[2, ])), "inconsistent.*patient key that has another")
+  same_id <- pat
+  same_id$PatientDurableKey[2] <- "424242"
+  expect_error(run_bad(rbind(pat, same_id[2, ])), "inconsistent.*StudyID used for another")
+  expect_error(run_bad(pat[, c("StudyID", "offset_days")]), "needs the columns")
+  zero <- pat
+  zero$StudyID[1] <- "0"
+  expect_error(run_bad(zero), "positive whole number")
+  expect_error(run_utmb_deid(data_dir, root, keys_folder = file.path(dir, "nowhere"),
+                             policy_path = deid_policy_file, progress = quiet), "not found")
+  expect_equal(list.files(file.path(root, "output", "utmb")), before)
+})
+
+test_that("offsets are stable across runs with the same secret, never 0 and within 30 days", {
+  dir <- local_output_dir()
+  keys <- 800000 + seq_len(60) * 3
+  root <- deid_root(dir)
+  first <- run_utmb_deid(make_patients(dir, keys, "one"), root, label = "one",
+                         policy_path = deid_policy_file, progress = quiet)
+  second <- run_utmb_deid(make_patients(dir, rev(keys), "two"), root, label = "two",
+                          keys_folder = first$keys_dir, policy_path = deid_policy_file,
+                          progress = quiet)
+  p1 <- read_patients(first$keys_dir)
+  p2 <- read_patients(second$keys_dir)
+  off1 <- as.integer(p1$offset_days)
+  expect_true(all(off1 != 0L & abs(off1) <= 30L))
+  expect_equal(p2$offset_days, p1$offset_days)
+  secret <- read_utmb_secret(file.path(first$keys_dir, "secret.txt"))
+  expect_equal(off1, utmb_deid_offsets(p1$PatientDurableKey, secret))
+  d1 <- read_out(first$run_dir, "diagnoses")
+  expect_equal(as.Date(d1$StartDate), as.Date("2020-05-05") + off1[match(d1$StudyID, p1$StudyID)])
 })
 
 test_that("an unlisted column is dropped, warned about and reported", {
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
-  extra <- data.table::fread(file.path(data_dir, "diagnoses"), colClasses = "character")
+  extra <- read_raw(file.path(data_dir, "diagnoses"))
   extra$ZzNewColumn <- "secret-ish"
   write_deid_csv(extra, data_dir, "diagnoses")
   root <- deid_root(dir)
@@ -363,10 +659,58 @@ test_that("an unlisted column is dropped, warned about and reported", {
   expect_true(any(grepl("diagnoses.ZzNewColumn", summary, fixed = TRUE)))
 })
 
+test_that("exact matches in catalog code columns are review items and do not fail the run", {
+  dir <- local_output_dir()
+  data_dir <- make_deid_data(dir)
+  enc <- read_raw(file.path(data_dir, "encounters"))
+  enc$DepartmentKey[1] <- "70011"
+  write_deid_csv(enc, data_dir, "encounters")
+  fl <- read_raw(file.path(data_dir, "flowsheets"))
+  fl$FlowsheetRowEpicId <- "5"
+  fl$FlowsheetRowEpicId_1 <- "5"
+  fl$FlowsheetRowEpicId[1:2] <- "70011"
+  write_deid_csv(fl, data_dir, "flowsheets")
+  root <- deid_root(dir)
+  res <- run_utmb_deid(data_dir, root, policy_path = deid_policy_file, progress = quiet)
+  expect_true(res$ok)
+  expect_null(res$leaks)
+  rev <- res$review[order(res$review$table), ]
+  expect_equal(paste0(rev$table, ".", rev$column),
+               c("encounters.DepartmentKey", "flowsheets.FlowsheetRowEpicId"))
+  expect_equal(rev$n_cells, c(1L, 2L))
+  expect_equal(rev$n_values, c(1L, 1L))
+  expect_equal(rev$min_patients, c(1L, 1L))
+  expect_true(file.exists(file.path(res$run_dir, "leak_review.csv")))
+  summary <- readLines(file.path(res$run_dir, "summary.txt"))
+  expect_true(any(grepl("Leak check: review items (catalog code columns, do not fail the run)",
+                        summary, fixed = TRUE)))
+  expect_true(any(grepl("encounters.DepartmentKey: cells 1, distinct values 1", summary,
+                        fixed = TRUE)))
+  expect_false(any(grepl("70011", summary)))
+  expect_true(any(grepl("Result: OK", summary)))
+  expect_true(utmb_leak_review_only("flowsheets", "FlowsheetRowEpicId_1", NA_character_))
+  expect_false(utmb_leak_review_only("diagnoses", "Code", NA_character_))
+})
+
+test_that("the same planted value in a kept non-reference column still fails the run", {
+  dir <- local_output_dir()
+  data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
+  dx <- read_raw(file.path(data_dir, "diagnoses"))
+  dx$Code[1] <- "70011"
+  write_deid_csv(dx, data_dir, "diagnoses")
+  root <- deid_root(dir)
+  res <- run_utmb_deid(data_dir, root, policy_path = deid_policy_file, progress = quiet)
+  expect_false(res$ok)
+  expect_equal(res$leaks$column, "Code")
+  expect_equal(res$leaks$check, "exact")
+  expect_null(res$review)
+  expect_false(file.exists(file.path(res$run_dir, "leak_review.csv")))
+})
+
 test_that("the leak check finds a planted MRN, a patient name in other case and own birth date", {
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
-  dx <- data.table::fread(file.path(data_dir, "diagnoses"), colClasses = "character")
+  dx <- read_raw(file.path(data_dir, "diagnoses"))
   dx$Code[3] <- "MRN002"
   dx$Type[1] <- "DOE, JANE"
   dx$CodeType[1] <- "1980-05-17"
@@ -387,7 +731,7 @@ test_that("the leak check finds a planted MRN, a patient name in other case and 
 test_that("the leak check counts a value only in the row of the patient it belongs to", {
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
-  dx <- data.table::fread(file.path(data_dir, "diagnoses"), colClasses = "character")
+  dx <- read_raw(file.path(data_dir, "diagnoses"))
   dx$Code[1] <- "MRN002"
   dx$Type[3] <- "doe, jane"
   dx$CodeType[4] <- "Z100"
@@ -415,7 +759,7 @@ test_that("a patient name in other case is caught in the same patient's row only
 test_that("a NumericId column feeds the leak check with its patient's values", {
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
-  enc <- data.table::fread(file.path(data_dir, "encounters"), colClasses = "character")
+  enc <- read_raw(file.path(data_dir, "encounters"))
   enc$ChiefComplaintNumericId <- c("9001", "9001", "5")
   enc$PatientClass[1] <- "9001"
   write_deid_csv(enc, data_dir, "encounters")
@@ -473,6 +817,7 @@ test_that("burn_index runs on the de-identified fixture output", {
                                   progress = quiet)
   events <- data.table::fread(file.path(burn_dir, "index_events.csv"), colClasses = "character")
   expect_setequal(events$StudyID, c("1", "2", "3"))
+  expect_false(any(events$StudyID %in% c("901", "902", "903")))
   expect_true(file.exists(file.path(burn_dir, "summary.txt")))
 })
 
@@ -496,7 +841,7 @@ test_that("placeholder date bounds stay unchanged in both shift functions", {
 test_that("1900-01-01 stays a placeholder for burn_index after de-identification", {
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
-  dx <- data.table::fread(file.path(data_dir, "diagnoses"), colClasses = "character")
+  dx <- read_raw(file.path(data_dir, "diagnoses"))
   dx$StartDate[1] <- "1900-01-01"
   write_deid_csv(dx, data_dir, "diagnoses")
   root <- deid_root(dir)
@@ -529,8 +874,12 @@ test_that("keep_common_values columns are filtered in the pipeline and counted",
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
   n <- 22
+  keys <- 70010 + seq_len(n)
+  write_deid_csv(data.frame(StudyID = seq_len(n), PatientDurableKey = keys,
+                            BirthDate = "1985-01-01", Sex = "F"), data_dir, "demographics")
   write_deid_csv(data.frame(
-    StudyID = as.character(1:n), Value = c(rep("Positive", n - 1), "Jane Doe called"),
+    StudyID = seq_len(n), PatientDurableKey = keys,
+    Value = c(rep("Positive", n - 1), "Jane Doe called"),
     ComponentName = "x"
   ), data_dir, "labs")
   root <- deid_root(dir)

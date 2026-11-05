@@ -1,5 +1,5 @@
 table,column,action,domain,reason
-crosswalk,StudyID,keep,,study identifier
+crosswalk,StudyID,drop,,"extract study id, replaced by a new patient id"
 crosswalk,PatientDurableKey,drop,,"patient key, StudyID replaces it"
 crosswalk,PatientEpicId,drop,,identifier
 crosswalk,MRN,drop,,identifier
@@ -7,7 +7,7 @@ crosswalk,PatientName,drop,,identifier
 crosswalk,DOB,drop,,"identifier, BirthDate in demographics is shifted"
 crosswalk,BurnCode,keep,,""
 crosswalk,BurnCodeDate,shift_date,,date shifted
-demographics,StudyID,keep,,study identifier
+demographics,StudyID,drop,,"extract study id, replaced by a new patient id"
 demographics,PatientDurableKey,drop,,"patient key, StudyID replaces it"
 demographics,BirthDate,shift_date,,date shifted
 demographics,Sex,keep,,""
@@ -23,7 +23,7 @@ demographics,DeathLocation,keep,,""
 demographics,Status,keep,,""
 demographics,IsValid,keep,,""
 demographics,Test,keep,,""
-diagnoses,StudyID,keep,,study identifier
+diagnoses,StudyID,drop,,"extract study id, replaced by a new patient id"
 diagnoses,CodeType,keep,,""
 diagnoses,Code,keep,,"text, review"
 diagnoses,CodeDescription,keep,,"text, review"
@@ -81,7 +81,7 @@ diagnoses,ExtSupplementalEncounterKey,remap,encounter,patient-level key
 diagnoses,EarliestReceivedDateKey,shift_datekey,,date shifted
 diagnoses,IsAbstractedMedicalRecord,keep,,""
 diagnoses,UseAsAdminStartDateKey,shift_datekey,,date shifted
-ed_visits,StudyID,keep,,study identifier
+ed_visits,StudyID,drop,,"extract study id, replaced by a new patient id"
 ed_visits,EdVisitKey,remap,ed_visit,patient-level key
 ed_visits,PatientKey,drop,,"patient key, StudyID replaces it"
 ed_visits,PatientDurableKey,drop,,"patient key, StudyID replaces it"
@@ -414,7 +414,7 @@ ed_visits,ArrivalUTCTimeOfDayKey,keep,,time of day
 ed_visits,RoomedUTCInstant,shift_instant,,date shifted
 ed_visits,InfusionChargingBatchFlag,keep,,""
 ed_visits,InfusionChargingBatchFailureReason,keep,,empty in the extract
-encounters,StudyID,keep,,study identifier
+encounters,StudyID,drop,,"extract study id, replaced by a new patient id"
 encounters,EncounterKey,remap,encounter,patient-level key
 encounters,PatientKey,drop,,"patient key, StudyID replaces it"
 encounters,PatientDurableKey,drop,,"patient key, StudyID replaces it"
@@ -563,7 +563,7 @@ encounters,EarliestReceivedDateKey,shift_datekey,,date shifted
 encounters,IsImmediateClaimEligible,keep,,""
 encounters,BillingExchangeSourceOrganizationEpicId,drop,,identifier
 encounters,BasePatientClass,keep,,""
-flowsheets,StudyID,keep,,study identifier
+flowsheets,StudyID,drop,,"extract study id, replaced by a new patient id"
 flowsheets,FlowsheetRowEpicId,keep,,""
 flowsheets,RowName,keep,,"text, review"
 flowsheets,RowDisplayName,keep,,"text, review"
@@ -634,7 +634,7 @@ flowsheets,PatientDepartmentKey,keep,,reference dimension key
 flowsheets,EarliestReceivedDateKey,shift_datekey,,date shifted
 flowsheets,SpeechEnteredMethod,keep,,""
 flowsheets,ClientApplication,keep,,""
-hospital_admissions,StudyID,keep,,study identifier
+hospital_admissions,StudyID,drop,,"extract study id, replaced by a new patient id"
 hospital_admissions,HospitalAdmissionKey,remap,hospital_admission,patient-level key
 hospital_admissions,PatientKey,drop,,"patient key, StudyID replaces it"
 hospital_admissions,PatientDurableKey,drop,,"patient key, StudyID replaces it"
@@ -747,7 +747,7 @@ hospital_admissions,DischargeEntryInstant,shift_instant,,date shifted
 hospital_admissions,DischargeEntryTimeOfDayKey,keep,,time of day
 hospital_admissions,DischargeEntryDateKey,shift_datekey,,date shifted
 hospital_admissions,MappedDischargeDisposition,keep,,""
-labs,StudyID,keep,,study identifier
+labs,StudyID,drop,,"extract study id, replaced by a new patient id"
 labs,ComponentName,keep,,"text, review"
 labs,ComponentCommonName,keep,,"text, review"
 labs,LoincCode,keep,,"text, review"
@@ -813,7 +813,7 @@ labs,IsAccredited,keep,,""
 labs,ExternalOrganizationKey,drop,,"unclassified key, review"
 labs,OrderEncounterKey,remap,encounter,patient-level key
 labs,EarliestReceivedDateKey,shift_datekey,,date shifted
-medication_administrations,StudyID,keep,,study identifier
+medication_administrations,StudyID,drop,,"extract study id, replaced by a new patient id"
 medication_administrations,MedicationName,keep,,"text, review"
 medication_administrations,GenericName,keep,,"text, review"
 medication_administrations,TherapeuticClass,keep,,""
@@ -923,7 +923,7 @@ medication_administrations,EquivalentMorphineDose,keep,,""
 medication_administrations,EquivalentMorphineDosePerHourRate,keep,,""
 medication_administrations,IsCupAdministration,keep,,""
 medication_administrations,IsPatientSpecificPackageAdministration,keep,,""
-medication_orders,StudyID,keep,,study identifier
+medication_orders,StudyID,drop,,"extract study id, replaced by a new patient id"
 medication_orders,MedicationName,keep,,"text, review"
 medication_orders,GenericName,keep,,"text, review"
 medication_orders,TherapeuticClass,keep,,""
@@ -1092,7 +1092,7 @@ medication_orders,DiscontinuedUtcDateKey,shift_datekey,,date shifted
 medication_orders,DiscontinuedUtcTimeOfDayKey,keep,,time of day
 medication_orders,AnesthesiaOrderWasScanned,keep,,""
 medication_orders,OneStepMed,keep,,""
-procedures_coded,StudyID,keep,,study identifier
+procedures_coded,StudyID,drop,,"extract study id, replaced by a new patient id"
 procedures_coded,ProcedureName,keep,,"text, review"
 procedures_coded,ProcedureCategory,keep,,"text, review"
 procedures_coded,ProcedureEventKey,remap,procedure_event,patient-level key
@@ -1162,7 +1162,7 @@ procedures_coded,TerminologyComboId,keep,,empty in the extract
 procedures_coded,ExtSupplementalEncounterKey,remap,encounter,patient-level key
 procedures_coded,IsAbstractedMedicalRecord,keep,,""
 procedures_coded,UseAsAdminStartDateKey,shift_datekey,,date shifted
-surgical_cases,StudyID,keep,,study identifier
+surgical_cases,StudyID,drop,,"extract study id, replaced by a new patient id"
 surgical_cases,SurgicalCaseKey,remap,surgical_case,patient-level key
 surgical_cases,SurgicalCaseEpicId,drop,,identifier
 surgical_cases,PatientKey,drop,,"patient key, StudyID replaces it"
@@ -1582,7 +1582,7 @@ surgical_cases,PrimaryPerformingSurgeonDurableKey,remap,person_staff,provider or
 surgical_cases,PrimaryPerformingSurgeonSourceDataDurableKey,remap,person_staff,provider or staff key
 surgical_cases,SourceKey,keep,,reference dimension key
 surgical_cases,ProcedureMismatchStatus,keep,,""
-surgical_procedures,StudyID,keep,,study identifier
+surgical_procedures,StudyID,drop,,"extract study id, replaced by a new patient id"
 surgical_procedures,SurgicalProcedureEventKey,remap,surgical_procedure_event,patient-level key
 surgical_procedures,PatientKey,drop,,"patient key, StudyID replaces it"
 surgical_procedures,PatientDurableKey,drop,,"patient key, StudyID replaces it"
