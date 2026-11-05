@@ -189,8 +189,12 @@ test_that("the policy generator assigns the expected actions", {
   expect_equal(get("labs", "LoincName")$reason, "text, review")
   remap <- policy[policy$action == "remap", ]
   expect_false(anyNA(remap$domain))
-  expect_true(all(policy$reason[policy$action == "drop" &
-                                  dict$role == "surrogate_key"] %in%
+  numeric_id <- grepl("NumericId$", policy$column)
+  expect_gt(sum(numeric_id), 0)
+  expect_true(all(policy$action[numeric_id] == "drop"))
+  expect_true(all(startsWith(policy$reason[numeric_id], "identifier")))
+  expect_true(all(policy$reason[policy$action == "drop" & dict$role == "surrogate_key" &
+                                  !numeric_id] %in%
                     c("patient key, StudyID replaces it", "unclassified key, review")))
 })
 
@@ -363,8 +367,8 @@ test_that("the leak check finds a planted MRN, a patient name in other case and 
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
   dx <- data.table::fread(file.path(data_dir, "diagnoses"), colClasses = "character")
-  dx$Code[2] <- "MRN002"
-  dx$Type[3] <- "DOE, JANE"
+  dx$Code[3] <- "MRN002"
+  dx$Type[1] <- "DOE, JANE"
   dx$CodeType[1] <- "1980-05-17"
   write_deid_csv(dx, data_dir, "diagnoses")
   root <- deid_root(dir)
@@ -380,6 +384,49 @@ test_that("the leak check finds a planted MRN, a patient name in other case and 
   expect_false(any(grepl("MRN002|DOE, JANE|1980-05-17", summary)))
 })
 
+test_that("the leak check counts a value only in the row of the patient it belongs to", {
+  dir <- local_output_dir()
+  data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
+  dx <- data.table::fread(file.path(data_dir, "diagnoses"), colClasses = "character")
+  dx$Code[1] <- "MRN002"
+  dx$Type[3] <- "doe, jane"
+  dx$CodeType[4] <- "Z100"
+  write_deid_csv(dx, data_dir, "diagnoses")
+  root <- deid_root(dir)
+  res <- run_utmb_deid(data_dir, root, policy_path = deid_policy_file, progress = quiet)
+  expect_true(res$ok)
+  expect_null(res$leaks)
+})
+
+test_that("a patient name in other case is caught in the same patient's row only", {
+  dir <- local_output_dir()
+  policy <- read_utmb_deid_policy(deid_policy_file)
+  out <- file.path(dir, "out")
+  dir.create(out)
+  write_deid_csv(data.frame(StudyID = c("1", "2"), Code = c("T31.0", "T31.0"),
+                            Type = c("dOe, jAnE", "DOE, JANE")), out, "diagnoses")
+  names <- data.table::data.table(StudyID = "1", value = "doe, jane")
+  check <- utmb_deid_leak_check(out, policy, list(exact = NULL, names = names))
+  expect_equal(check$leaks$check, "name")
+  expect_equal(check$leaks$column, "Type")
+  expect_equal(check$leaks$n, 1L)
+})
+
+test_that("a NumericId column feeds the leak check with its patient's values", {
+  dir <- local_output_dir()
+  data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
+  enc <- data.table::fread(file.path(data_dir, "encounters"), colClasses = "character")
+  enc$ChiefComplaintNumericId <- c("9001", "9001", "5")
+  enc$PatientClass[1] <- "9001"
+  write_deid_csv(enc, data_dir, "encounters")
+  root <- deid_root(dir)
+  res <- run_utmb_deid(data_dir, root, policy_path = deid_policy_file, progress = quiet)
+  expect_false("ChiefComplaintNumericId" %in% names(read_out(res$run_dir, "encounters")))
+  expect_false(res$ok)
+  expect_equal(res$leaks$column, "PatientClass")
+  expect_equal(res$leaks$n, 1L)
+})
+
 test_that("the leak check rejects an output column the policy drops or does not list", {
   dir <- local_output_dir()
   policy <- read_utmb_deid_policy(deid_policy_file)
@@ -387,7 +434,7 @@ test_that("the leak check rejects an output column the policy drops or does not 
   dir.create(out)
   write_deid_csv(data.frame(StudyID = "1", PatientDurableKey = "5", Nope = "x"), out,
                  "demographics")
-  check <- utmb_deid_leak_check(out, policy, list(exact = character(0), names = character(0)))
+  check <- utmb_deid_leak_check(out, policy, list(exact = NULL, names = NULL))
   expect_setequal(check$violations$column, c("PatientDurableKey", "Nope"))
   expect_null(check$leaks)
 })
@@ -399,8 +446,9 @@ test_that("the leak check ignores identifier values that equal a shifted date by
   dir.create(out)
   write_deid_csv(data.frame(StudyID = c("1", "2"), StartDate = c("20190314", "2019-03-14"),
                             Code = c("T31.0", "20190314")), out, "diagnoses")
-  check <- utmb_deid_leak_check(out, policy, list(exact = c("20190314", "2019-03-14"),
-                                                  names = character(0)))
+  exact <- data.table::data.table(StudyID = c("1", "2", "2"),
+                                  value = c("20190314", "20190314", "2019-03-14"))
+  check <- utmb_deid_leak_check(out, policy, list(exact = exact, names = NULL))
   expect_equal(check$leaks$column, "Code")
   expect_equal(check$leaks$n, 1L)
 })

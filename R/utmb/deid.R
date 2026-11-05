@@ -195,6 +195,7 @@ utmb_deid_rule <- function(table, column, type, role) {
     list(action = action, domain = domain, reason = reason)
   }
   if (role == "study_id") return(act("keep", "study identifier"))
+  if (grepl("NumericId$", name)) return(act("drop", "identifier: Epic record id (NumericId)"))
   if (name %in% c("BirthDate", "DeathDate")) return(act("shift_date", "date shifted"))
   if (name == "DeathInstant") return(act("shift_instant", "date shifted"))
   if (name == "DOB") return(act("drop", "identifier, BirthDate in demographics is shifted"))
@@ -310,15 +311,22 @@ deid_utmb_table <- function(dt, table, policy, secret) {
   listed <- cols %in% pol$column
   rows_in <- nrow(dt)
 
-  leak <- list(exact = character(0), names = character(0), dob = NULL)
+  leak <- list(exact = NULL, names = NULL, dob = NULL)
+  pair <- function(values) {
+    has <- !is.na(dt[["StudyID"]]) & !is.na(values)
+    unique(data.table::data.table(StudyID = dt[["StudyID"]][has], value = values[has]))
+  }
   for (col in cols[listed]) {
     row <- pol[match(col, pol$column), ]
     base <- utmb_base_name(col)
     if (row$action == "drop" && isTRUE(startsWith(row$reason, "identifier")) &&
           !base %in% utmb_deid_date_identifiers) {
-      values <- unique(dt[[col]][!is.na(dt[[col]])])
-      leak$exact <- c(leak$exact, values)
-      if (base == "PatientName") leak$names <- c(leak$names, values)
+      pairs <- pair(dt[[col]])
+      leak$exact <- unique(rbind(leak$exact, pairs))
+      if (base == "PatientName") {
+        pairs$value <- tolower(pairs$value)
+        leak$names <- unique(rbind(leak$names, pairs))
+      }
     }
     if (base %in% utmb_deid_date_identifiers) {
       has <- !is.na(dt[["StudyID"]]) & !is.na(dt[[col]])
@@ -388,15 +396,21 @@ deid_utmb_table <- function(dt, table, policy, secret) {
 
 # ---- leak check -------------------------------------------------------------------------------
 
-# Scans the written tables. Counts are cells equal to an original identifier value: any dropped
-# identifier value anywhere ("exact"), a patient name in any case ("name"), and a patient's own
-# original birth date in an unshifted column of that patient ("own_birth_date"). Also lists every
-# written column that the policy does not allow ("not_allowed"). Counts only, never values.
+# Scans the written tables. Counts are cells equal to an original identifier value of the same
+# patient (the row's own StudyID): a dropped identifier value ("exact"), the patient name in any
+# case ("name"), and the original birth date in an unshifted column ("own_birth_date"). Matching
+# is per patient because Epic id spaces overlap, so another patient's id can equal a reference key
+# by chance. leak$exact and leak$names are tables of StudyID and value (names lowercased). Also
+# lists every written column that the policy does not allow ("not_allowed"). Counts only.
 utmb_deid_leak_check <- function(out_data_dir, policy, leak) {
   leaks <- list()
   violations <- list()
-  exact <- unique(leak$exact)
-  lower_names <- unique(tolower(leak$names))
+  exact <- leak$exact
+  lower_names <- leak$names
+  match_count <- function(pairs, sid, x) {
+    probe <- data.table::data.table(StudyID = sid, value = x)[!is.na(x) & !is.na(sid)]
+    sum(pairs[probe, on = c("StudyID", "value"), nomatch = 0L, .N, by = .EACHI]$N)
+  }
   dob <- leak$dob
   files <- utmb_table_files(out_data_dir)
   for (table in names(files)) {
@@ -412,15 +426,13 @@ utmb_deid_leak_check <- function(out_data_dir, policy, leak) {
       present <- !is.na(x)
       # A shifted date can equal an 8-digit Epic ID by chance; it cannot carry the original ID.
       shifted <- row$action %in% c("shift_date", "shift_instant", "shift_datekey")
-      if (length(exact) > 0 && !shifted) {
-        n <- sum(x[present] %in% exact)
+      if (!is.null(exact) && !shifted) {
+        n <- match_count(exact, dt[["StudyID"]], x)
         if (n > 0) leaks[[length(leaks) + 1L]] <- data.frame(table = table, column = col,
                                                              check = "exact", n = n)
       }
-      if (length(lower_names) > 0) {
-        u <- unique(x[present])
-        hit <- u[tolower(u) %in% lower_names]
-        n <- sum(x %in% hit)
+      if (!is.null(lower_names)) {
+        n <- match_count(lower_names, dt[["StudyID"]], tolower(x))
         if (n > 0) leaks[[length(leaks) + 1L]] <- data.frame(table = table, column = col,
                                                              check = "name", n = n)
       }
@@ -486,7 +498,7 @@ run_utmb_deid <- function(data_dir, root, label = NULL, secret_file = NULL, poli
   stats <- list()
   counts <- list()
   all_ids <- character(0)
-  leak <- list(exact = character(0), names = character(0), dob = NULL)
+  leak <- list(exact = NULL, names = NULL, dob = NULL)
   for (table in names(files)) {
     res <- deid_utmb_table(read_utmb_table(files[[table]]), table, policy, secret)
     data.table::fwrite(res$data, file.path(out_data_dir, table), na = "")
@@ -494,8 +506,8 @@ run_utmb_deid <- function(data_dir, root, label = NULL, secret_file = NULL, poli
     counts[[table]] <- data.frame(table = table, rows_in = res$rows_in, rows_out = res$rows_out,
                                   rows_no_id = res$rows_no_id, stringsAsFactors = FALSE)
     all_ids <- unique(c(all_ids, res$ids))
-    leak$exact <- unique(c(leak$exact, res$leak$exact))
-    leak$names <- unique(c(leak$names, res$leak$names))
+    leak$exact <- unique(rbind(leak$exact, res$leak$exact))
+    leak$names <- unique(rbind(leak$names, res$leak$names))
     leak$dob <- rbind(leak$dob, res$leak$dob)
     step(sprintf("%s: %s rows in, %s rows out", table, format(res$rows_in, big.mark = ","),
                  format(res$rows_out, big.mark = ",")))

@@ -72,7 +72,7 @@ diagnoses,_DeletedFromSourceClarity,drop,,audit field
 diagnoses,_HasSourceClaimBasedEvents,drop,,audit field
 diagnoses,_DeletedFromSourceClaimBasedEvents,drop,,audit field
 diagnoses,SourceComboIdTypeId,keep,,""
-diagnoses,SourceNumericId,keep,,empty in the extract
+diagnoses,SourceNumericId,drop,,identifier: Epic record id (NumericId)
 diagnoses,SourceComboId,keep,,"text, review"
 diagnoses,_HasSourceCaboodle,drop,,audit field
 diagnoses,_DeletedFromSourceCaboodle,drop,,audit field
@@ -395,10 +395,10 @@ ed_visits,_NumberOfSources,drop,,audit field
 ed_visits,_HasSourceClarity,drop,,audit field
 ed_visits,_DeletedFromSourceClarity,drop,,audit field
 ed_visits,ChiefComplaintComboIdTypeId,keep,,""
-ed_visits,ChiefComplaintNumericId,keep,,""
+ed_visits,ChiefComplaintNumericId,drop,,identifier: Epic record id (NumericId)
 ed_visits,ChiefComplaintComboId,keep,,empty in the extract
 ed_visits,EdDiagnosisComboIdTypeId,keep,,""
-ed_visits,EdDiagnosisNumericId,keep,,""
+ed_visits,EdDiagnosisNumericId,drop,,identifier: Epic record id (NumericId)
 ed_visits,EdDiagnosisComboId,keep,,empty in the extract
 ed_visits,DispositionProviderDurableKey,remap,person_staff,provider or staff key
 ed_visits,DispositionProviderSourceDataDurableKey,remap,person_staff,provider or staff key
@@ -513,10 +513,10 @@ encounters,_DeletedFromSourceClarity,drop,,audit field
 encounters,_HasSourceClaimBasedEvents,drop,,audit field
 encounters,_DeletedFromSourceClaimBasedEvents,drop,,audit field
 encounters,ChiefComplaintComboIdTypeId,keep,,""
-encounters,ChiefComplaintNumericId,keep,,""
+encounters,ChiefComplaintNumericId,drop,,identifier: Epic record id (NumericId)
 encounters,ChiefComplaintComboId,keep,,empty in the extract
 encounters,SourceComboIdTypeId,keep,,""
-encounters,SourceNumericId,keep,,empty in the extract
+encounters,SourceNumericId,drop,,identifier: Epic record id (NumericId)
 encounters,SourceComboId,keep,,"text, review"
 encounters,_HasSourceCaboodle,drop,,audit field
 encounters,_DeletedFromSourceCaboodle,drop,,audit field
@@ -615,7 +615,7 @@ flowsheets,_NumberOfSources,drop,,audit field
 flowsheets,_HasSourceClarity,drop,,audit field
 flowsheets,_DeletedFromSourceClarity,drop,,audit field
 flowsheets,SourceComboIdTypeId,keep,,""
-flowsheets,SourceNumericId,keep,,empty in the extract
+flowsheets,SourceNumericId,drop,,identifier: Epic record id (NumericId)
 flowsheets,SourceComboId,keep,,"text, review"
 flowsheets,SourceKey,keep,,reference dimension key
 flowsheets,FlowsheetValueCategoryKey,keep,,reference dimension key
@@ -709,13 +709,13 @@ hospital_admissions,_NumberOfSources,drop,,audit field
 hospital_admissions,_HasSourceClarity,drop,,audit field
 hospital_admissions,_DeletedFromSourceClarity,drop,,audit field
 hospital_admissions,DischargeDiagnosisComboIdTypeId,keep,,""
-hospital_admissions,DischargeDiagnosisNumericId,keep,,""
+hospital_admissions,DischargeDiagnosisNumericId,drop,,identifier: Epic record id (NumericId)
 hospital_admissions,DischargeDiagnosisComboId,keep,,empty in the extract
 hospital_admissions,PresentOnAdmissionDiagnosisComboIdTypeId,keep,,""
-hospital_admissions,PresentOnAdmissionDiagnosisNumericId,keep,,""
+hospital_admissions,PresentOnAdmissionDiagnosisNumericId,drop,,identifier: Epic record id (NumericId)
 hospital_admissions,PresentOnAdmissionDiagnosisComboId,keep,,empty in the extract
 hospital_admissions,HospitalAcquiredDiagnosisComboIdTypeId,keep,,""
-hospital_admissions,HospitalAcquiredDiagnosisNumericId,keep,,""
+hospital_admissions,HospitalAcquiredDiagnosisNumericId,drop,,identifier: Epic record id (NumericId)
 hospital_admissions,HospitalAcquiredDiagnosisComboId,keep,,empty in the extract
 hospital_admissions,DischargeInstant,shift_instant,,date shifted
 hospital_admissions,DischargeOrderDateKey,shift_datekey,,date shifted
@@ -801,7 +801,7 @@ labs,_DeletedFromSourceClarity,drop,,audit field
 labs,SourceKey,keep,,reference dimension key
 labs,SourceComboKey,keep,,reference dimension key
 labs,SourceComboIdTypeId,keep,,""
-labs,SourceNumericId,keep,,empty in the extract
+labs,SourceNumericId,drop,,identifier: Epic record id (NumericId)
 labs,SourceComboId,keep,,"text, review"
 labs,_HasSourceCaboodle,drop,,audit field
 labs,_DeletedFromSourceCaboodle,drop,,audit field
@@ -909,7 +909,7 @@ medication_administrations,PatientSpecificPackageIdentifier,drop,,"identifier-li
 medication_administrations,AnesthesiaAdministrationWasScanned,keep,,""
 medication_administrations,MedicationComponentComboKey,keep,,reference dimension key
 medication_administrations,MedicationComponentComboIdTypeId,keep,,""
-medication_administrations,MedicationComponentNumericId,keep,,""
+medication_administrations,MedicationComponentNumericId,drop,,identifier: Epic record id (NumericId)
 medication_administrations,MedicationComponentComboId,keep,,empty in the extract
 medication_administrations,CustomAdministrationActionInfoKey,drop,,"unclassified key, review"
 medication_administrations,ActionIsMedAdministration,keep,,""
@@ -1048,10 +1048,10 @@ medication_orders,_NumberOfSources,drop,,audit field
 medication_orders,_HasSourceClarity,drop,,audit field
 medication_orders,_DeletedFromSourceClarity,drop,,audit field
 medication_orders,AssociatedDiagnosisComboIdTypeId,keep,,""
-medication_orders,AssociatedDiagnosisNumericId,keep,,""
+medication_orders,AssociatedDiagnosisNumericId,drop,,identifier: Epic record id (NumericId)
 medication_orders,AssociatedDiagnosisComboId,keep,,empty in the extract
 medication_orders,MedicationComponentComboIdTypeId,keep,,""
-medication_orders,MedicationComponentNumericId,keep,,""
+medication_orders,MedicationComponentNumericId,drop,,identifier: Epic record id (NumericId)
 medication_orders,MedicationComponentComboId,keep,,empty in the extract
 medication_orders,InterfaceOrder,keep,,""
 medication_orders,SentToPharmacyKey,keep,,reference dimension key
@@ -1143,7 +1143,7 @@ procedures_coded,_DeletedFromSourceClarity,drop,,audit field
 procedures_coded,_HasSourceClaimBasedEvents,drop,,audit field
 procedures_coded,_DeletedFromSourceClaimBasedEvents,drop,,audit field
 procedures_coded,SourceComboIdTypeId,keep,,""
-procedures_coded,SourceNumericId,keep,,""
+procedures_coded,SourceNumericId,drop,,identifier: Epic record id (NumericId)
 procedures_coded,SourceComboId,keep,,"text, review"
 procedures_coded,EarliestDocumentedDateKey,shift_datekey,,date shifted
 procedures_coded,_HasSourceCaboodle,drop,,audit field
@@ -1157,7 +1157,7 @@ procedures_coded,FirstModifierCategoryKey,keep,,reference dimension key
 procedures_coded,EarliestReceivedDateKey,shift_datekey,,date shifted
 procedures_coded,TerminologyComboKey,keep,,reference dimension key
 procedures_coded,TerminologyComboIdTypeId,keep,,empty in the extract
-procedures_coded,TerminologyNumericId,keep,,empty in the extract
+procedures_coded,TerminologyNumericId,drop,,identifier: Epic record id (NumericId)
 procedures_coded,TerminologyComboId,keep,,empty in the extract
 procedures_coded,ExtSupplementalEncounterKey,remap,encounter,patient-level key
 procedures_coded,IsAbstractedMedicalRecord,keep,,""
@@ -1523,21 +1523,21 @@ surgical_cases,_NumberOfSources,drop,,audit field
 surgical_cases,_HasSourceClarity,drop,,audit field
 surgical_cases,_DeletedFromSourceClarity,drop,,audit field
 surgical_cases,BillingDiagnosisComboIdTypeId,keep,,""
-surgical_cases,BillingDiagnosisNumericId,keep,,""
+surgical_cases,BillingDiagnosisNumericId,drop,,identifier: Epic record id (NumericId)
 surgical_cases,BillingDiagnosisComboId,keep,,empty in the extract
 surgical_cases,CaseDiagnosisComboIdTypeId,keep,,""
-surgical_cases,CaseDiagnosisNumericId,keep,,""
+surgical_cases,CaseDiagnosisNumericId,drop,,identifier: Epic record id (NumericId)
 surgical_cases,CaseDiagnosisComboId,keep,,empty in the extract
 surgical_cases,CodedProcedureComboIdTypeId,keep,,""
-surgical_cases,CodedProcedureNumericId,keep,,""
+surgical_cases,CodedProcedureNumericId,drop,,identifier: Epic record id (NumericId)
 surgical_cases,CodedProcedureComboId,keep,,empty in the extract
 surgical_cases,PreprocedureDiagnosisComboKey,keep,,reference dimension key
 surgical_cases,PreprocedureDiagnosisComboIdTypeId,keep,,""
-surgical_cases,PreprocedureDiagnosisNumericId,keep,,""
+surgical_cases,PreprocedureDiagnosisNumericId,drop,,identifier: Epic record id (NumericId)
 surgical_cases,PreprocedureDiagnosisComboId,keep,,empty in the extract
 surgical_cases,PostopDiagnosisComboKey,keep,,reference dimension key
 surgical_cases,PostopDiagnosisComboIdTypeId,keep,,""
-surgical_cases,PostopDiagnosisNumericId,keep,,""
+surgical_cases,PostopDiagnosisNumericId,drop,,identifier: Epic record id (NumericId)
 surgical_cases,PostopDiagnosisComboId,keep,,empty in the extract
 surgical_cases,LocationKey,drop,,"unclassified key, review"
 surgical_cases,CaseType_X,keep,,""
@@ -1629,5 +1629,5 @@ surgical_procedures,SourceKey,keep,,reference dimension key
 surgical_procedures,IsPrimary,keep,,""
 surgical_procedures,ProcedureCodeComboKey,keep,,reference dimension key
 surgical_procedures,ProcedureCodeComboIdTypeId,keep,,""
-surgical_procedures,ProcedureCodeNumericId,keep,,empty in the extract
+surgical_procedures,ProcedureCodeNumericId,drop,,identifier: Epic record id (NumericId)
 surgical_procedures,ProcedureCodeComboId,keep,,"text, review"
