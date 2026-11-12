@@ -118,6 +118,7 @@ test_that("offsets are never 0, stay within 30 days, and are stable per StudyID 
 })
 
 test_that("a new secret is 64 hex characters and a secret file is validated", {
+  skip_without_urandom()
   s <- new_utmb_secret()
   expect_match(s, "^[0-9a-f]{64}$")
   expect_false(identical(s, new_utmb_secret()))
@@ -301,6 +302,7 @@ pipeline_run <- function(dir, label = "a", ...) {
 }
 
 test_that("the pipeline writes de-identified tables, keys and reports, and passes the leak check", {
+  skip_without_urandom()
   dir <- local_output_dir()
   run <- pipeline_run(dir)
   res <- run$res
@@ -400,6 +402,7 @@ test_that("the pipeline writes de-identified tables, keys and reports, and passe
 })
 
 test_that("new ids are 1 to N in hash order, not file, key or extract StudyID order", {
+  skip_without_urandom()
   dir <- local_output_dir()
   keys <- 800000 + seq_len(60) * 3
   data_dir <- make_patients(dir, keys)
@@ -422,6 +425,7 @@ test_that("new ids are 1 to N in hash order, not file, key or extract StudyID or
 })
 
 test_that("a table or key problem stops with counts and writes nothing", {
+  skip_without_urandom()
   run_with <- function(change) {
     dir <- local_output_dir(env = parent.frame())
     data_dir <- make_deid_data(dir)
@@ -493,6 +497,7 @@ test_that("a table or key problem stops with counts and writes nothing", {
 })
 
 test_that("--patient-key can name another column, which is dropped even if the policy lacks it", {
+  skip_without_urandom()
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir)
   for (table in list.files(data_dir)) {
@@ -516,6 +521,7 @@ test_that("--patient-key can name another column, which is dropped even if the p
 })
 
 test_that("an extract without a StudyID column works and patients.csv has no extract_StudyID", {
+  skip_without_urandom()
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir)
   for (table in list.files(data_dir)) {
@@ -531,6 +537,7 @@ test_that("an extract without a StudyID column works and patients.csv has no ext
 })
 
 test_that("--keys reuse keeps ids, offsets and pseudonyms, numbers new patients, keeps dropped", {
+  skip_without_urandom()
   dir <- local_output_dir()
   keys <- 800000 + seq_len(60) * 3
   root <- deid_root(dir)
@@ -591,6 +598,7 @@ test_that("--keys reuse keeps ids, offsets and pseudonyms, numbers new patients,
 })
 
 test_that("an inconsistent patients.csv or a missing keys folder is an error, nothing written", {
+  skip_without_urandom()
   dir <- local_output_dir()
   keys <- 800000 + seq_len(10) * 3
   root <- deid_root(dir)
@@ -623,6 +631,7 @@ test_that("an inconsistent patients.csv or a missing keys folder is an error, no
 })
 
 test_that("offsets are stable across runs with the same secret, never 0 and within 30 days", {
+  skip_without_urandom()
   dir <- local_output_dir()
   keys <- 800000 + seq_len(60) * 3
   root <- deid_root(dir)
@@ -643,6 +652,7 @@ test_that("offsets are stable across runs with the same secret, never 0 and with
 })
 
 test_that("an unlisted column is dropped, warned about and reported", {
+  skip_without_urandom()
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
   extra <- read_raw(file.path(data_dir, "diagnoses"))
@@ -660,6 +670,7 @@ test_that("an unlisted column is dropped, warned about and reported", {
 })
 
 test_that("exact matches in catalog code columns are review items and do not fail the run", {
+  skip_without_urandom()
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir)
   enc <- read_raw(file.path(data_dir, "encounters"))
@@ -693,6 +704,7 @@ test_that("exact matches in catalog code columns are review items and do not fai
 })
 
 test_that("the same planted value in a kept non-reference column still fails the run", {
+  skip_without_urandom()
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
   dx <- read_raw(file.path(data_dir, "diagnoses"))
@@ -708,6 +720,7 @@ test_that("the same planted value in a kept non-reference column still fails the
 })
 
 test_that("the leak check finds a planted MRN, a patient name in other case and own birth date", {
+  skip_without_urandom()
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
   dx <- read_raw(file.path(data_dir, "diagnoses"))
@@ -729,6 +742,7 @@ test_that("the leak check finds a planted MRN, a patient name in other case and 
 })
 
 test_that("the leak check counts a value only in the row of the patient it belongs to", {
+  skip_without_urandom()
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
   dx <- read_raw(file.path(data_dir, "diagnoses"))
@@ -757,6 +771,7 @@ test_that("a patient name in other case is caught in the same patient's row only
 })
 
 test_that("a NumericId column feeds the leak check with its patient's values", {
+  skip_without_urandom()
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
   enc <- read_raw(file.path(data_dir, "encounters"))
@@ -808,6 +823,7 @@ test_that("nothing is written without a confirmed project root", {
 })
 
 test_that("burn_index runs on the de-identified fixture output", {
+  skip_without_urandom()
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
   root <- deid_root(dir)
@@ -839,6 +855,7 @@ test_that("placeholder date bounds stay unchanged in both shift functions", {
 })
 
 test_that("1900-01-01 stays a placeholder for burn_index after de-identification", {
+  skip_without_urandom()
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
   dx <- read_raw(file.path(data_dir, "diagnoses"))
@@ -871,6 +888,7 @@ test_that("keep_common_values keeps numeric-like values and values shared by eno
 })
 
 test_that("keep_common_values columns are filtered in the pipeline and counted", {
+  skip_without_urandom()
   dir <- local_output_dir()
   data_dir <- make_deid_data(dir, with_flowsheets = FALSE)
   n <- 22
