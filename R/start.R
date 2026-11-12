@@ -93,15 +93,19 @@ start_burn_vp <- function(script_dir, is_interactive = interactive(),
                           is_windows = .Platform$OS.type == "windows", chooser = NULL,
                           ask = start_ask, run_setup = start_run_setup, open_window = gui_main,
                           check_r_version = setup_check_r_version,
-                          setup_needed = start_setup_needed,
+                          setup_needed = start_setup_needed, r_version = getRversion(),
                           say = function(...) cat(..., sep = "")) {
   root <- setup_find_root(script_dir, is_interactive, is_windows, chooser)
   say("Project folder: ", root, "\n")
 
-  version_check <- check_r_version(setup_lock_r_version(root))
+  locked <- setup_lock_r_version(root)
+  version_check <- check_r_version(locked)
   if (identical(version_check$status, "fail")) {
-    stop("This version of R does not match the project. Please contact the project team. ",
-         "Nothing was changed.", call. = FALSE)
+    needed <- if (is.na(locked)) "another version" else sub("^([0-9]+\\.[0-9]+).*$", "\\1", locked)
+    stop("This tool needs R ", needed, ", but this R is version ", as.character(r_version), ". ",
+         "Close R and open R ", needed, " from the Start menu, then try again. If R ", needed,
+         " is not on this computer, please contact the project team. Nothing was changed.",
+         call. = FALSE)
   }
   if (version_check$status %in% c("warning", "note")) say(version_check$message, "\n")
 

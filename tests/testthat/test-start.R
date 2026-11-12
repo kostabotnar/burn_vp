@@ -102,6 +102,17 @@ test_that("start_burn_vp stops on a failing R version check before anything else
   expect_false(any(c("ask", "setup", "window") %in% fakes$calls$log))
 })
 
+test_that("the R version error names the version needed and the version running", {
+  root <- make_start_project()
+  fakes <- make_fakes(status = "fail")
+  expect_error(
+    do.call(start_burn_vp, c(list(script_dir = root, is_interactive = TRUE, is_windows = TRUE,
+                                  r_version = numeric_version("4.6.1")),
+                             fakes$args)),
+    "needs R 4\\.5, but this R is version 4\\.6\\.1\\. Close R and open R 4\\.5 from the Start menu"
+  )
+})
+
 test_that("start_burn_vp runs setup after a yes and then opens the window", {
   root <- make_start_project()
   fakes <- make_fakes(ask = TRUE)
