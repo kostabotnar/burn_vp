@@ -10,9 +10,10 @@ Before you start, the project folder must be on your own computer, for example i
 
 1. Open R (Rgui) from the Start menu.
 2. In R, choose File, then Source R code..., and select `start_burn_vp.R` in the project folder.
-3. The first time, a window asks whether to run the one-time setup. Click Yes. Wait: it takes several minutes and needs internet. Do not close R.
-4. When the R window (the console) says SETUP COMPLETE, the program window opens. You do not need to run the setup again.
-5. If the R window says SETUP FAILED, send the log file to the project team. You find it in the folder `output\setup`.
+3. The first time, a setup window opens. It explains the one-time setup. Click Start setup. The setup takes several minutes and needs internet. Do not close R. Cancel (or closing the window) stops without changing anything; to run the setup later, repeat steps 1 and 2.
+4. The window shows the current step, a progress bar and everything the setup prints, so you do not need to watch the R console. During the longest step ("Installing packages") the window can look still for a while. Wait until it says Setup complete.
+5. Click Open the program to open the program window. You do not need to run the setup again. (Close ends without opening it.)
+6. If the window says Setup failed, it shows what went wrong and what to do. Send the log file to the project team. You find it in the folder `output\setup`.
 
 The next times, repeat steps 1 and 2. The program window opens straight away.
 
