@@ -4,15 +4,15 @@ Comparison of vasopressor use in patients with severe burns.
 
 ## Installation on Windows
 
-You need Windows, R 4.5 (any 4.5.x version) and an internet connection. You do not install or change R. The start file checks the R version. If it does not fit, it stops and shows a message. Then contact the project team.
+You need Windows, R 4.5 (any 4.5.x version) and an internet connection. You do not install or change R. The start file checks the R version. If it is not 4.5, it stops and names the version it found. Then close R and open R 4.5 from the Start menu (see step 1). If R 4.5 is not on your computer, contact the project team.
 
 Before you start, the project folder must be on your own computer, for example in `C:\burn_vp`. Use a short path. Do not use OneDrive.
 
-1. Open R (Rgui) from the Start menu.
+1. Open R (Rgui) 4.5 from the Start menu. The entry is named like "R x64 4.5.2". If the Start menu lists more than one R version, choose the 4.5 one.
 2. In R, choose File, then Source R code..., and select `start_burn_vp.R` in the project folder.
 3. The first time, a setup window opens. It explains the one-time setup. Click Start setup. The setup takes several minutes and needs internet. Do not close R. Cancel (or closing the window) stops without changing anything; to run the setup later, repeat steps 1 and 2.
 4. The window shows the current step, a progress bar and everything the setup prints, so you do not need to watch the R console. During the longest step ("Installing packages") the window can look still for a while. Wait until it says Setup complete.
-5. Click Open the program to open the program window. You do not need to run the setup again. (Close ends without opening it.)
+5. Click Open the program to open the program window. You do not need to run the setup again. Close ends without opening it; to open the program later, repeat steps 1 and 2.
 6. If the window says Setup failed, it shows what went wrong and what to do. Send the log file to the project team. You find it in the folder `output\setup`.
 
 The next times, repeat steps 1 and 2. The program window opens straight away.
