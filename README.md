@@ -66,6 +66,42 @@ To try the pipeline without real data, generate a synthetic file with known erro
 "C:\Program Files\R\R-4.5.2\bin\Rscript.exe" scripts\run_qc_pipeline.R NBC=output\generated\NBC_synthetic_n100_seed1_corrupt.xlsx --label demo
 ```
 
+## Profiling the UTMB data
+
+The raw UTMB extract (13 comma-separated files without an extension, from Epic Caboodle) goes in `data/`, which is ignored by version control. To profile it:
+
+```
+Rscript scripts/utmb/profile_utmb.R [--data <folder>] [--label <text>]
+```
+
+The default data folder is `data/` in the project folder; a relative `--data` path is resolved against the project folder, not the working directory. The run writes `output/utmb/profile_<date>_<time>[_<label>]/` with `column_profile.csv`, `table_stats.csv` (including read and profile seconds per table), `demographics_categorical.csv`, `demographics_numeric.csv` and `summary.txt` and `utmb_dictionary.csv`. These hold aggregate counts, but some columns list the most frequent values, so keep the run folder out of version control. `utmb_dictionary.csv` is a structure-only dictionary (column types, roles, identifier flags and descriptions, no data values). The script never writes outside `output/`; to update the committed copy `metadata/utmb_dictionary.csv`, review the file and copy it there by hand. The functions are in `R/utmb/`.
+
+## Burn index events in the UTMB data
+
+```
+Rscript scripts/utmb/burn_index.R [--data <folder>] [--label <text>]
+```
+
+Burn records are `diagnoses` rows with ICD-10-CM `T31.*` or ICD-9-CM `948.*`. The index event is each patient's earliest burn record dated 2015-01-01 to 2023-12-31 (highest group when several records share the date). The group is the first digit after the dot: percent of body surface area burned in tenths (0 = under 10%, 9 = 90% or more). The run writes `output/utmb/burn_index_<date>_<time>[_<label>]/` with group, year and month distributions, demographics, index encounter types, burn records before the index event, a comparison with the crosswalk, `figures/` and `summary.txt`. Smoking status and race are the extract's current values, not values at the index date.
+
+`index_events.csv` in the run folder is patient-level (one row per StudyID, with index date, code, encounter and age). It stays in `output/`, which is ignored by version control, and must not be shared. All other files are aggregate counts. The functions are in `R/utmb/burn_index.R`.
+
+## De-identifying the UTMB data
+
+```
+Rscript scripts/utmb/deid_utmb.R [--data <folder>] [--label <text>] [--patient-key <column>] [--keys <folder>]
+```
+
+Patients get a new number. `--patient-key` names the column that identifies a patient in every table (default `PatientDurableKey`). The extract's own `StudyID` is not used or kept, because it is not known how it was assigned. Before anything is written the script checks that `demographics` exists and has exactly one row per patient (the key is never missing and never repeated), that every table has the key column, and that every key in another table is in `demographics`. If a check fails the script stops with table names and counts and writes nothing. Only the key column of each table is read for these checks. The patients of `demographics` are then numbered 1 to N in a random order (sorted by SHA-256 of the secret, "patient_id" and the key), and the number is written as the first column `StudyID` of every output table, so `profile_utmb.R` and `burn_index.R` work unchanged.
+
+The run writes two folders under `output/utmb/`. `deid_<date>_<time>[_<label>]/` holds `data/` (the 13 tables with the same file names and format, so `profile_utmb.R --data output/utmb/deid_.../data` and `burn_index.R` work on them), `summary.txt` and `column_actions.csv` (counts only). `deid_keys_<date>_<time>[_<label>]/` holds `secret.txt` (the random run secret), `patients.csv` (new `StudyID`, the patient key under its own column name, `extract_StudyID` if the extract had a StudyID column, and `offset_days`) and `README.txt`. The keys folder can re-identify patients and dates: store it apart from the de-identified data and never share it. `--keys <folder>` reads `secret.txt` and `patients.csv` of an earlier keys folder: the same secret gives the same offsets (SHA-256 of the secret and the patient key) and pseudonyms, patients already in `patients.csv` keep their new `StudyID`, new patients are numbered from the largest id plus 1 in hash order, and patients missing from the new extract stay in the new `patients.csv`. A key with two ids or an id used twice in the old file is an error. The new keys folder is self-contained.
+
+What happens to each column is listed in `metadata/utmb_deid_policy.csv` (table, column, action, domain, reason), which a person can review and edit. Actions: `keep`; `drop`; `shift_date`, `shift_instant` and `shift_datekey` (every date of a patient moves by the same number of days, between 1 and 30 earlier or later, never 0, so intervals stay exact and the time of day is kept); `remap` (a key is replaced by a 16 character pseudonym; columns with the same `domain` get the same pseudonym for the same value, so joins still work, and negative "unknown" values stay as they are); `keep_common_values` (a text value is kept only if it looks like a number, with an optional `<`, `>`, `<=` or `>=`, or if the same value occurs for at least 20 different patients in that column; used for lab `Value`, flowsheet `TimeValue`, medication order `Sig` and the `PrnReason` columns); `keep_typed_or_common_values` (flowsheet `Value`: kept as is when `RowValueType` is Custom List, Numeric Type, Blood Pressure or Temperature, otherwise the common-values rule applies). Counts of blanked values are in `column_actions.csv` and `summary.txt`. Identifiers, free text, ETL audit fields, the patient keys and the extract's StudyID are dropped, since the new StudyID identifies the patient. Rows marked `text, review` are kept text columns that need a human check, and `unclassified key, review` marks keys that were dropped because they could not be classified. Columns in the data that the policy does not list are dropped and reported. Rows without a patient key are dropped and counted. Placeholder dates (1900-01-01 and earlier, 9999-01-01 and later) are never shifted, so they stay recognisable as placeholders.
+
+The run ends with a leak check on the written files: any cell equal to the same patient's original patient key, MRN, Epic id, patient name (any case), dropped identifier value, or original birth date in an unshifted column is counted (the output `StudyID` column is exempt; matching is per patient, using the new id, because Epic id spaces overlap, so another patient's id can equal a reference key by chance; columns ending in `NumericId` hold Epic record ids and are dropped as identifiers) in `summary.txt`, and the script exits with status 1 if there is any. Exact matches in catalog code columns (columns whose policy reason is "reference dimension key", and the flowsheet `FlowsheetRowEpicId` columns) do not fail the run, because a code shared by many patients can equal one patient's own case number or CSN by chance. They are listed in `summary.txt` under "Leak check: review items" and in `leak_review.csv` of the run folder (per column: matching cells, distinct colliding values, fewest patients that have any one of those values), counts only. Offsets and pseudonyms come from SHA-256 of the secret and the value, so nothing needs to be stored to keep the tables joinable. This needs `/dev/urandom` (Linux) for a new secret.
+
+To rebuild the policy from `metadata/utmb_dictionary.csv`, run `Rscript scripts/utmb/deid_policy.R [--label <text>]`. It writes `output/utmb/deid_policy_<date>_<time>[_<label>]/utmb_deid_policy.csv`; review it and copy it by hand to `metadata/`. The functions are in `R/utmb/deid.R`.
+
 ## Layout
 
 - `R/`: reusable functions
