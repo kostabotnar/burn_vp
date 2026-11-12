@@ -22,8 +22,8 @@
 #     approved for the package library: the folders "renv/library" and
 #     "renv/staging" in the project folder. Nothing is written to the home
 #     folder, AppData, the Desktop or any other location. (R itself keeps a
-#     temporary folder of its own. setup.bat moves it to "output/tmp"; when
-#     this file is run from Rgui, it stays in the Windows temporary folder.)
+#     temporary folder of its own. It stays in the Windows temporary folder,
+#     where R creates and removes it.)
 #   - The packages: downloaded packages are kept in "output/renv" and
 #     installed into "renv/library".
 #   - A log file, output/setup/setup_<date>_<time>.txt.
@@ -32,8 +32,8 @@
 #   - At the end, complete or failed, it deletes what this run created and
 #     no longer needs: the fake data, the test run folder, the downloaded
 #     packages in "output/renv" and "renv/staging". It keeps the log file and
-#     the installed packages in "renv/library". setup.bat then deletes
-#     "output/tmp". Folders that existed before the run are never deleted.
+#     the installed packages in "renv/library". Folders that existed before
+#     the run are never deleted.
 #   - Nothing is written unless the project folder is confirmed: the folder
 #     above this script's folder must contain a readable file "PROJECT_VERSION"
 #     with the line "Project: burn_vp".
@@ -55,9 +55,11 @@
 #   <home>. It contains no patient data. If setup fails, send us this file.
 #
 # HOW TO RUN
-#   Easiest: double-click "setup.bat" in the project folder.
+#   Easiest: in R (Rgui), choose File > Source R code... and select
+#   "start_burn_vp.R" in the project folder. It runs this setup when it is
+#   needed and then opens the program window.
 #
-#   Or in R (Rgui):
+#   Or run this file directly in R (Rgui):
 #     Start R from the Start menu, choose File > Source R code..., go to the
 #     project folder, open the "scripts" folder, and select this file
 #     ("setup_environment.R"). Wait until the final message says
@@ -115,8 +117,9 @@ local({
     }
   }
   if (!has_helpers(start)) {
-    stop("The project files were not found. Run setup.bat in the project folder, or run this ",
-         "file from the scripts folder of the complete project folder. Nothing was changed.",
+    stop("The project files were not found. Source start_burn_vp.R in the project folder, or ",
+         "run this file from the scripts folder of the complete project folder. ",
+         "Nothing was changed.",
          call. = FALSE)
   }
   for (f in c("project_paths.R", "setup.R")) {
@@ -127,10 +130,24 @@ local({
 
   local({
     log_lines <- character()
+    # start_burn_vp.R sets the option burn_vp.setup_progress to a function(line) while its setup
+    # window is open. A problem in that function never stops setup.
+    notify <- function(text) {
+      progress <- getOption("burn_vp.setup_progress")
+      if (is.function(progress)) tryCatch(progress(text), error = function(e) NULL)
+      invisible(NULL)
+    }
     say <- function(...) {
       text <- paste0(...)
       cat(text, "\n", sep = "")
       log_lines <<- c(log_lines, text)
+      notify(text)
+    }
+    # Final lines: shown and passed on, but not part of the log file (which is written before).
+    say_final <- function(...) {
+      text <- paste0(...)
+      cat(text, "\n", sep = "")
+      notify(text)
     }
     show_check <- function(check) {
       label <- c(ok = "OK", warning = "WARNING", fail = "PROBLEM", note = "NOTE")[[check$status]]
@@ -311,10 +328,6 @@ local({
       if (length(cleaned$removed) == 0) say("Nothing needed to be removed.")
       for (w in cleaned$warnings) say("[WARNING] ", w)
       say("Kept: renv/library (the installed packages) and this log file.")
-      temp_dir <- normalizePath(tempdir(), winslash = "/", mustWork = FALSE)
-      if (startsWith(temp_dir, paste0(root, "/output/tmp"))) {
-        say("setup.bat removes output/tmp when R has closed.")
-      }
     }
 
     # Log (only when the project folder is known and confirmed).
@@ -350,18 +363,18 @@ local({
     say("")
     say("=====================================================")
     if (outcome == "complete") {
-      cat("SETUP COMPLETE\n")
-      cat("Everything is installed and the test run worked.\n")
-      cat("You can now use the tool. You do not need to run setup again.\n")
-      if (!is.null(log_name)) cat("Log file: ", log_name, "\n", sep = "")
+      say_final("SETUP COMPLETE")
+      say_final("Everything is installed and the test run worked.")
+      say_final("You can now use the tool. You do not need to run setup again.")
+      if (!is.null(log_name)) say_final("Log file: ", log_name)
     } else {
-      cat("SETUP FAILED\n")
-      cat("What went wrong: ", failure$message, "\n", sep = "")
-      cat("What to do: ", failure$action, "\n", sep = "")
+      say_final("SETUP FAILED")
+      say_final("What went wrong: ", failure$message)
+      say_final("What to do: ", failure$action)
       if (is.null(log_name)) {
-        cat("No log file could be written. Copy the text above and send it to us.\n")
+        say_final("No log file could be written. Copy the text above and send it to us.")
       } else {
-        cat("Log file: ", log_name, "\n", sep = "")
+        say_final("Log file: ", log_name)
       }
     }
     cat("=====================================================\n")

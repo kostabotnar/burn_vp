@@ -28,19 +28,23 @@ setup_script_dir <- function(args = commandArgs(trailingOnly = FALSE), frames = 
   dirname(normalizePath(script, winslash = "/", mustWork = FALSE))
 }
 
-# The confirmed project folder (normalised path). `script_dir` is the folder of the script, which
-# sits in scripts/ directly under the project folder. When it is unknown or does not lead to a
-# confirmed folder, an interactive Windows session asks the user to pick the project folder.
+# The confirmed project folder (normalised path). `script_dir` is the folder of the script: the
+# project folder itself, or its scripts/ folder (the folder is checked first, then its parent).
+# When it is unknown or does not lead to a confirmed folder, an interactive Windows session asks
+# the user to pick the project folder.
 # `chooser` takes a `caption` and returns a path or NA, like utils::choose.dir().
 setup_find_root <- function(script_dir, is_interactive = interactive(),
                             is_windows = .Platform$OS.type == "windows", chooser = NULL,
                             attempts = 3) {
-  if (!is.na(script_dir) && is_project_root(dirname(script_dir))) {
-    return(normalizePath(dirname(script_dir), winslash = "/"))
+  if (!is.na(script_dir)) {
+    for (candidate in c(script_dir, dirname(script_dir))) {
+      if (is_project_root(candidate)) return(normalizePath(candidate, winslash = "/"))
+    }
   }
   if (!(is_interactive && is_windows)) {
-    stop("The project folder was not found. Run setup.bat in the project folder, or run this ",
-         "file from the scripts folder of the complete project folder (the folder that contains ",
+    stop("The project folder was not found. Source start_burn_vp.R in the project folder, or ",
+         "run this file from the scripts folder of the complete project folder (the folder ",
+         "that contains ",
          "the file PROJECT_VERSION).", call. = FALSE)
   }
   if (is.null(chooser)) chooser <- utils::choose.dir
