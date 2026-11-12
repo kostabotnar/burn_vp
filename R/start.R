@@ -85,13 +85,27 @@ start_run_setup <- function(root) {
   source(file.path(root, "scripts", "setup_environment.R"))$value
 }
 
+# Runs `run_setup(root)` with the option burn_vp.setup_progress set to `on_line`, so that
+# scripts/setup_environment.R passes every line it prints to the setup dialog. The previous value
+# of the option comes back when setup ends, also after an error.
+start_run_with_progress <- function(root, on_line, run_setup) {
+  old <- options(burn_vp.setup_progress = on_line)
+  on.exit(options(old), add = TRUE)
+  run_setup(root)
+}
+
 # The whole start. Returns invisibly which branch ran: "window" (packages were present),
-# "setup_then_window" (setup ran and succeeded) or "setup_failed" (setup ran and failed, so no
-# window). Stops with a plain message when the project folder or R version is wrong, or when setup
-# is needed and was not accepted. Never calls quit().
+# "setup_then_window" (setup succeeded and the user chose to open the program),
+# "setup_closed" (setup succeeded and the user chose Close) or "setup_failed" (setup failed, so
+# no window). Stops with a plain message when the project folder or R version is wrong, or when
+# setup is needed and was not accepted. Never calls quit().
+# `dialog(root, run_setup)` is the setup window (see setup_dialog_run). When Tk is not available
+# (`dialog_available()` is FALSE) the question is asked with `ask` and setup output stays in the
+# console.
 start_burn_vp <- function(script_dir, is_interactive = interactive(),
                           is_windows = .Platform$OS.type == "windows", chooser = NULL,
                           ask = start_ask, run_setup = start_run_setup, open_window = gui_main,
+                          dialog = setup_dialog_run, dialog_available = setup_dialog_available,
                           check_r_version = setup_check_r_version,
                           setup_needed = start_setup_needed, r_version = getRversion(),
                           say = function(...) cat(..., sep = "")) {
@@ -111,28 +125,50 @@ start_burn_vp <- function(script_dir, is_interactive = interactive(),
 
   branch <- "window"
   if (isTRUE(setup_needed(root))) {
-    rerun <- paste("To run it, source start_burn_vp.R again in R (File > Source R code...)",
-                   "and answer Yes when asked.")
-    if (!(is_interactive && is_windows)) {
+    can_ask <- is_interactive && is_windows
+    use_dialog <- can_ask && isTRUE(dialog_available())
+    answer <- if (can_ask && !use_dialog) "answer Yes when asked." else "click Start setup."
+    rerun <- paste("To run it, source start_burn_vp.R again in R (File > Source R code...) and",
+                   answer)
+    if (!can_ask) {
       stop("The first-time setup has not been run on this computer. It must run first. ", rerun,
            call. = FALSE)
     }
     say("The first-time setup has not been run on this computer.\n")
-    yes <- isTRUE(ask(paste(
-      "The tool needs a one-time setup before it can start.",
-      "It installs the programs the tool uses and checks that they work.",
-      "It takes several minutes and needs an internet connection.",
-      "\n\nRun the setup now?"
-    )))
-    if (!yes) {
-      stop("The setup was not run, and the tool cannot start without it. ", rerun, call. = FALSE)
-    }
-    say("Running the setup. This takes several minutes. Please wait.\n")
-    outcome <- run_setup(root)
-    if (!identical(outcome, "complete")) {
-      say("The setup did not finish, so the tool was not started. ",
-          "Please read the message above and contact the project team.\n")
-      return(invisible("setup_failed"))
+    if (use_dialog) {
+      say("A setup window opens. Its Start setup button begins the setup.\n")
+      choice <- dialog(root, function(root, on_line) {
+        start_run_with_progress(root, on_line, run_setup)
+      })
+      if (identical(choice, "cancel")) {
+        stop("The setup was not run, and the tool cannot start without it. ", rerun, call. = FALSE)
+      }
+      if (identical(choice, "close")) {
+        say("The setup is complete. To open the program, source start_burn_vp.R again.\n")
+        return(invisible("setup_closed"))
+      }
+      if (!identical(choice, "open")) {
+        say("The setup did not finish, so the tool was not started. ",
+            "Please read the message in the setup window and contact the project team.\n")
+        return(invisible("setup_failed"))
+      }
+    } else {
+      yes <- isTRUE(ask(paste(
+        "The tool needs a one-time setup before it can start.",
+        "It installs the programs the tool uses and checks that they work.",
+        "It takes several minutes and needs an internet connection.",
+        "\n\nRun the setup now?"
+      )))
+      if (!yes) {
+        stop("The setup was not run, and the tool cannot start without it. ", rerun, call. = FALSE)
+      }
+      say("Running the setup. This takes several minutes. Please wait.\n")
+      outcome <- run_setup(root)
+      if (!identical(outcome, "complete")) {
+        say("The setup did not finish, so the tool was not started. ",
+            "Please read the message above and contact the project team.\n")
+        return(invisible("setup_failed"))
+      }
     }
     branch <- "setup_then_window"
   }

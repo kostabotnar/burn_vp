@@ -20,10 +20,14 @@ file_listing <- function(dir) {
   data.frame(files, size = info$size, mtime = info$mtime)
 }
 
-# Fakes that record what was called, in order.
-make_fakes <- function(ask = TRUE, outcome = "complete", status = "ok", needed = TRUE) {
+# Fakes that record what was called, in order. `tk = FALSE` makes the dialog unavailable, so
+# the winDialog question (`ask`) is used. `after` is the button pressed after a completed setup.
+make_fakes <- function(ask = TRUE, outcome = "complete", status = "ok", needed = TRUE,
+                       tk = TRUE, cancel = FALSE, after = "open") {
   calls <- new.env()
   calls$log <- character()
+  calls$lines <- character()
+  calls$option_during <- "unset"
   note <- function(x) calls$log <- c(calls$log, x)
   list(
     calls = calls,
@@ -35,8 +39,18 @@ make_fakes <- function(ask = TRUE, outcome = "complete", status = "ok", needed =
       },
       run_setup = function(root) {
         note("setup")
+        calls$option_during <- getOption("burn_vp.setup_progress")
+        if (is.function(calls$option_during)) calls$option_during("Step 1 of 5: Finding it")
         outcome
       },
+      dialog = function(root, run_setup) {
+        note("dialog")
+        if (cancel) return("cancel")
+        result <- run_setup(root, function(line) calls$lines <- c(calls$lines, line))
+        calls$option_after <- getOption("burn_vp.setup_progress")
+        if (identical(result, "complete")) after else "failed"
+      },
+      dialog_available = function() tk,
       open_window = function(root) {
         note("window")
         invisible(NULL)
@@ -99,7 +113,7 @@ test_that("start_burn_vp stops on a failing R version check before anything else
   root <- make_start_project()
   fakes <- make_fakes(status = "fail")
   expect_error(run_start(root, fakes), "contact the project team")
-  expect_false(any(c("ask", "setup", "window") %in% fakes$calls$log))
+  expect_false(any(c("ask", "dialog", "setup", "window") %in% fakes$calls$log))
 })
 
 test_that("the R version error names the version needed and the version running", {
@@ -113,20 +127,76 @@ test_that("the R version error names the version needed and the version running"
   )
 })
 
-test_that("start_burn_vp runs setup after a yes and then opens the window", {
+test_that("start_burn_vp runs setup in the dialog and opens the window when asked", {
   root <- make_start_project()
-  fakes <- make_fakes(ask = TRUE)
+  fakes <- make_fakes(after = "open")
+  expect_equal(run_start(root, fakes), "setup_then_window")
+  expect_equal(fakes$calls$log, c("version", "dialog", "setup", "window"))
+})
+
+test_that("start_burn_vp does not open the window when the dialog is closed after setup", {
+  root <- make_start_project()
+  fakes <- make_fakes(after = "close")
+  expect_equal(run_start(root, fakes), "setup_closed")
+  expect_equal(fakes$calls$log, c("version", "dialog", "setup"))
+})
+
+test_that("start_burn_vp stops after Cancel in the dialog without running setup", {
+  root <- make_start_project()
+  fakes <- make_fakes(cancel = TRUE)
+  expect_error(run_start(root, fakes), "source start_burn_vp.R again.*click Start setup")
+  expect_equal(fakes$calls$log, c("version", "dialog"))
+})
+
+test_that("start_burn_vp does not open the window when setup failed in the dialog", {
+  root <- make_start_project()
+  fakes <- make_fakes(outcome = "failed")
+  expect_equal(run_start(root, fakes), "setup_failed")
+  expect_equal(fakes$calls$log, c("version", "dialog", "setup"))
+})
+
+test_that("the progress option is set during setup, receives the lines, and is restored", {
+  root <- make_start_project()
+  before <- function(line) "previous"
+  withr::local_options(burn_vp.setup_progress = before)
+  fakes <- make_fakes()
+  run_start(root, fakes)
+  expect_true(is.function(fakes$calls$option_during))
+  expect_false(identical(fakes$calls$option_during, before))
+  expect_equal(fakes$calls$lines, "Step 1 of 5: Finding it")
+  expect_identical(fakes$calls$option_after, before)
+  expect_identical(getOption("burn_vp.setup_progress"), before)
+})
+
+test_that("the progress option is unset again after setup and after a setup error", {
+  root <- make_start_project()
+  withr::local_options(burn_vp.setup_progress = NULL)
+  run_start(root, make_fakes())
+  expect_null(getOption("burn_vp.setup_progress"))
+  fakes <- make_fakes()
+  fakes$args$run_setup <- function(root) stop("boom")
+  expect_error(run_start(root, fakes), "boom")
+  expect_null(getOption("burn_vp.setup_progress"))
+})
+
+test_that("without Tk start_burn_vp asks with a yes/no question and runs setup in the console", {
+  root <- make_start_project()
+  fakes <- make_fakes(ask = TRUE, tk = FALSE)
   expect_equal(run_start(root, fakes), "setup_then_window")
   expect_equal(fakes$calls$log, c("version", "ask", "setup", "window"))
   expect_match(fakes$calls$question, "several minutes")
   expect_match(fakes$calls$question, "internet")
+  expect_false(is.function(fakes$calls$option_during))
 })
 
-test_that("start_burn_vp stops after a no without running setup or the window", {
+test_that("without Tk a no stops the start and a failed setup shows no window", {
   root <- make_start_project()
-  fakes <- make_fakes(ask = FALSE)
-  expect_error(run_start(root, fakes), "source start_burn_vp.R again")
+  fakes <- make_fakes(ask = FALSE, tk = FALSE)
+  expect_error(run_start(root, fakes), "source start_burn_vp.R again.*answer Yes")
   expect_equal(fakes$calls$log, c("version", "ask"))
+  fakes <- make_fakes(outcome = "failed", tk = FALSE)
+  expect_equal(run_start(root, fakes), "setup_failed")
+  expect_equal(fakes$calls$log, c("version", "ask", "setup"))
 })
 
 test_that("start_burn_vp stops without asking when the session is not interactive", {
@@ -134,14 +204,7 @@ test_that("start_burn_vp stops without asking when the session is not interactiv
   fakes <- make_fakes()
   expect_error(run_start(root, fakes, interactive = FALSE), "must run first")
   expect_error(run_start(root, fakes, windows = FALSE), "must run first")
-  expect_false(any(c("ask", "setup", "window") %in% fakes$calls$log))
-})
-
-test_that("start_burn_vp does not open the window when setup failed", {
-  root <- make_start_project()
-  fakes <- make_fakes(outcome = "failed")
-  expect_equal(run_start(root, fakes), "setup_failed")
-  expect_equal(fakes$calls$log, c("version", "ask", "setup"))
+  expect_false(any(c("ask", "dialog", "setup", "window") %in% fakes$calls$log))
 })
 
 test_that("start_burn_vp goes straight to the window when the packages are present", {
@@ -154,8 +217,9 @@ test_that("start_burn_vp goes straight to the window when the packages are prese
 test_that("start_burn_vp writes nothing itself", {
   root <- make_start_project()
   before <- file_listing(dirname(root))
-  for (fakes in list(make_fakes(), make_fakes(needed = FALSE), make_fakes(ask = FALSE),
-                     make_fakes(outcome = "failed"))) {
+  for (fakes in list(make_fakes(), make_fakes(needed = FALSE), make_fakes(cancel = TRUE),
+                     make_fakes(outcome = "failed"), make_fakes(after = "close"),
+                     make_fakes(tk = FALSE), make_fakes(ask = FALSE, tk = FALSE))) {
     try(run_start(root, fakes), silent = TRUE)
   }
   expect_equal(file_listing(dirname(root)), before)

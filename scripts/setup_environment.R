@@ -130,10 +130,24 @@ local({
 
   local({
     log_lines <- character()
+    # start_burn_vp.R sets the option burn_vp.setup_progress to a function(line) while its setup
+    # window is open. A problem in that function never stops setup.
+    notify <- function(text) {
+      progress <- getOption("burn_vp.setup_progress")
+      if (is.function(progress)) tryCatch(progress(text), error = function(e) NULL)
+      invisible(NULL)
+    }
     say <- function(...) {
       text <- paste0(...)
       cat(text, "\n", sep = "")
       log_lines <<- c(log_lines, text)
+      notify(text)
+    }
+    # Final lines: shown and passed on, but not part of the log file (which is written before).
+    say_final <- function(...) {
+      text <- paste0(...)
+      cat(text, "\n", sep = "")
+      notify(text)
     }
     show_check <- function(check) {
       label <- c(ok = "OK", warning = "WARNING", fail = "PROBLEM", note = "NOTE")[[check$status]]
@@ -349,18 +363,18 @@ local({
     say("")
     say("=====================================================")
     if (outcome == "complete") {
-      cat("SETUP COMPLETE\n")
-      cat("Everything is installed and the test run worked.\n")
-      cat("You can now use the tool. You do not need to run setup again.\n")
-      if (!is.null(log_name)) cat("Log file: ", log_name, "\n", sep = "")
+      say_final("SETUP COMPLETE")
+      say_final("Everything is installed and the test run worked.")
+      say_final("You can now use the tool. You do not need to run setup again.")
+      if (!is.null(log_name)) say_final("Log file: ", log_name)
     } else {
-      cat("SETUP FAILED\n")
-      cat("What went wrong: ", failure$message, "\n", sep = "")
-      cat("What to do: ", failure$action, "\n", sep = "")
+      say_final("SETUP FAILED")
+      say_final("What went wrong: ", failure$message)
+      say_final("What to do: ", failure$action)
       if (is.null(log_name)) {
-        cat("No log file could be written. Copy the text above and send it to us.\n")
+        say_final("No log file could be written. Copy the text above and send it to us.")
       } else {
-        cat("Log file: ", log_name, "\n", sep = "")
+        say_final("Log file: ", log_name)
       }
     }
     cat("=====================================================\n")
