@@ -4,6 +4,27 @@
 # run_utmb_burn_index() is patient-level; every other output is an aggregate count or statistic.
 
 burn_index_window <- as.Date(c("2015-01-01", "2023-12-31"))
+
+# Validates the --window-pad-days value (a character string or a number) and returns an integer.
+parse_window_pad_days <- function(x) {
+  bad <- function() {
+    stop("--window-pad-days must be a non-negative whole number of days.", call. = FALSE)
+  }
+  if (length(x) != 1 || is.na(x)) bad()
+  if (is.character(x)) {
+    if (!grepl("^[0-9]+$", trimws(x))) bad()
+    x <- as.numeric(x)
+  }
+  if (!is.numeric(x) || !is.finite(x) || x < 0 || x != round(x) || x > 36500) bad()
+  as.integer(x)
+}
+
+# The index window widened by `pad` days on both sides.
+burn_effective_window <- function(pad = 0, window = burn_index_window) {
+  pad <- parse_window_pad_days(pad)
+  c(window[1] - pad, window[2] + pad)
+}
+
 burn_placeholder_cutoff <- as.Date("1900-01-01")
 burn_encounter_categories <- c("hospital admission", "ED visit", "other", "no linked encounter")
 burn_prior_bands <- c("0", "1", "2-5", "6-10", "more than 10")
@@ -178,9 +199,10 @@ burn_prior_band <- function(n) {
   factor(band, levels = burn_prior_bands)
 }
 
-# One row per month of `window` (108 rows for 2015 to 2023), zeros included.
+# One row per month of `window` (108 rows for the default window), zeros included.
 burn_month_table <- function(index_dates, window = burn_index_window) {
-  months <- seq(window[1], as.Date(format(window[2], "%Y-%m-01")), by = "month")
+  months <- seq(as.Date(format(window[1], "%Y-%m-01")), as.Date(format(window[2], "%Y-%m-01")),
+                by = "month")
   tab <- table(factor(format(index_dates, "%Y-%m"), levels = format(months, "%Y-%m")))
   n <- as.integer(tab)
   data.frame(year = as.integer(format(months, "%Y")), month = as.integer(format(months, "%m")),
@@ -427,7 +449,7 @@ require_utmb_columns <- function(dt, table, columns) {
 
 # Runs the analysis and writes <root>/output/utmb/burn_index_<YYYYmmdd_HHMMSS>[_<label>]/.
 # Nothing is written unless `root` is confirmed by PROJECT_VERSION. Returns the run folder.
-run_utmb_burn_index <- function(data_dir, root, label = NULL,
+run_utmb_burn_index <- function(data_dir, root, label = NULL, window_pad_days = 0,
                                 progress = function(...) cat(..., "\n", sep = "")) {
   files <- utmb_table_files(data_dir)
   needed <- c("crosswalk", "demographics", "diagnoses", "encounters")
@@ -468,7 +490,8 @@ run_utmb_burn_index <- function(data_dir, root, label = NULL,
   require_utmb_columns(crosswalk, "crosswalk", c("StudyID", "BurnCode", "BurnCodeDate"))
   step("other tables read")
 
-  index <- select_burn_index(burn)
+  window <- burn_effective_window(window_pad_days)
+  index <- select_burn_index(burn, window)
   encounter <- select_index_encounter(burn, index, encounters)
   prior <- count_prior_burn_records(burn, index)
   demo <- summarise_index_demographics(index, demographics)
@@ -476,8 +499,8 @@ run_utmb_burn_index <- function(data_dir, root, label = NULL,
   events <- build_index_events(index, encounter, prior, demo$age)
 
   groups <- burn_group_table(index)
-  years <- burn_year_table(index$index_date)
-  months <- burn_month_table(index$index_date)
+  years <- burn_year_table(index$index_date, window)
+  months <- burn_month_table(index$index_date, window)
   matrix_table <- burn_year_month_matrix(months)
   encounter_table <- summarise_index_encounters(encounter)
   prior_table <- summarise_prior_burn_records(prior)
@@ -507,7 +530,8 @@ run_utmb_burn_index <- function(data_dir, root, label = NULL,
   )
   writeLines(burn_index_summary_lines(burn, index, encounter, prior, demo, comparison, groups,
                                       years, months, encounter_table, prior_table, issues,
-                                      as.numeric(difftime(Sys.time(), started, units = "secs"))),
+                                      as.numeric(difftime(Sys.time(), started, units = "secs")),
+                                      window, as.integer(window_pad_days)),
              file.path(run_dir, "summary.txt"))
   progress("Output folder: ", run_dir)
   invisible(run_dir)
@@ -515,7 +539,7 @@ run_utmb_burn_index <- function(data_dir, root, label = NULL,
 
 burn_index_summary_lines <- function(burn, index, encounter, prior, demo, comparison, groups,
                                      years, months, encounter_table, prior_table, issues,
-                                     total_seconds) {
+                                     total_seconds, window = burn_index_window, pad = 0) {
   fmt <- function(x) format(x, big.mark = ",", scientific = FALSE, trim = TRUE)
   line_for <- function(df, variable) {
     d <- df[df$variable == variable, ]
@@ -524,13 +548,20 @@ burn_index_summary_lines <- function(burn, index, encounter, prior, demo, compar
   n_index <- nrow(index)
   patients_burn <- length(unique(burn$StudyID))
   dated <- burn[!is.na(burn$date), ]
-  in_window <- dated[dated$date >= burn_index_window[1] & dated$date <= burn_index_window[2], ]
+  in_window <- dated[dated$date >= window[1] & dated$date <= window[2], ]
   patients_dated <- length(unique(dated$StudyID))
   g_all <- groups[groups$code_system == "all", ]
   num <- demo$numeric
   p <- prior$patients
   cmp <- comparison$table
   cat_df <- demo$categorical
+  widened <- if (pad > 0) {
+    sprintf(" (%s to %s widened by %d days)", burn_index_window[1], burn_index_window[2], pad)
+  } else {
+    ""
+  }
+  index_event_line <- paste0("  Index event: earliest burn record dated ", window[1], " to ",
+                             window[2], widened, "; highest group on that")
 
   c(
     "UTMB burn index event summary", "",
@@ -540,7 +571,7 @@ burn_index_summary_lines <- function(burn, index, encounter, prior, demo, compar
     "Definitions",
     "  Burn record: diagnoses row with ICD-10-CM T31.* or ICD-9-CM 948.* (all record types).",
     "  Group: first digit after the dot (percent of body surface area burned, tenths).",
-    "  Index event: earliest burn record dated 2015-01-01 to 2023-12-31; highest group on that",
+    index_event_line,
     "  date. Index encounter: hospital admission, then ED visit, then other, then lowest key.",
     "  Smoking status and race are the extract's current values, not values at the index date.",
     "",
@@ -606,11 +637,11 @@ burn_index_summary_lines <- function(burn, index, encounter, prior, demo, compar
             sum(is.na(burn$date)), length(unique(burn$StudyID[is.na(burn$date)]))),
     sprintf("  Burn records on placeholder dates (1900-01-01 or earlier): %d rows",
             sum(!is.na(burn$date) & burn$date <= burn_placeholder_cutoff)),
-    sprintf("  Burn records dated before 2015 (placeholders excluded): %d rows",
+    sprintf("  Burn records dated before %s (placeholders excluded): %d rows", window[1],
             sum(!is.na(burn$date) & burn$date > burn_placeholder_cutoff &
-                  burn$date < burn_index_window[1])),
-    sprintf("  Burn records dated after 2023-12-31: %d rows",
-            sum(!is.na(burn$date) & burn$date > burn_index_window[2])),
+                  burn$date < window[1])),
+    sprintf("  Burn records dated after %s: %d rows", window[2],
+            sum(!is.na(burn$date) & burn$date > window[2])),
     sprintf("  Patients with burn records but none dated in the window: %d",
             patients_burn - n_index),
     sprintf("  Crosswalk patients with no burn record at all: %d", issues$crosswalk_without_burn),

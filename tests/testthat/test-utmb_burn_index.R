@@ -382,3 +382,66 @@ test_that("run_utmb_burn_index needs a confirmed root and the required tables", 
   expect_error(run_utmb_burn_index(partial, root, progress = function(...) NULL),
                "crosswalk, demographics, encounters")
 })
+
+test_that("parse_window_pad_days accepts non-negative whole numbers only", {
+  expect_identical(parse_window_pad_days("0"), 0L)
+  expect_identical(parse_window_pad_days("30"), 30L)
+  expect_identical(parse_window_pad_days(7), 7L)
+  for (bad in list("-1", "1.5", "abc", "", " ", NA_character_, "1e3", -3, 2.5, Inf, NA_real_,
+                   c("1", "2"), character(), NULL)) {
+    expect_error(parse_window_pad_days(bad), "non-negative whole number")
+  }
+})
+
+test_that("burn_effective_window widens both sides and keeps pad 0 unchanged", {
+  expect_equal(burn_effective_window(0), burn_index_window)
+  expect_equal(burn_effective_window("30"), as.Date(c("2014-12-02", "2024-01-30")))
+})
+
+test_that("a record just before the window is selected only when the window is padded", {
+  burn <- burn_rows(StudyID = c("A", "B"), date = as.Date(c("2014-12-20", "2016-01-01")),
+                    group = c(1L, 2L), code_system = "ICD-10", Code = c("T31.1", "T31.2"))
+  none <- select_burn_index(burn, burn_effective_window(0))
+  expect_equal(none$StudyID, "B")
+  padded <- select_burn_index(burn, burn_effective_window(30))
+  expect_equal(padded$StudyID, c("A", "B"))
+  expect_equal(padded$index_date[padded$StudyID == "A"], as.Date("2014-12-20"))
+})
+
+test_that("month and year tables span the widened window", {
+  w <- burn_effective_window(30)
+  m <- burn_month_table(as.Date("2014-12-20"), w)
+  expect_equal(nrow(m), 110)
+  expect_equal(c(m$year[1], m$month[1], m$year[110], m$month[110]), c(2014, 12, 2024, 1))
+  expect_equal(m$n[1], 1)
+  y <- burn_year_table(as.Date("2014-12-20"), w)
+  expect_equal(y$year, 2014:2024)
+  expect_equal(y$n[1], 1)
+})
+
+test_that("run_utmb_burn_index with a pad selects shifted records and states the window", {
+  dir <- local_output_dir()
+  data_dir <- make_burn_data(dir)
+  root <- make_burn_root(dir)
+  quiet <- function(...) NULL
+  base <- run_utmb_burn_index(data_dir, root, progress = quiet)
+  base_summary <- readLines(file.path(base, "summary.txt"))
+  expect_true(any(grepl("dated 2015-01-01 to 2023-12-31; highest group on that", base_summary,
+                        fixed = TRUE)))
+  expect_false(any(grepl("widened", base_summary)))
+  Sys.sleep(1.1)
+  padded <- run_utmb_burn_index(data_dir, root, window_pad_days = 30, progress = quiet)
+  summary <- readLines(file.path(padded, "summary.txt"))
+  expect_true(any(grepl(paste0("Index event: earliest burn record dated 2014-12-02 to 2024-01-30",
+                               " (2015-01-01 to 2023-12-31 widened by 30 days); highest group"),
+                        summary, fixed = TRUE)))
+  expect_true(any(grepl("dated before 2014-12-02", summary, fixed = TRUE)))
+  expect_true(any(grepl("dated after 2024-01-30", summary, fixed = TRUE)))
+  expect_false(has_dash(summary))
+  read <- function(name) {
+    utils::read.csv(file.path(padded, name), stringsAsFactors = FALSE, na.strings = "")
+  }
+  expect_equal(nrow(read("index_by_month.csv")), 110)
+  expect_equal(nrow(read("index_year_distribution.csv")), 11)
+  expect_true(nrow(read("index_events.csv")) > 3)
+})
