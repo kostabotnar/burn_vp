@@ -1,13 +1,15 @@
-# Profiles the raw UTMB Epic Caboodle extract (13 comma-separated files without an extension).
-# Patient-level data is only read; results are aggregate counts and column structure.
+# Profiles the de-identified UTMB Epic Caboodle tables (13 comma-separated files without an
+# extension). Run scripts/utmb/deid_utmb.R first; the raw extract is refused.
+# Data is only read; results are aggregate counts and column structure.
 #
 # Usage (from any working directory):
 #   Rscript scripts/utmb/profile_utmb.R [--data <folder>] [--label <text>]
-#   --data   folder with the UTMB files; default <project folder>/data. A relative path is
-#            resolved against the project folder, not the working directory.
+#   --data   data folder of a de-identified run in output/utmb (made by deid_utmb.R); default the
+#            newest valid run. The raw extract is refused. A relative path is resolved against
+#            the project folder, not the working directory.
 #   --label  optional text added to the run folder name
 #
-# Reads:  the files in the data folder and the R/ and R/utmb/ functions.
+# Reads:  the files in the de-identified data folder and the R/ and R/utmb/ functions.
 # Writes: output/utmb/profile_<YYYYmmdd_HHMMSS>[_<label>]/ (column_profile.csv, table_stats.csv,
 #         demographics_*.csv, summary.txt, utmb_dictionary.csv). The dictionary holds structure
 #         only,
@@ -49,8 +51,7 @@ data_dir <- opt$value
 opt <- take_option(opt$args, "--label")
 label <- opt$value
 if (length(opt$args) > 0) stop(usage, call. = FALSE)
-if (is.null(data_dir)) data_dir <- file.path(project_root, "data")
-if (!grepl("^(/|~|[A-Za-z]:)", data_dir)) data_dir <- file.path(project_root, data_dir)
-if (!dir.exists(data_dir)) stop("Data folder not found: ", data_dir, call. = FALSE)
+data_dir <- resolve_utmb_deid_data(project_root, data_dir)
+cat("Data: ", data_dir, "\n", sep = "")
 
 run_utmb_profile(data_dir, project_root, label = label)
